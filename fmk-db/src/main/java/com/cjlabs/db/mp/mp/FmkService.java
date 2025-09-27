@@ -1,0 +1,1047 @@
+package com.cjlabs.db.mp.mp;
+
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.xodo.fmk.common.EnableFlagEnum;
+import com.xodo.fmk.core.query.FmkBaseEntity;
+import com.xodo.fmk.core.query.FmkOrderItem;
+import com.xodo.fmk.jdk.basetype.type.FmkUserId;
+import com.xodo.fmk.json.FmkJacksonUtil;
+import com.xodo.fmk.time.FmkLocalDateTimeUtil;
+import com.xodo.fmk.web.FmkContextUtil;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.io.Serializable;
+import java.lang.reflect.ParameterizedType;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+/**
+ * 基础Service实现类
+ */
+@Slf4j
+@Getter
+@Setter
+public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntity> implements IFmkService<T> {
+    public static final int DEFAULT_QUERY_LIMIT = 1000;
+    public static final int DEFAULT_BATCH_SIZE = 1000;
+
+    @Autowired
+    protected SqlSessionFactory sqlSessionFactory;
+
+    @Autowired
+    @Qualifier(value = "tx")
+    protected TransactionTemplate transactionTemplate;
+
+    private final M baseMapper;
+
+    public FmkService(M mapper) {
+        this.baseMapper = mapper;
+    }
+
+    /**
+     * 获取Mapper类型
+     */
+    @SuppressWarnings("unchecked")
+    protected Class<M> getMapperClass() {
+        try {
+            ParameterizedType parameterizedType = (ParameterizedType) getClass().getGenericSuperclass();
+            return (Class<M>) parameterizedType.getActualTypeArguments()[0];
+        } catch (Exception e) {
+            log.warn("Cannot determine mapper class through reflection, using baseMapper class");
+            return (Class<M>) this.baseMapper.getClass().getInterfaces()[0];
+        }
+    }
+
+    // ============ 新增：精细化查询封装方法 ============
+
+    /**
+     * 构建查询条件包装器
+     */
+    public QueryWrapper<T> buildQueryWrapper() {
+        return new QueryWrapper<>();
+    }
+
+    /**
+     * 构建更新条件包装器
+     */
+    public UpdateWrapper<T> buildUpdateWrapper() {
+        return new UpdateWrapper<>();
+    }
+
+    /**
+     * 构建 Lambda 查询条件包装器
+     */
+    public LambdaQueryWrapper<T> buildLambdaQueryWrapper() {
+        return new LambdaQueryWrapper<>();
+    }
+
+    /**
+     * 构建 Lambda 更新条件包装器
+     */
+    public LambdaUpdateWrapper<T> buildLambdaUpdateWrapper() {
+        return new LambdaUpdateWrapper<>();
+    }
+
+    // ==================== 单个操作方法 ====================
+
+    @Transactional(rollbackFor = Exception.class)
+    public int saveService(T entity) {
+        if (Objects.isNull(entity)) {
+            return 0;
+        }
+        setInsertDefault(entity);
+        log.info("FmkService|saveService|entity={}", FmkJacksonUtil.toJson(entity));
+        return this.baseMapper.insert(entity);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public int updateByIdService(T entity) {
+        if (Objects.isNull(entity)) {
+            return 0;
+        }
+        setUpdateDefault(entity);
+        log.info("FmkService|updateByIdService|entity={}", FmkJacksonUtil.toJson(entity));
+        return this.baseMapper.updateById(entity);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public int removeByIdService(Serializable id) {
+        if (Objects.isNull(id)) {
+            return 0;
+        }
+        T byIdDb = getByIdService(id);
+        if (Objects.isNull(byIdDb)) {
+            return 0;
+        }
+        byIdDb.setDelFlag(EnableFlagEnum.DISABLED);
+        log.info("FmkService|removeByIdService|id={}", id);
+        return this.baseMapper.updateById(byIdDb);
+    }
+
+    public T getByIdService(Serializable id) {
+        if (Objects.isNull(id)) {
+            return null;
+        }
+        log.info("FmkService|getByIdService|id={}", id);
+        // 使用条件查询，过滤已删除数据
+        QueryWrapper<T> wrapper = buildQueryWrapper();
+        wrapper.eq("id", id)
+                .eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+
+        return this.baseMapper.selectOne(wrapper, false);
+    }
+
+    public Optional<T> getByIdOpService(Serializable id) {
+        return Optional.ofNullable(getByIdService(id));
+    }
+
+    /**
+     * 根据ID查询（包含已删除数据）- 特殊场景使用
+     */
+    public T getByIdServiceIncludeDeleted(Serializable id) {
+        if (Objects.isNull(id)) {
+            return null;
+        }
+        log.info("FmkService|getByIdServiceIncludeDeleted|id={}", id);
+        return this.baseMapper.selectById(id);
+    }
+
+    // ==================== 批量操作方法 ====================
+
+    /**
+     * 批量保存 - 默认批次大小
+     */
+    public int saveBatchService(Collection<T> entityList) {
+        return saveBatchService(entityList, DEFAULT_BATCH_SIZE);
+    }
+
+    /**
+     * 批量保存 - 手动控制事务，分批提交
+     */
+    public int saveBatchService(Collection<T> entityList, int batchSize) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            log.info("Entity list is empty, skipping batch save");
+            return 0;
+        }
+
+        List<T> list = entityList instanceof List ? (List<T>) entityList : new ArrayList<>(entityList);
+        int processedCount = 0;
+        int batchNumber = 1;
+
+        for (List<T> batchList : Lists.partition(list, batchSize)) {
+            setInsertDefault(batchList);
+            boolean batchSuccess = executeManualTransactionBatch(batchList, "INSERT", batchNumber);
+            if (batchSuccess) {
+                processedCount += batchList.size();
+            } else {
+                break;
+            }
+            batchNumber++;
+        }
+        log.info("FmkService|saveBatchService|processedCount={}", processedCount);
+        return processedCount;
+    }
+
+    /**
+     * 批量更新 - 默认批次大小
+     */
+    public int updateBatchByIdService(Collection<T> entityList) {
+        return updateBatchByIdService(entityList, DEFAULT_BATCH_SIZE);
+    }
+
+    /**
+     * 批量更新 - 手动控制事务，分批提交
+     */
+    public int updateBatchByIdService(Collection<T> entityList, int batchSize) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            log.info("Entity list is empty, skipping batch update");
+            return 0;
+        }
+
+        List<T> list = entityList instanceof List ? (List<T>) entityList : new ArrayList<>(entityList);
+        int processedCount = 0;
+        int batchNumber = 1;
+
+        for (List<T> batchList : Lists.partition(list, batchSize)) {
+            setUpdateDefault(batchList);
+            boolean batchSuccess = executeManualTransactionBatch(batchList, "UPDATE", batchNumber);
+
+            if (batchSuccess) {
+                processedCount += batchList.size();
+            } else {
+                break;
+            }
+            batchNumber++;
+        }
+        log.info("Starting batch update: total={}, batchSize={}, processedCount={}", entityList.size(), batchSize, processedCount);
+
+        return processedCount;
+    }
+
+    /**
+     * 批量删除 - 默认批次大小
+     */
+    public int updateBatchDelFlagById(Collection<? extends Serializable> idList) {
+        return updateBatchDelFlagById(idList, DEFAULT_BATCH_SIZE);
+    }
+
+    /**
+     * 批量删除 - 手动控制事务，分批提交
+     */
+    public int updateBatchDelFlagById(Collection<? extends Serializable> idList, int batchSize) {
+        if (CollectionUtils.isEmpty(idList)) {
+            log.info("ID list is empty, skipping batch delete");
+            return 0;
+        }
+
+        List<T> listByIdsService = listByIdListService(idList);
+        if (CollectionUtils.isEmpty(listByIdsService)) {
+            return 0;
+        }
+
+        for (T t : listByIdsService) {
+            t.setDelFlag(EnableFlagEnum.DISABLED);
+            setUpdateDefault(t);
+        }
+
+        int updated = updateBatchByIdService(listByIdsService, batchSize);
+        log.info("FmkService|removeBatchByIdService|processedCount={}", updated);
+        return updated;
+    }
+
+    /**
+     * 批量删除 - 默认批次大小
+     */
+    public int deleteByIdList(Collection<? extends Serializable> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            log.info("ID list is empty, skipping batch delete");
+            return 0;
+        }
+        return getBaseMapper().deleteBatchIds(idList);
+    }
+
+    // ==================== 查询方法 ====================
+
+    /**
+     * 批量查询 - 根据ID列表查询
+     */
+    public List<T> listByIdListService(Collection<? extends Serializable> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            log.info("ID list is empty for batch query");
+            return new ArrayList<>();
+        }
+
+        // 使用字符串字段名代替 Lambda 表达式
+        QueryWrapper<T> wrapper = buildQueryWrapper();
+        wrapper.in("id", idList)
+                .eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+
+        List<T> result = this.baseMapper.selectList(wrapper);
+        log.info("Batch query completed: requested={}, found={}", idList.size(), result.size());
+        return result;
+    }
+
+    /**
+     * 批量查询 - 根据ID列表查询（包含已删除数据）
+     */
+    public List<T> listByIdsServiceIncludeDeleted(Collection<? extends Serializable> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            log.info("ID list is empty for batch query");
+            return new ArrayList<>();
+        }
+
+        log.info("Batch query by IDs: count={}", idList.size());
+        List<T> result = this.baseMapper.selectBatchIds(idList);
+        log.info("Batch query completed: requested={}, found={}", idList.size(), result.size());
+        return result;
+    }
+
+    // public long countService() {
+    //     return this.baseMapper.selectCount(null);
+    // }
+
+    public List<T> listAllLimitService() {
+        return listAllLimitService(DEFAULT_QUERY_LIMIT);
+    }
+
+    /**
+     * 查询所有数据（限制数量，自动过滤已删除数据）
+     */
+    public List<T> listAllLimitService(int limit) {
+        QueryWrapper<T> wrapper = buildQueryWrapper();
+        wrapper.eq("del_flag", EnableFlagEnum.ENABLED.getCode())
+                .orderByDesc("create_date")
+                .last("LIMIT " + Math.min(limit, DEFAULT_QUERY_LIMIT));
+
+        List<T> result = this.baseMapper.selectList(wrapper);
+        log.info("listAllLimitService completed: limit={}, actual={}", limit, result.size());
+        return result;
+    }
+
+    // ==================== 核心批量事务执行方法 ====================
+
+    /**
+     * 手动控制事务执行单个批次 - 核心方法
+     */
+    private boolean executeManualTransactionBatch(List<T> batchList, String operation, int batchNumber) {
+        return Boolean.TRUE.equals(transactionTemplate.execute(status -> {
+            try (SqlSession batchSession = sqlSessionFactory.openSession(ExecutorType.BATCH, false)) {
+                M batchMapper = batchSession.getMapper(getMapperClass());
+
+                for (T entity : batchList) {
+                    executeOperation(batchMapper, entity, operation);
+                }
+
+                // 关键：执行批量语句并获取结果
+                batchSession.flushStatements();
+                return true;
+
+            } catch (Exception e) {
+                log.error("Batch {} {} operation failed, transaction will rollback",
+                        batchNumber, operation.toLowerCase(), e);
+                status.setRollbackOnly();
+                return false;
+            }
+        }));
+    }
+
+    /**
+     * 执行具体的操作
+     */
+    private void executeOperation(M batchMapper, T entity, String operation) {
+        switch (operation) {
+            case "INSERT":
+                batchMapper.insert(entity);
+                break;
+            case "UPDATE":
+                batchMapper.updateById(entity);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported operation: " + operation);
+        }
+    }
+
+    private void setInsertDefault(T entity) {
+        if (Objects.isNull(entity)) {
+            return;
+        }
+        LocalDateTime now = FmkLocalDateTimeUtil.now();
+        setInsertDefault(entity, now);
+    }
+
+    private void setInsertDefault(T entity, LocalDateTime now) {
+        if (Objects.isNull(entity)) {
+            return;
+        }
+        Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
+        if (userIdOptional.isPresent()) {
+            FmkUserId userId = userIdOptional.get();
+            entity.setCreateUser(userId.get().toString());
+            entity.setUpdateUser(userId.get().toString());
+        }
+        entity.setCreateDate(now);
+        entity.setUpdateDate(now);
+        entity.setDelFlag(EnableFlagEnum.ENABLED);
+    }
+
+    private void setInsertDefault(List<T> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return;
+        }
+        LocalDateTime now = FmkLocalDateTimeUtil.now();
+        for (T t : entityList) {
+            setInsertDefault(t, now);
+        }
+    }
+
+    private void setUpdateDefault(T entity) {
+        if (Objects.isNull(entity)) {
+            return;
+        }
+        LocalDateTime now = FmkLocalDateTimeUtil.now();
+        setUpdateDefault(entity, now);
+    }
+
+    private void setUpdateDefault(T entity, LocalDateTime now) {
+        if (Objects.isNull(entity)) {
+            return;
+        }
+        Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
+        if (userIdOptional.isPresent()) {
+            FmkUserId userId = userIdOptional.get();
+            entity.setUpdateUser(userId.get().toString());
+        }
+        entity.setUpdateDate(now);
+    }
+
+    private void setUpdateDefault(List<T> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return;
+        }
+        LocalDateTime now = FmkLocalDateTimeUtil.now();
+        for (T t : entityList) {
+            setUpdateDefault(t, now);
+        }
+    }
+
+    // ==================== 新增：更多查询封装方法 ====================
+
+
+    /**
+     * 条件查询 - 单个结果（自动过滤已删除数据）
+     */
+    public T getByCondition(Wrapper<T> queryWrapper) {
+        Wrapper<T> finalWrapper = addDeletedFilter(queryWrapper);
+        return this.baseMapper.selectOne(finalWrapper, false);
+    }
+
+    /**
+     * 条件查询 - 列表结果（自动过滤已删除数据）
+     */
+    public List<T> listByCondition(Wrapper<T> queryWrapper) {
+        Wrapper<T> finalWrapper = addDeletedFilter(queryWrapper);
+        return this.baseMapper.selectList(finalWrapper);
+    }
+
+    /**
+     * 条件查询 - 分页结果（自动过滤已删除数据）
+     */
+    public IPage<T> pageByCondition(IPage<T> page, Wrapper<T> queryWrapper) {
+        Wrapper<T> finalWrapper = addDeletedFilter(queryWrapper);
+        return this.baseMapper.selectPage(page, finalWrapper);
+    }
+
+    /**
+     * 条件查询 - 分页结果（自动过滤已删除数据）
+     */
+    public IPage<T> pageByCondition(IPage<T> page,
+                                    Wrapper<T> queryWrapper,
+                                    List<FmkOrderItem> orderItemList) {
+        Wrapper<T> finalWrapper = addDeletedFilter(queryWrapper);
+        if (CollectionUtils.isEmpty(orderItemList)) {
+            addOrderBy(finalWrapper, orderItemList, Maps.newHashMap());
+        }
+
+        return this.baseMapper.selectPage(page, finalWrapper);
+    }
+
+    /**
+     * 条件统计（自动过滤已删除数据）
+     */
+    public Long countByCondition(Wrapper<T> queryWrapper) {
+        Wrapper<T> finalWrapper = addDeletedFilter(queryWrapper);
+        return this.baseMapper.selectCount(finalWrapper);
+    }
+
+    /**
+     * 条件更新
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public int updateByCondition(T entity, Wrapper<T> updateWrapper) {
+        setUpdateDefault(entity);
+        return this.baseMapper.update(entity, updateWrapper);
+    }
+
+
+    // ==================== 包含已删除数据的查询方法 ====================
+
+    /**
+     * 条件查询 - 单个结果（包含已删除数据）
+     */
+    public T getByConditionIncludeDeleted(Wrapper<T> queryWrapper) {
+        return this.baseMapper.selectOne(queryWrapper);
+    }
+
+    /**
+     * 条件查询 - 列表结果（包含已删除数据）
+     */
+    public List<T> listByConditionIncludeDeleted(Wrapper<T> queryWrapper) {
+        return this.baseMapper.selectList(queryWrapper);
+    }
+
+    /**
+     * 条件查询 - 分页结果（包含已删除数据）
+     */
+    public IPage<T> pageByConditionIncludeDeleted(IPage<T> page, Wrapper<T> queryWrapper) {
+        return this.baseMapper.selectPage(page, queryWrapper);
+    }
+
+    /**
+     * 条件统计（包含已删除数据）
+     */
+    public Long countByConditionIncludeDeleted(Wrapper<T> queryWrapper) {
+        return this.baseMapper.selectCount(queryWrapper);
+    }
+
+    /**
+     * 条件删除（逻辑删除）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public int updateBatchDelFlagByCondition(Wrapper<T> queryWrapper) {
+        // 使用 UpdateWrapper 进行逻辑删除
+        UpdateWrapper<T> updateWrapper = buildUpdateWrapper();
+        updateWrapper.set("del_flag", EnableFlagEnum.DISABLED.getCode());
+        setUpdateDefaultForWrapper(updateWrapper);
+
+        // 将查询条件复制到更新条件中
+        if (queryWrapper instanceof QueryWrapper) {
+            QueryWrapper<T> qw = (QueryWrapper<T>) queryWrapper;
+            String sqlSegment = qw.getSqlSegment();
+            if (sqlSegment != null && !sqlSegment.trim().isEmpty()) {
+                updateWrapper.apply(sqlSegment);
+            }
+        }
+
+        return this.baseMapper.update(null, updateWrapper);
+    }
+
+    /**
+     * 为 UpdateWrapper 设置更新默认值
+     */
+    private void setUpdateDefaultForWrapper(UpdateWrapper<T> updateWrapper) {
+        LocalDateTime now = FmkLocalDateTimeUtil.now();
+        updateWrapper.set("update_date", now);
+
+        Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
+        userIdOptional.ifPresent(userId -> updateWrapper.set("update_user", userId.toString()));
+    }
+
+    /**
+     * 根据字段值查询单个实体
+     */
+    public T getByField(String fieldName, Object value) {
+        QueryWrapper<T> wrapper = buildQueryWrapper();
+        wrapper.eq(fieldName, value)
+                .eq("del_flag", EnableFlagEnum.ENABLED.getCode())
+                .last("LIMIT 1");
+        return getByCondition(wrapper);
+    }
+
+    // /**
+    //  * 根据字段值查询列表
+    //  */
+    // public List<T> listByField(String fieldName, Object value) {
+    //     QueryWrapper<T> wrapper = buildQueryWrapper();
+    //     wrapper.eq(fieldName, value)
+    //             .eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+    //     return listByCondition(wrapper);
+    // }
+    //
+    // /**
+    //  * 根据字段值模糊查询
+    //  */
+    // public List<T> listByFieldLike(String fieldName, String value) {
+    //     QueryWrapper<T> wrapper = buildQueryWrapper();
+    //     wrapper.like(fieldName, value)
+    //             .eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+    //     return listByCondition(wrapper);
+    // }
+
+    /**
+     * 根据多个字段值查询
+     */
+    public List<T> listByFields(Map<String, Object> fieldMap) {
+        QueryWrapper<T> wrapper = buildQueryWrapper();
+        fieldMap.forEach(wrapper::eq);
+        wrapper.eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+        return listByCondition(wrapper);
+    }
+
+    // ==================== 统计相关方法 ====================
+
+    /**
+     * 批量统计 - 针对多个字段值进行统计（适用于批量获取邀请数量等场景）
+     *
+     * @param groupByField 分组字段名
+     * @param inField      过滤字段名
+     * @param inValueList  过滤字段值列表
+     * @return Map<String, Long> 返回 String 类型的 Key-Value 映射
+     */
+    public Map<String, Integer> batchCountByField(String groupByField,
+                                                  String inField,
+                                                  Collection<Long> inValueList) {
+        if (CollectionUtils.isEmpty(inValueList)) {
+            log.warn("FmkService|batchCountByField|filterValues is empty");
+            return new HashMap<>();
+        }
+
+        QueryWrapper<T> wrapper = buildQueryWrapper();
+        wrapper.in(inField, inValueList)
+                .eq("del_flag", EnableFlagEnum.ENABLED.getCode())
+                .groupBy(groupByField)
+                .select(groupByField + ", COUNT( " + inField + ") as count_value");
+
+        List<Map<String, Object>> results = this.baseMapper.selectMaps(wrapper);
+
+        return results.stream()
+                .collect(Collectors.toMap(
+                        map -> String.valueOf(map.get(groupByField)), // 修正：确保返回 String 类型
+                        map -> Integer.valueOf(map.get("count_value").toString()),
+                        (existing, replacement) -> existing
+                ));
+    }
+
+
+    /**
+     * 批量求和 - 根据分组字段进行求和统计
+     *
+     * @param sumField     求和字段名
+     * @param groupByField 分组字段名
+     * @param wrapper      查询条件
+     * @return Map<分组字段值, 求和结果>
+     */
+    public Map<String, BigDecimal> batchSumByField(String sumField,
+                                                   String groupByField,
+                                                   QueryWrapper<T> wrapper) {
+        try {
+            wrapper.eq("del_flag", EnableFlagEnum.ENABLED.getCode())
+                    .groupBy(groupByField)
+                    .select(groupByField + ", COALESCE(SUM(" + sumField + "), 0) as sum_value");
+
+            List<Map<String, Object>> results = this.baseMapper.selectMaps(wrapper);
+
+            return results.stream()
+                    .collect(Collectors.toMap(
+                            map -> String.valueOf(map.get(groupByField)),
+                            map -> new BigDecimal(map.get("sum_value").toString()),
+                            (existing, replacement) -> existing
+                    ));
+
+        } catch (Exception e) {
+            log.error("FmkService|batchSumByField|分组求和失败|sumField={}|groupByField={}|error={}",
+                    sumField, groupByField, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * 批量求和 - 根据分组字段进行求和统计
+     *
+     * @param sumField     求和字段名
+     * @param groupByField 分组字段名
+     * @param inField      查询条件
+     * @param inValueList  查询条件
+     * @return Map<分组字段值, 求和结果>
+     */
+    public Map<String, BigDecimal> batchSumByField(String sumField,
+                                                   String groupByField,
+                                                   String inField,
+                                                   Collection<Long> inValueList) {
+        try {
+            QueryWrapper<T> wrapper = buildQueryWrapper();
+            wrapper
+                    .in(inField, inValueList)
+                    .eq("del_flag", EnableFlagEnum.ENABLED.getCode())
+                    .groupBy(groupByField)
+                    .select(groupByField + ", COALESCE(SUM(" + sumField + "), 0) as sum_value");
+
+            List<Map<String, Object>> results = this.baseMapper.selectMaps(wrapper);
+
+            return results.stream()
+                    .collect(Collectors.toMap(
+                            map -> String.valueOf(map.get(groupByField)),
+                            map -> new BigDecimal(map.get("sum_value").toString()),
+                            (existing, replacement) -> existing
+                    ));
+
+        } catch (Exception e) {
+            log.error("FmkService|batchSumByField|分组求和失败|sumField={}|groupByField={}|inField={}|inValueList={}|error={}",
+                    sumField, groupByField, inField, inValueList, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    // ==================== 私有辅助方法 ====================
+
+    /**
+     * 为查询条件添加删除状态过滤
+     */
+    @SuppressWarnings("unchecked")
+    private Wrapper<T> addDeletedFilter(Wrapper<T> originalWrapper) {
+        if (originalWrapper == null) {
+            QueryWrapper<T> wrapper = buildQueryWrapper();
+            wrapper.eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+            return wrapper;
+        }
+
+        // 如果是 LambdaQueryWrapper，转换为 QueryWrapper
+        if (originalWrapper instanceof LambdaQueryWrapper) {
+            LambdaQueryWrapper<T> lambdaWrapper = (LambdaQueryWrapper<T>) originalWrapper;
+            // 检查是否已经包含 delFlag 条件
+            if (!containsDelFlagCondition(lambdaWrapper)) {
+                // 使用字段名添加条件，但保持在 LambdaQueryWrapper 中
+                lambdaWrapper.apply("del_flag = {0}", EnableFlagEnum.ENABLED.getCode());
+            }
+            return lambdaWrapper;
+        }
+
+        // 如果是 QueryWrapper
+        if (originalWrapper instanceof QueryWrapper) {
+            QueryWrapper<T> queryWrapper = (QueryWrapper<T>) originalWrapper;
+            // 检查是否已经包含 delFlag 条件
+            if (!containsDelFlagCondition(queryWrapper)) {
+                queryWrapper.eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+            }
+            return queryWrapper;
+        }
+
+        // 其他类型的 Wrapper，创建新的 QueryWrapper
+        QueryWrapper<T> newWrapper = buildQueryWrapper();
+        newWrapper.eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+
+        log.warn("Unsupported wrapper type: {}, using default delete filter only",
+                originalWrapper.getClass().getSimpleName());
+
+        return newWrapper;
+    }
+
+    /**
+     * 检查 wrapper 是否已包含删除状态条件
+     */
+    private boolean containsDelFlagCondition(Wrapper<T> wrapper) {
+        String sqlSegment = wrapper.getSqlSegment();
+        return sqlSegment != null && (
+                sqlSegment.contains("del_flag") ||
+                        sqlSegment.contains("delFlag")
+        );
+    }
+
+    /**
+     * 添加创建用户条件 - 支持 QueryWrapper 和 LambdaQueryWrapper
+     */
+    public void addEqCreateUser(Wrapper<T> wrapper) {
+        Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
+        if (userIdOptional.isEmpty()) {
+            return;
+        }
+        FmkUserId fmkUserId = userIdOptional.get();
+        String userId = fmkUserId.get().toString();
+
+        // 根据 wrapper 类型添加条件
+        if (wrapper instanceof QueryWrapper) {
+            QueryWrapper<T> queryWrapper = (QueryWrapper<T>) wrapper;
+            queryWrapper.eq("create_user", userId);
+        } else if (wrapper instanceof LambdaQueryWrapper) {
+            LambdaQueryWrapper<T> lambdaWrapper = (LambdaQueryWrapper<T>) wrapper;
+            lambdaWrapper.apply("create_user = {0}", userId);
+        }
+    }
+
+    /**
+     * 添加排序条件 - 支持 QueryWrapper 和 LambdaQueryWrapper
+     */
+    public void addOrderBy(Wrapper<T> wrapper,
+                           List<FmkOrderItem> orderItemList,
+                           Map<String, String> tempAllowedColumnMap) {
+        if (Objects.isNull(wrapper)) {
+            return;
+        }
+        if (CollectionUtils.isEmpty(orderItemList)) {
+            // 默认排序
+            addDefaultOrder(wrapper);
+            return;
+        }
+
+        // 字段白名单映射（前端字段名 → 数据库字段名）
+        Map<String, String> allowedColumns = Map.of(
+                "id", "id",
+                "createDate", "create_date",
+                "updateDate", "update_date",
+                "name", "name",
+                "status", "status",
+                "userId", "user_id",
+                "username", "username"
+                // 这里可以继续加
+        );
+
+        boolean hasValidOrder = false;
+
+        // 对于 LambdaQueryWrapper，收集所有排序条件
+        List<String> orderClauses = new ArrayList<>();
+
+        for (FmkOrderItem tItem : orderItemList) {
+            if (tItem == null || StringUtils.isBlank(tItem.getColumn())) {
+                continue;
+            }
+            String column = allowedColumns.get(tItem.getColumn());
+            String tempColumn = tempAllowedColumnMap != null ? tempAllowedColumnMap.get(tItem.getColumn()) : null;
+
+            // 优先使用临时映射，如果没有则使用默认映射
+            String finalColumn = tempColumn != null ? tempColumn : column;
+
+            if (finalColumn == null) {
+                // 忽略非法字段，避免 SQL 注入
+                continue;
+            }
+
+            hasValidOrder = true;
+
+            // 根据 wrapper 类型添加排序条件
+            if (wrapper instanceof QueryWrapper) {
+                QueryWrapper<T> queryWrapper = (QueryWrapper<T>) wrapper;
+                if (tItem.isAsc()) {
+                    queryWrapper.orderByAsc(finalColumn);
+                } else {
+                    queryWrapper.orderByDesc(finalColumn);
+                }
+            } else if (wrapper instanceof LambdaQueryWrapper) {
+                // 对于 LambdaQueryWrapper，收集排序条件
+                String orderDirection = tItem.isAsc() ? "ASC" : "DESC";
+                orderClauses.add(finalColumn + " " + orderDirection);
+            }
+        }
+
+        // 对于 LambdaQueryWrapper，使用 last 方法添加 ORDER BY 子句
+        if (wrapper instanceof LambdaQueryWrapper && !orderClauses.isEmpty()) {
+            LambdaQueryWrapper<T> lambdaWrapper = (LambdaQueryWrapper<T>) wrapper;
+            String orderByClause = "ORDER BY " + String.join(", ", orderClauses);
+            lambdaWrapper.last(orderByClause);
+        }
+
+        // 兜底排序，防止排序不稳定
+        if (!hasValidOrder) {
+            addDefaultOrder(wrapper);
+        }
+    }
+
+    /**
+     * 添加默认排序
+     */
+    private void addDefaultOrder(Wrapper<T> wrapper) {
+        if (wrapper instanceof QueryWrapper) {
+            ((QueryWrapper<T>) wrapper).orderByDesc("create_date");
+        } else if (wrapper instanceof LambdaQueryWrapper) {
+            // 直接使用 orderByDesc 方法，而不是 apply 或 last
+            String orderByClause = "ORDER BY create_date desc";
+            ((LambdaQueryWrapper<T>) wrapper).last(orderByClause);
+        }
+    }
+
+    // 在 FmkService 类中添加以下方法，建议放在 buildLambdaUpdateWrapper() 方法后面
+
+    // ==================== 日期范围查询条件方法 ====================
+
+    /**
+     * 添加日期范围查询条件 - QueryWrapper 版本
+     *
+     * @param queryWrapper   查询包装器
+     * @param dateColumnName 日期字段名
+     * @param startDateStr   开始日期字符串
+     * @param endDateStr     结束日期字符串
+     */
+    public void addDateRangeCondition(QueryWrapper<T> queryWrapper,
+                                      String dateColumnName,
+                                      String startDateStr,
+                                      String endDateStr) {
+        addDateRangeCondition(queryWrapper, dateColumnName, startDateStr, endDateStr, true);
+    }
+
+    /**
+     * 添加日期范围查询条件 - QueryWrapper 版本（带验证控制）
+     *
+     * @param queryWrapper   查询包装器
+     * @param dateColumnName 日期字段名
+     * @param startDateStr   开始日期字符串
+     * @param endDateStr     结束日期字符串
+     * @param validateRange  是否验证时间范围合理性
+     */
+    public void addDateRangeCondition(QueryWrapper<T> queryWrapper,
+                                      String dateColumnName,
+                                      String startDateStr,
+                                      String endDateStr,
+                                      boolean validateRange) {
+        if (!isValidDateRangeParams(queryWrapper, dateColumnName)) {
+            return;
+        }
+
+        DateRange dateRange = parseDateRange(startDateStr, endDateStr, validateRange);
+        applyDateRangeToQueryWrapper(queryWrapper, dateColumnName, dateRange);
+    }
+
+    // ==================== 常用日期字段的便捷方法 ====================
+
+    /**
+     * 添加创建时间范围查询条件 - QueryWrapper 版本
+     */
+    public void addCreateDateRangeCondition(QueryWrapper<T> queryWrapper,
+                                            String startDateStr,
+                                            String endDateStr) {
+        addDateRangeCondition(queryWrapper, "create_date", startDateStr, endDateStr);
+    }
+
+    /**
+     * 添加创建时间范围查询条件 - LambdaQueryWrapper 版本
+     * 使用字符串字段名避免抽象类 Lambda 缓存问题
+     */
+    public void addCreateDateRangeCondition(LambdaQueryWrapper<T> queryWrapper,
+                                            String startDateStr,
+                                            String endDateStr) {
+        if (queryWrapper == null) {
+            log.warn("FmkService|addCreateDateRangeCondition|lambda queryWrapper is null");
+            return;
+        }
+
+        DateRange dateRange = parseDateRange(startDateStr, endDateStr, true);
+
+        if (dateRange.getStartTime() != null) {
+            queryWrapper.apply("create_date >= {0}", dateRange.getStartTime());
+        }
+        if (dateRange.getEndTime() != null) {
+            queryWrapper.apply("create_date <= {0}", dateRange.getEndTime());
+        }
+    }
+
+    // ==================== 日期范围查询私有辅助方法 ====================
+
+    /**
+     * 验证 QueryWrapper 日期范围查询参数
+     */
+    private boolean isValidDateRangeParams(QueryWrapper<T> queryWrapper, String dateColumnName) {
+        if (queryWrapper == null || StringUtils.isBlank(dateColumnName)) {
+            log.warn("FmkService|addDateRangeCondition|invalid params|queryWrapper={}|dateColumnName={}",
+                    queryWrapper != null, dateColumnName);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 解析日期范围字符串
+     */
+    private DateRange parseDateRange(String startDateStr, String endDateStr, boolean validateRange) {
+        try {
+            LocalDateTime startTime = FmkLocalDateTimeUtil.strToLocalDateTime(startDateStr);
+            LocalDateTime endTime = FmkLocalDateTimeUtil.strToLocalDateTime(endDateStr);
+
+            if (validateRange) {
+                validateDateRange(startTime, endTime, startDateStr, endDateStr);
+            }
+
+            log.debug("FmkService|parseDateRange|success|start={}|end={}|startTime={}|endTime={}",
+                    startDateStr, endDateStr, startTime, endTime);
+
+            return new DateRange(startTime, endTime);
+
+        } catch (IllegalArgumentException e) {
+            throw e; // 重新抛出验证异常
+        } catch (Exception e) {
+            log.error("FmkService|parseDateRange|parseError|start={}|end={}",
+                    startDateStr, endDateStr, e);
+            throw new IllegalArgumentException("时间格式不正确: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 验证日期范围的合理性
+     */
+    private void validateDateRange(LocalDateTime startTime, LocalDateTime endTime,
+                                   String startDateStr, String endDateStr) {
+        if (startTime != null && endTime != null && startTime.isAfter(endTime)) {
+            String errorMsg = String.format("开始时间不能晚于结束时间: start=%s, end=%s", startDateStr, endDateStr);
+            log.warn("FmkService|validateDateRange|timeRangeError|{}", errorMsg);
+            throw new IllegalArgumentException(errorMsg);
+        }
+    }
+
+    /**
+     * 将日期范围应用到 QueryWrapper
+     */
+    private void applyDateRangeToQueryWrapper(QueryWrapper<T> queryWrapper,
+                                              String dateColumnName,
+                                              DateRange dateRange) {
+        if (dateRange.getStartTime() != null) {
+            queryWrapper.ge(dateColumnName, dateRange.getStartTime());
+        }
+        if (dateRange.getEndTime() != null) {
+            queryWrapper.le(dateColumnName, dateRange.getEndTime());
+        }
+    }
+
+    /**
+     * 日期范围内部类
+     */
+    private static class DateRange {
+        private final LocalDateTime startTime;
+        private final LocalDateTime endTime;
+
+        public DateRange(LocalDateTime startTime, LocalDateTime endTime) {
+            this.startTime = startTime;
+            this.endTime = endTime;
+        }
+
+        public LocalDateTime getStartTime() {
+            return startTime;
+        }
+
+        public LocalDateTime getEndTime() {
+            return endTime;
+        }
+    }
+}

@@ -6,9 +6,14 @@
     <groupId>com.cjlabs</groupId>
     <artifactId>cj-fmk-spring-boot3-parent</artifactId>
     <version>20250924_v1</version>
-
-<!--    <name>cj-fmk-spring-boot3-parent</name>-->
-<!--    <description>cj-fmk-spring-boot3-parent</description>-->
+    <packaging>pom</packaging>
+    <modules>
+        <module>fmk-core</module>
+        <module>fmk-db</module>
+        <module>fmk-cloud</module>
+        <module>fmk-web</module>
+        <module>fmk-tg</module>
+    </modules>
 
     <properties>
         <java.version>21</java.version>
