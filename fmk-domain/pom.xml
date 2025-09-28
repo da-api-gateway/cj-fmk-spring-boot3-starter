@@ -8,6 +8,8 @@
     </parent>
 
     <artifactId>fmk-domain</artifactId>
+    <version>20250924_v1</version>
+
     <packaging>jar</packaging>
     <name>fmk-domain</name>
 

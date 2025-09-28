@@ -1,6 +1,5 @@
 package com.cjlabs.domain.context;
 
-
 import lombok.Getter;
 import lombok.Setter;
 
