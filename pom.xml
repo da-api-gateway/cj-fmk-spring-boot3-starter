@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.cjlabs</groupId>
-    <artifactId>cj-fmk-spring-boot3-parent</artifactId>
+    <artifactId>cj-fmk-spring-boot3-starter</artifactId>
     <version>20250924_v1</version>
 
     <packaging>pom</packaging>
@@ -14,6 +14,7 @@
         <module>fmk-cloud</module>
         <module>fmk-web</module>
         <module>fmk-tg</module>
+        <module>fmk-domain</module>
         <module>fmk-domain</module>
     </modules>
 
@@ -28,12 +29,18 @@
 
         <telegrambots.version>9.1.0</telegrambots.version>
         <guava.version>33.5.0-jre</guava.version>
-        <commons-collections4.version>4.5.0</commons-collections4.version>
-        <commons-lang3.version>3.18.0</commons-lang3.version>
+        <apache-commons-collections4.version>4.5.0</apache-commons-collections4.version>
+        <apache-commons-lang3.version>3.18.0</apache-commons-lang3.version>
+        <apache-commons-text.version>1.14.0</apache-commons-text.version>
         <mybatis-plus.version>3.5.14</mybatis-plus.version>
         <mysql.version>9.4.0</mysql.version>
         <ttl.version>2.14.5</ttl.version>
         <lombok.version>1.18.40</lombok.version>
+        <junit.version>5.11.0</junit.version>
+        <mockito.version>5.8.0</mockito.version>
+        <slf4j.version>2.0.13</slf4j.version>
+        <logbak.version>1.5.6</logbak.version>
+        <apache-http.version>5.3.1</apache-http.version>
 
         <!-- 插件版本 -->
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
@@ -72,30 +79,60 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-web</artifactId>
+                <version>${spring-boot.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-test</artifactId>
+                <version>${spring-boot.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!-- JUnit 5 核心依赖 -->
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-collections4</artifactId>
-                <version>${commons-collections4.version}</version>
+                <version>${apache-commons-collections4.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>${commons-lang3.version}</version>
+                <version>${apache-commons-lang3.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>${apache-commons-text.version}</version>
             </dependency>
 
             <dependency>
@@ -134,6 +171,31 @@
                 <groupId>com.alibaba</groupId>
                 <artifactId>transmittable-thread-local</artifactId>
                 <version>${ttl.version}</version>
+            </dependency>
+
+            <!-- SLF4J API (统一接口) -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logbak.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-logging</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.httpcomponents.client5</groupId>
+                <artifactId>httpclient5</artifactId>
+                <version>${apache-http.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

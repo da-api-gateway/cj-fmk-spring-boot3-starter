@@ -7,7 +7,7 @@ import lombok.Setter;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -40,9 +40,19 @@ public class SnowflakeStatus {
     private long lastTimestamp;
 
     /**
+     * 上次生成时间的格式化字符串 (UTC+0)
+     */
+    private String lastGeneratedTime;
+
+    /**
      * 当前时间戳
      */
     private long currentTimestamp;
+
+    /**
+     * 当前时间的格式化字符串 (UTC+0)
+     */
+    private String currentTime;
 
     /**
      * 时钟回拨容忍时间
@@ -50,32 +60,61 @@ public class SnowflakeStatus {
     private long clockBackwardToleranceMs;
 
     /**
-     * 获取上次生成时间的格式化字符串
+     * 六参数构造函数 (向后兼容)
+     */
+    public SnowflakeStatus(long totalGenerated, long clockBackwardCount, long waitCount,
+                           long lastTimestamp, long currentTimestamp, long clockBackwardToleranceMs) {
+        this.totalGenerated = totalGenerated;
+        this.clockBackwardCount = clockBackwardCount;
+        this.waitCount = waitCount;
+        this.lastTimestamp = lastTimestamp;
+        this.currentTimestamp = currentTimestamp;
+        this.clockBackwardToleranceMs = clockBackwardToleranceMs;
+        this.lastGeneratedTime = formatTimestamp(lastTimestamp);
+        this.currentTime = formatTimestamp(currentTimestamp);
+    }
+
+    /**
+     * 获取上次生成时间的格式化字符串 (UTC+0)
      *
      * @return 格式化时间
      */
     public String getLastGeneratedTime() {
+        if (lastGeneratedTime != null) {
+            return lastGeneratedTime;
+        }
+
         if (lastTimestamp <= 0) {
             return "未生成过ID";
         }
-        LocalDateTime dateTime = LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(lastTimestamp),
-                ZoneId.systemDefault()
-        );
-        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
+        return formatTimestamp(lastTimestamp);
     }
 
     /**
-     * 获取当前时间的格式化字符串
+     * 获取当前时间的格式化字符串 (UTC+0)
      *
      * @return 格式化时间
      */
     public String getCurrentTime() {
+        if (currentTime != null) {
+            return currentTime;
+        }
+
+        return formatTimestamp(currentTimestamp);
+    }
+
+    /**
+     * 格式化时间戳为UTC+0时间
+     *
+     * @param timestamp 时间戳
+     * @return 格式化的UTC时间字符串
+     */
+    private String formatTimestamp(long timestamp) {
         LocalDateTime dateTime = LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(currentTimestamp),
-                ZoneId.systemDefault()
+                Instant.ofEpochMilli(timestamp),
+                ZoneOffset.UTC
         );
-        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
+        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")) + " UTC";
     }
 
     /**

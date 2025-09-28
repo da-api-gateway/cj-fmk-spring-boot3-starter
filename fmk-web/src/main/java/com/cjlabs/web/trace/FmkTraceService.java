@@ -1,26 +1,20 @@
 package com.cjlabs.web.trace;
 
-import com.xodo.fmk.common.FmkConstant;
-import com.xodo.fmk.id.FmkIdUtil;
-import com.xodo.fmk.jdk.basetype.type.FmkTraceId;
+import com.cjlabs.core.id.FmkSnowflakeIdGenerator;
+import com.cjlabs.domain.common.FmkConstant;
+import com.cjlabs.web.types.strings.FmkTraceId;
+
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
 
 @Slf4j
 @Component
 public class FmkTraceService {
-    private static final String TRACE_PREFIX = "TRACE";
-
-    @Autowired
-    private FmkIdUtil fmkIdUtil;
-
     public FmkTraceId generateTraceId() {
-        String traceIdStr = fmkIdUtil.nextIdString(TRACE_PREFIX);
-        return FmkTraceId.ofNullable(traceIdStr);
+        return FmkTraceId.generate();
     }
 
     /**
