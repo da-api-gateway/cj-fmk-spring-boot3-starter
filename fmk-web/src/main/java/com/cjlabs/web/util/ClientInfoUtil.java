@@ -2,6 +2,7 @@ package com.cjlabs.web.util;
 
 import com.xodo.business.common.user.enums.DeviceTypeEnum;
 import com.xodo.fmk.core.ClientInfo;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 

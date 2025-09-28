@@ -6,6 +6,7 @@
     <groupId>com.cjlabs</groupId>
     <artifactId>cj-fmk-spring-boot3-parent</artifactId>
     <version>20250924_v1</version>
+
     <packaging>pom</packaging>
     <modules>
         <module>fmk-core</module>
@@ -13,6 +14,7 @@
         <module>fmk-cloud</module>
         <module>fmk-web</module>
         <module>fmk-tg</module>
+        <module>fmk-domain</module>
     </modules>
 
     <properties>

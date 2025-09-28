@@ -1,3 +1,9 @@
+# 第一层
 .idea
+logs
 
+# 第二层
+/**/.gitignore
+/**/**.iml
+/**/target/
 
