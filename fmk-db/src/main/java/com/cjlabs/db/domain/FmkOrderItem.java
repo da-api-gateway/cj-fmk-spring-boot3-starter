@@ -1,7 +1,6 @@
 package com.cjlabs.db.domain;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.cjlabs.core.strings.FmkStringUtil;
 import lombok.Getter;
 import lombok.Setter;
 

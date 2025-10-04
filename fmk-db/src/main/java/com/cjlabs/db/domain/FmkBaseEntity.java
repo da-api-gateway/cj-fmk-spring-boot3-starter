@@ -1,6 +1,6 @@
 package com.cjlabs.db.domain;
 
-import com.cjlabs.domain.enums.EnableFlagEnum;
+import com.cjlabs.domain.enums.NormalEnum;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -29,7 +29,7 @@ public abstract class FmkBaseEntity implements Serializable {
      * 删除标志：ENABLED-正常，DISABLED-删除
      */
     @TableField("del_flag")
-    private EnableFlagEnum delFlag;
+    private NormalEnum delFlag;
 
     /**
      * 创建用户

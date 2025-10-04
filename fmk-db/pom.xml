@@ -11,16 +11,18 @@
     <packaging>jar</packaging>
     <name>fmk-db</name>
 
-    <properties>
-        <fmk-core.version>20250924_v1</fmk-core.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.cjlabs</groupId>
             <artifactId>fmk-core</artifactId>
             <version>${fmk-core.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.cjlabs</groupId>
+            <artifactId>fmk-web</artifactId>
+            <version>${fmk-web.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>

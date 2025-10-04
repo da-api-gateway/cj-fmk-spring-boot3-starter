@@ -2,7 +2,8 @@ package com.cjlabs.db.domain;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.google.common.collect.Lists;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.function.Function;
@@ -11,7 +12,8 @@ import java.util.stream.Collectors;
 /**
  * 分页响应结果
  */
-@Data
+@Getter
+@Setter
 public class FmkPageResponse<T> {
 
     /**

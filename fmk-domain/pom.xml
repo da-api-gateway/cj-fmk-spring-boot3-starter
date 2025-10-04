@@ -22,9 +22,5 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId></groupId>
-            <artifactId>logss</artifactId>
-        </dependency>
     </dependencies>
 </project>

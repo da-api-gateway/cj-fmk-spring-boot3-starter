@@ -7,15 +7,15 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.cjlabs.db.domain.FmkBaseEntity;
+import com.cjlabs.db.domain.FmkOrderItem;
+import com.cjlabs.domain.enums.NormalEnum;
+import com.cjlabs.web.json.FmkJacksonUtil;
+import com.cjlabs.web.threadlocal.FmkContextUtil;
+import com.cjlabs.web.time.FmkLocalDateTimeUtil;
+import com.cjlabs.web.types.longs.FmkUserId;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.xodo.fmk.common.EnableFlagEnum;
-import com.xodo.fmk.core.query.FmkBaseEntity;
-import com.xodo.fmk.core.query.FmkOrderItem;
-import com.xodo.fmk.jdk.basetype.type.FmkUserId;
-import com.xodo.fmk.json.FmkJacksonUtil;
-import com.xodo.fmk.time.FmkLocalDateTimeUtil;
-import com.xodo.fmk.web.FmkContextUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -140,7 +140,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (Objects.isNull(byIdDb)) {
             return 0;
         }
-        byIdDb.setDelFlag(EnableFlagEnum.DISABLED);
+        byIdDb.setDelFlag(NormalEnum.DISABLED);
         log.info("FmkService|removeByIdService|id={}", id);
         return this.baseMapper.updateById(byIdDb);
     }
@@ -153,7 +153,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         // 使用条件查询，过滤已删除数据
         QueryWrapper<T> wrapper = buildQueryWrapper();
         wrapper.eq("id", id)
-                .eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+                .eq("del_flag", NormalEnum.ENABLED.getCode());
 
         return this.baseMapper.selectOne(wrapper, false);
     }
@@ -267,7 +267,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         }
 
         for (T t : listByIdsService) {
-            t.setDelFlag(EnableFlagEnum.DISABLED);
+            t.setDelFlag(NormalEnum.DISABLED);
             setUpdateDefault(t);
         }
 
@@ -301,7 +301,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         // 使用字符串字段名代替 Lambda 表达式
         QueryWrapper<T> wrapper = buildQueryWrapper();
         wrapper.in("id", idList)
-                .eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+                .eq("del_flag", NormalEnum.ENABLED.getCode());
 
         List<T> result = this.baseMapper.selectList(wrapper);
         log.info("Batch query completed: requested={}, found={}", idList.size(), result.size());
@@ -336,7 +336,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public List<T> listAllLimitService(int limit) {
         QueryWrapper<T> wrapper = buildQueryWrapper();
-        wrapper.eq("del_flag", EnableFlagEnum.ENABLED.getCode())
+        wrapper.eq("del_flag", NormalEnum.ENABLED.getCode())
                 .orderByDesc("create_date")
                 .last("LIMIT " + Math.min(limit, DEFAULT_QUERY_LIMIT));
 
@@ -408,7 +408,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         }
         entity.setCreateDate(now);
         entity.setUpdateDate(now);
-        entity.setDelFlag(EnableFlagEnum.ENABLED);
+        entity.setDelFlag(NormalEnum.ENABLED);
     }
 
     private void setInsertDefault(List<T> entityList) {
@@ -547,7 +547,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     public int updateBatchDelFlagByCondition(Wrapper<T> queryWrapper) {
         // 使用 UpdateWrapper 进行逻辑删除
         UpdateWrapper<T> updateWrapper = buildUpdateWrapper();
-        updateWrapper.set("del_flag", EnableFlagEnum.DISABLED.getCode());
+        updateWrapper.set("del_flag", NormalEnum.DISABLED.getCode());
         setUpdateDefaultForWrapper(updateWrapper);
 
         // 将查询条件复制到更新条件中
@@ -579,7 +579,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     public T getByField(String fieldName, Object value) {
         QueryWrapper<T> wrapper = buildQueryWrapper();
         wrapper.eq(fieldName, value)
-                .eq("del_flag", EnableFlagEnum.ENABLED.getCode())
+                .eq("del_flag", NormalEnum.ENABLED.getCode())
                 .last("LIMIT 1");
         return getByCondition(wrapper);
     }
@@ -610,7 +610,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     public List<T> listByFields(Map<String, Object> fieldMap) {
         QueryWrapper<T> wrapper = buildQueryWrapper();
         fieldMap.forEach(wrapper::eq);
-        wrapper.eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+        wrapper.eq("del_flag", NormalEnum.ENABLED.getCode());
         return listByCondition(wrapper);
     }
 
@@ -634,7 +634,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
         QueryWrapper<T> wrapper = buildQueryWrapper();
         wrapper.in(inField, inValueList)
-                .eq("del_flag", EnableFlagEnum.ENABLED.getCode())
+                .eq("del_flag", NormalEnum.ENABLED.getCode())
                 .groupBy(groupByField)
                 .select(groupByField + ", COUNT( " + inField + ") as count_value");
 
@@ -661,7 +661,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
                                                    String groupByField,
                                                    QueryWrapper<T> wrapper) {
         try {
-            wrapper.eq("del_flag", EnableFlagEnum.ENABLED.getCode())
+            wrapper.eq("del_flag", NormalEnum.ENABLED.getCode())
                     .groupBy(groupByField)
                     .select(groupByField + ", COALESCE(SUM(" + sumField + "), 0) as sum_value");
 
@@ -698,7 +698,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             QueryWrapper<T> wrapper = buildQueryWrapper();
             wrapper
                     .in(inField, inValueList)
-                    .eq("del_flag", EnableFlagEnum.ENABLED.getCode())
+                    .eq("del_flag", NormalEnum.ENABLED.getCode())
                     .groupBy(groupByField)
                     .select(groupByField + ", COALESCE(SUM(" + sumField + "), 0) as sum_value");
 
@@ -727,7 +727,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     private Wrapper<T> addDeletedFilter(Wrapper<T> originalWrapper) {
         if (originalWrapper == null) {
             QueryWrapper<T> wrapper = buildQueryWrapper();
-            wrapper.eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+            wrapper.eq("del_flag", NormalEnum.ENABLED.getCode());
             return wrapper;
         }
 
@@ -737,7 +737,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             // 检查是否已经包含 delFlag 条件
             if (!containsDelFlagCondition(lambdaWrapper)) {
                 // 使用字段名添加条件，但保持在 LambdaQueryWrapper 中
-                lambdaWrapper.apply("del_flag = {0}", EnableFlagEnum.ENABLED.getCode());
+                lambdaWrapper.apply("del_flag = {0}", NormalEnum.ENABLED.getCode());
             }
             return lambdaWrapper;
         }
@@ -747,14 +747,14 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             QueryWrapper<T> queryWrapper = (QueryWrapper<T>) originalWrapper;
             // 检查是否已经包含 delFlag 条件
             if (!containsDelFlagCondition(queryWrapper)) {
-                queryWrapper.eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+                queryWrapper.eq("del_flag", NormalEnum.ENABLED.getCode());
             }
             return queryWrapper;
         }
 
         // 其他类型的 Wrapper，创建新的 QueryWrapper
         QueryWrapper<T> newWrapper = buildQueryWrapper();
-        newWrapper.eq("del_flag", EnableFlagEnum.ENABLED.getCode());
+        newWrapper.eq("del_flag", NormalEnum.ENABLED.getCode());
 
         log.warn("Unsupported wrapper type: {}, using default delete filter only",
                 originalWrapper.getClass().getSimpleName());

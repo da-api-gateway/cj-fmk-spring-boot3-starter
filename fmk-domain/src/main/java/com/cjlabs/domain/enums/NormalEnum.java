@@ -5,9 +5,9 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum EnableFlagEnum implements IEnumStr {
-    ENABLED("ENABLED", "有效"),
-    DISABLED("DISABLED", "无效"),
+public enum NormalEnum implements IEnumStr {
+    NORMAL("NORMAL", "正常"),
+    ABNORMAL("ABNORMAL", "不正常"),
 
     ;
 

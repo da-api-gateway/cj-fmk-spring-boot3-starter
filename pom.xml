@@ -15,13 +15,19 @@
         <module>fmk-web</module>
         <module>fmk-tg</module>
         <module>fmk-domain</module>
-        <module>fmk-domain</module>
     </modules>
 
     <properties>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <fmk-core.version>20250924_v1</fmk-core.version>
+        <fmk-db.version>20250924_v1</fmk-db.version>
+        <fmk-cloud.version>20250924_v1</fmk-cloud.version>
+        <fmk-web.version>20250924_v1</fmk-web.version>
+        <fmk-tg.version>20250924_v1</fmk-tg.version>
+        <fmk-domain.version>20250924_v1</fmk-domain.version>
 
         <spring-boot.version>3.5.6</spring-boot.version>
         <spring-cloud.version>2025.0.0</spring-cloud.version>
