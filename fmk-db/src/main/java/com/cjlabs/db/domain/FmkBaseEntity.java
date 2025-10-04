@@ -1,6 +1,6 @@
 package com.cjlabs.db.domain;
 
-import com.xodo.fmk.common.EnableFlagEnum;
+import com.cjlabs.domain.enums.EnableFlagEnum;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
