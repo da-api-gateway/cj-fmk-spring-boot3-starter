@@ -306,13 +306,13 @@ class FmkCollectionUtilTest {
         @Test
         @DisplayName("toMap should convert collection to map using key mapper")
         void toMapShouldConvertCollectionToMapUsingKeyMapper() {
-            List<String> input = List.of("apple", "banana", "cherry");
+            List<String> input = List.of("apple", "banana", "cherry1");
             Map<Integer, String> result = FmkCollectionUtil.toMap(input, String::length);
             
             assertEquals(3, result.size());
             assertEquals("apple", result.get(5));
             assertEquals("banana", result.get(6));
-            assertEquals("cherry", result.get(6)); // Note: This will be overridden by the first value
+            assertEquals("cherry1", result.get(7)); // Note: This will be overridden by the first value
         }
     }
 

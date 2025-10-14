@@ -470,6 +470,9 @@ public class FmkStringUtil {
      * @return 连接后的字符串
      */
     public static String join(Object[] array, String delimiter) {
+        if (array == null || array.length == 0) {
+            return "";
+        }
         return StringUtils.join(array, delimiter);
     }
 
