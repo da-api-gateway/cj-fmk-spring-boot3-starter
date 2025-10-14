@@ -1,13 +1,15 @@
-package com.cjlabs.web.types.strings;
+package com.cjlabs.core.types.strings;
 
-import com.cjlabs.web.types.base.BaseStringType;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonCreator.Mode;
+import com.cjlabs.core.types.base.BaseStringType;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -42,7 +44,6 @@ public class FmkToken extends BaseStringType<FmkToken> {
     /**
      * 从Object值创建Token，支持JSON反序列化
      */
-    @JsonCreator(mode = Mode.DELEGATING)
     public static FmkToken ofNullable(Object value) {
         return ofNullableObject(value, FmkToken::new, String.class);
     }

@@ -1,4 +1,4 @@
-package com.cjlabs.web.types.base;
+package com.cjlabs.core.types.base;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

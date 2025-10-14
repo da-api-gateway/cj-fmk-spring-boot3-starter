@@ -1,10 +1,10 @@
 package com.cjlabs.web.check;
 
+import com.cjlabs.core.types.longs.FmkUserId;
+import com.cjlabs.web.exception.DcxjCommonException;
+import com.cjlabs.web.exception.DcxjDbMsgKeyException;
+import com.cjlabs.web.exception.ExceptionDbInterface;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
-import com.xodo.fmk.jdk.basetype.type.FmkUserId;
-import com.xodo.fmk.web.exception.DcxjCommonException;
-import com.xodo.fmk.web.exception.DcxjDbMsgKeyException;
-import com.xodo.fmk.web.exception.ExceptionDbInterface;
 
 import java.util.Objects;
 import java.util.Optional;

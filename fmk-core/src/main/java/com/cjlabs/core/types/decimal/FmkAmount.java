@@ -17,6 +17,8 @@ public class FmkAmount extends BaseType<BigDecimal, FmkAmount> {
      */
     public static final FmkAmount ZERO = new FmkAmount(BigDecimal.ZERO);
 
+    public static final FmkAmount ONE = new FmkAmount(BigDecimal.ONE);
+
     /**
      * 从BigDecimal创建Amount，支持null值
      */

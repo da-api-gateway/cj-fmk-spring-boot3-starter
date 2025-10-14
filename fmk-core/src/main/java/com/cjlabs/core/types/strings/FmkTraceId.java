@@ -1,21 +1,17 @@
 package com.cjlabs.core.types.strings;
 
+import com.cjlabs.core.id.FmkSnowflakeIdGenerator;
 import com.cjlabs.core.types.base.BaseStringType;
 
 import org.apache.commons.lang3.StringUtils;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * 链路追踪ID类型安全包装类
  * 提供分布式系统中请求链路追踪的ID管理
  */
 public class FmkTraceId extends BaseStringType<FmkTraceId> {
+
+    private static final String TRACE_PREFIX = "TRACE_";
 
     // ==================== 静态工厂方法 ====================
 
@@ -34,13 +30,10 @@ public class FmkTraceId extends BaseStringType<FmkTraceId> {
     }
 
     /**
-     * 从字符串创建TraceId，不允许null或空值
+     * 生成一个新的UUID格式的TraceId
      */
-    public static FmkTraceId of(String value) {
-        if (StringUtils.isBlank(value)) {
-            throw new IllegalArgumentException("TraceId cannot be null or empty");
-        }
-        return new FmkTraceId(value.trim());
+    public static FmkTraceId generate() {
+        return new FmkTraceId(TRACE_PREFIX + FmkSnowflakeIdGenerator.nextId());
     }
 
     // ==================== 构造方法 ====================
@@ -50,6 +43,9 @@ public class FmkTraceId extends BaseStringType<FmkTraceId> {
         if (StringUtils.isBlank(value)) {
             throw new IllegalArgumentException("TraceId cannot be null or empty");
         }
+        if (!value.startsWith(TRACE_PREFIX)) {
+            throw new IllegalArgumentException("TraceId must start with " + TRACE_PREFIX);
+        }
     }
 
     @Override
@@ -57,6 +53,12 @@ public class FmkTraceId extends BaseStringType<FmkTraceId> {
         return new FmkTraceId(value);
     }
 
-    // ==================== TraceId 类型判断 ====================
+    // ==================== TraceId 操作 ====================
 
+    /**
+     * 获取不带前缀的TraceId值
+     */
+    public String getTraceWithoutPrefix() {
+        return getValue().substring(TRACE_PREFIX.length());
+    }
 }
