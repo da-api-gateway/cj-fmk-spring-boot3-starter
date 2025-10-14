@@ -1,7 +1,10 @@
 package com.cjlabs.domain.exception;
 
+import lombok.Getter;
+
 public class FmkBusinessException extends RuntimeException {
 
+    @Getter
     private final String code;
     private final String message;
 
@@ -9,10 +12,6 @@ public class FmkBusinessException extends RuntimeException {
         super(message);
         this.code = code;
         this.message = message;
-    }
-
-    public String getCode() {
-        return code;
     }
 
     @Override

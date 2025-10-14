@@ -57,10 +57,6 @@ public interface FmkConstant {
      * 用户的设备版本
      */
     String HEADER_DEVICE_VERSION = "X-CJ-Device-Version";
-    // /**
-    //  * {@link DeviceTypeEnum}
-    //  */
-    // String HEADER_DEVICE_TYPE = "X-CJ-Device_Type";
 
     String HEADER_DEVICE_LANGUAGE = "X-CJ-Accept-Language";
 
@@ -71,8 +67,7 @@ public interface FmkConstant {
     /**
      * traceId
      */
-    String MDC_TRACE_ID = "X-Trace-Id";
-    String MDC_SPAN_ID = "X-Span-Id";
-    String MDC_USER_ID = "X-User-Id";
+    String MDC_TRACE_ID = "X-CJ-Trace-Id";
+    String MDC_SPAN_ID = "X-CJ-Span-Id";
 
 }

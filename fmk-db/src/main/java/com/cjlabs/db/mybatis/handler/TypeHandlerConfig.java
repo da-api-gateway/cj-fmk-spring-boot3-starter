@@ -1,12 +1,12 @@
 package com.cjlabs.db.mybatis.handler;
 
-import com.cjlabs.core.types.decimal.Amount;
-import com.cjlabs.core.types.longs.UserId;
-import com.cjlabs.core.types.strings.CurrencyCode;
+import com.cjlabs.core.types.decimal.FmkAmount;
+import com.cjlabs.core.types.longs.FmkUserId;
+import com.cjlabs.core.types.strings.FmkCurrencyCode;
 import com.cjlabs.core.types.strings.FmkTraceId;
-import com.cjlabs.core.types.strings.OrderId;
-import com.cjlabs.core.types.strings.TransactionHash;
-import com.cjlabs.core.types.strings.WalletAddress;
+import com.cjlabs.core.types.strings.FmkOrderId;
+import com.cjlabs.core.types.strings.FmkTxHash;
+import com.cjlabs.core.types.strings.FmkWalletAddress;
 import com.cjlabs.db.mybatis.type.AmountTypeHandler;
 import com.cjlabs.db.mybatis.type.CurrencyCodeTypeHandler;
 import com.cjlabs.db.mybatis.type.FmkTraceIdTypeHandler;
@@ -40,16 +40,16 @@ public class TypeHandlerConfig implements InitializingBean {
     private void registerTypeHandlers() {
         // 注册字符串类型处理器
         sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(FmkTraceId.class, FmkTraceIdTypeHandler.class);
-        sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(OrderId.class, OrderIdTypeHandler.class);
-        sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(CurrencyCode.class, CurrencyCodeTypeHandler.class);
-        sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(TransactionHash.class, TransactionHashTypeHandler.class);
-        sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(WalletAddress.class, WalletAddressTypeHandler.class);
+        sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(FmkOrderId.class, OrderIdTypeHandler.class);
+        sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(FmkCurrencyCode.class, CurrencyCodeTypeHandler.class);
+        sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(FmkTxHash.class, TransactionHashTypeHandler.class);
+        sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(FmkWalletAddress.class, WalletAddressTypeHandler.class);
 
         // 注册Long类型处理器
-        sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(UserId.class, UserIdTypeHandler.class);
+        sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(FmkUserId.class, UserIdTypeHandler.class);
 
         // 注册BigDecimal类型处理器
-        sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(Amount.class, AmountTypeHandler.class);
+        sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(FmkAmount.class, AmountTypeHandler.class);
 
     }
 }

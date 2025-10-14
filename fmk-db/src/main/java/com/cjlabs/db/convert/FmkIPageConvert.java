@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import java.util.List;
 
-public class IPageConvert {
+public class FmkIPageConvert {
 
     public static <T1, T2> IPage<T2> convert(IPage<T1> source, List<T2> t2List) {
         if (source == null) {

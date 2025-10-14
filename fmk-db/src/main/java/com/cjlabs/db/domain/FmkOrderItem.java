@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 public class FmkOrderItem implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**

@@ -1,17 +1,17 @@
 // TransactionHashTypeHandler.java
 package com.cjlabs.db.mybatis.type;
 
-import com.cjlabs.core.types.strings.TransactionHash;
+import com.cjlabs.core.types.strings.FmkTxHash;
 import com.cjlabs.db.mybatis.handler.StringTypeHandler;
 import org.apache.ibatis.type.MappedTypes;
 
 /**
  * TransactionHash类型处理器
  */
-@MappedTypes(TransactionHash.class)
-public class TransactionHashTypeHandler extends StringTypeHandler<TransactionHash> {
+@MappedTypes(FmkTxHash.class)
+public class TransactionHashTypeHandler extends StringTypeHandler<FmkTxHash> {
 
     public TransactionHashTypeHandler() {
-        super(TransactionHash.class, TransactionHash::of);
+        super(FmkTxHash.class, FmkTxHash::of);
     }
 }
