@@ -1,6 +1,9 @@
 package com.cjlabs.web.threadlocal;
 
-import com.cjlabs.domain.types.strings.FmkTraceId;
+import com.cjlabs.core.types.longs.FmkUserId;
+import com.cjlabs.core.types.strings.FmkToken;
+import com.cjlabs.core.types.strings.FmkTraceId;
+import com.cjlabs.domain.enums.FmkLanguageEnum;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -36,7 +39,7 @@ public class FmkContextInfo {
     /**
      * 语言代码
      */
-    private LanguageEnum language = LanguageEnum.EN;
+    private FmkLanguageEnum language = FmkLanguageEnum.EN_US;
 
     /**
      * 请求时间

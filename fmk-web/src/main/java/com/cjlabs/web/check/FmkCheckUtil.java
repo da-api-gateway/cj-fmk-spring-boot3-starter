@@ -1,9 +1,7 @@
 package com.cjlabs.web.check;
 
 import com.cjlabs.core.types.longs.FmkUserId;
-import com.cjlabs.web.exception.DcxjCommonException;
-import com.cjlabs.web.exception.DcxjDbMsgKeyException;
-import com.cjlabs.web.exception.ExceptionDbInterface;
+import com.cjlabs.web.exception.SystemException;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
 
 import java.util.Objects;
@@ -98,6 +96,6 @@ public class FmkCheckUtil {
      * @param msgType 类型
      */
     public static void throwDcxjException(String msgKey, String msgType) {
-        throw new DcxjDbMsgKeyException(msgKey, msgType);
+        throw new SystemException(msgKey, msgType);
     }
 }

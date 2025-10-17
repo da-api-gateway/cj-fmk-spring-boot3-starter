@@ -2,7 +2,7 @@ package com.cjlabs.domain.enums;
 
 import java.util.Optional;
 
-public interface IEnumStrV2 {
+public interface IEnumStrException {
     /**
      * 获取枚举的 code
      *
@@ -18,20 +18,6 @@ public interface IEnumStrV2 {
     String getKey();
 
     /**
-     * 获取枚举的描述信息
-     *
-     * @return 描述信息
-     */
-    String getMsgZh();
-
-    /**
-     * 获取枚举的描述信息
-     *
-     * @return 描述信息
-     */
-    String getMsgEn();
-
-    /**
      * 根据 code 获取枚举对象
      *
      * @param type      枚举值
@@ -40,9 +26,9 @@ public interface IEnumStrV2 {
      * @param <T>       枚举类型
      * @return 对应的枚举对象，若不存在返回 Optional.empty()
      */
-    static <T extends Enum<T> & IEnumStrV2> Optional<T> getEnumByCode(String type, String key, Class<T> enumClass) {
+    static <T extends Enum<T> & IEnumStrException> Optional<T> getEnumByCode(String type, String key, Class<T> enumClass) {
         for (T flag : enumClass.getEnumConstants()) {
-            if (flag.getType().equals(type) && flag.getKey().equals(key)) {
+            if (flag.getType().equalsIgnoreCase(type) && flag.getKey().equalsIgnoreCase(key)) {
                 return Optional.of(flag);
             }
         }

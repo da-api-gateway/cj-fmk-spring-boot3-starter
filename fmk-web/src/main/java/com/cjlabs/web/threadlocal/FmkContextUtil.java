@@ -1,14 +1,10 @@
 package com.cjlabs.web.threadlocal;
 
 import com.alibaba.ttl.TransmittableThreadLocal;
-import com.xodo.business.common.user.enums.DeviceTypeEnum;
-import com.xodo.fmk.common.LanguageEnum;
-import com.xodo.fmk.core.ClientInfo;
-import com.xodo.fmk.core.FmkContextInfo;
-import com.xodo.fmk.core.FmkUserInfo;
-import com.xodo.fmk.jdk.basetype.type.FmkToken;
-import com.xodo.fmk.jdk.basetype.type.FmkTraceId;
-import com.xodo.fmk.jdk.basetype.type.FmkUserId;
+import com.cjlabs.core.types.longs.FmkUserId;
+import com.cjlabs.core.types.strings.FmkToken;
+import com.cjlabs.core.types.strings.FmkTraceId;
+import com.cjlabs.domain.enums.FmkLanguageEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
@@ -31,17 +27,17 @@ public class FmkContextUtil {
         CONTEXT_HOLDER.remove();
     }
 
-    public static LanguageEnum getCurrentLanguageCode() {
+    public static FmkLanguageEnum getCurrentLanguageCode() {
         try {
             Optional<FmkContextInfo> contextInfoOptional = FmkContextUtil.getContextInfo();
             if (contextInfoOptional.isPresent()) {
                 FmkContextInfo fmkContextInfo = contextInfoOptional.get();
-                return Optional.ofNullable(fmkContextInfo.getLanguage()).orElse(LanguageEnum.EN);
+                return Optional.ofNullable(fmkContextInfo.getLanguage()).orElse(FmkLanguageEnum.EN_US);
             }
         } catch (Exception e) {
             log.error("FmkContextUtil|getCurrentLanguageCode|e={}", e.getMessage(), e);
         }
-        return LanguageEnum.EN;
+        return FmkLanguageEnum.EN_US;
     }
 
     public static Optional<FmkTraceId> getTraceId() {
