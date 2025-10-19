@@ -1,19 +1,24 @@
 package com.cjlabs.web.filter;
 
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
-import javax.servlet.*;
-import javax.servlet.FilterConfig;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Enumeration;
 
+/**
+ * CORS跨域过滤器
+ * 处理跨域请求，设置CORS响应头
+ */
 @Slf4j
 @Order(1) // 最高优先级
-@Component
 public class CorsFilter implements Filter {
 
     @Override
@@ -25,54 +30,42 @@ public class CorsFilter implements Filter {
 
         String method = request.getMethod();
         String uri = request.getRequestURI();
-
-        Enumeration<String> headerNames = request.getHeaderNames();
-        if (headerNames != null) {
-            while (headerNames.hasMoreElements()) {
-                String headerName = headerNames.nextElement();
-                String headerValue = request.getHeader(headerName);
-                log.info("CorsFilter|doFilter|Header|{}={}", headerName, headerValue);
-            }
-        }
-
         String origin = request.getHeader("Origin");
         String userAgent = request.getHeader("User-Agent");
 
-        log.info("CorsFilter|doFilter|method={}|uri={}|origin={}|userAgent={}",
-                method, uri, origin, userAgent);
+        if (log.isDebugEnabled()) {
+            log.debug("CorsFilter|doFilter|请求信息|method={}|uri={}|origin={}|userAgent={}",
+                    method, uri, origin, userAgent);
+        }
 
-        // 🔥 强制设置CORS头
+        // 设置CORS头
         response.setHeader("Access-Control-Allow-Origin", "*");
-        response.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, HEAD");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
         response.setHeader("Access-Control-Allow-Headers", "*");
         response.setHeader("Access-Control-Max-Age", "3600");
         response.setHeader("Access-Control-Allow-Credentials", "false");
 
-        // 打印设置的响应头
-        log.info("CorsFilter|doFilter|设置CORS头|Allow-Origin={}|Allow-Headers={}",
-                response.getHeader("Access-Control-Allow-Origin"),
-                response.getHeader("Access-Control-Allow-Headers"));
-
-        // 🔥 对于OPTIONS请求，直接返回200
+        // 对于OPTIONS请求，直接返回200
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            log.info("CorsFilter|doFilter|OPTIONS请求，直接返回200|uri={}", uri);
+            if (log.isDebugEnabled()) {
+                log.debug("CorsFilter|doFilter|OPTIONS预检请求，直接返回200|uri={}", uri);
+            }
             response.setStatus(HttpServletResponse.SC_OK);
-            // 确保响应头被写入
             response.flushBuffer();
             return;
         }
 
-        log.info("CorsFilter|doFilter|非OPTIONS请求，继续处理|method={}|uri={}", method, uri);
+        // 非OPTIONS请求，继续处理
         chain.doFilter(req, res);
     }
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        log.info("CorsFilter|init|CORS过滤器初始化");
+        log.info("CorsFilter|init|初始化");
     }
 
     @Override
     public void destroy() {
-        log.info("CorsFilter|destroy|CORS过滤器销毁");
+        log.info("CorsFilter|destroy|销毁");
     }
-} 
+}

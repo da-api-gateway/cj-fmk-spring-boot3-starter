@@ -1,10 +1,7 @@
 package com.cjlabs.web.token;
 
-import com.xodo.business.common.user.enums.DeviceTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 /**
  * 设备信息
@@ -12,7 +9,6 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class DeviceInfo {
-    private DeviceTypeEnum deviceType; // iphone, pc, android, web
     private String userAgent;
     private String ipAddress;
     private String deviceVersion;
@@ -34,26 +30,26 @@ public class DeviceInfo {
     /**
      * 登录时间
      */
-    private LocalDateTime loginTime;
+    private Long loginTime;
 
     /**
      * 最后活跃时间
      */
-    private LocalDateTime lastActiveTime;
+    private Long lastActiveTime;
     /**
      * 设备语言
      */
     private String deviceLanguage;
 
     public DeviceInfo() {
-        this.deviceType = DeviceTypeEnum.WEB; // 默认为 WEB
-        this.loginTime = LocalDateTime.now();
-        this.lastActiveTime = LocalDateTime.now();
+        long now = System.currentTimeMillis();
+
+        this.loginTime = now;
+        this.lastActiveTime = now;
     }
 
-    public DeviceInfo(DeviceTypeEnum deviceType, String userAgent, String ipAddress, String deviceVersion) {
+    public DeviceInfo(String userAgent, String ipAddress, String deviceVersion) {
         this();
-        this.deviceType = deviceType != null ? deviceType : DeviceTypeEnum.WEB;
         this.userAgent = userAgent;
         this.ipAddress = ipAddress;
         this.deviceVersion = deviceVersion;
@@ -63,6 +59,8 @@ public class DeviceInfo {
      * 更新最后活跃时间
      */
     public void updateLastActiveTime() {
-        this.lastActiveTime = LocalDateTime.now();
+        long now = System.currentTimeMillis();
+
+        this.lastActiveTime = now;
     }
 }

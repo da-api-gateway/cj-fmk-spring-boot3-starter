@@ -1,4 +1,4 @@
-package com.cjlabs.web.req;
+package com.cjlabs.db.domain;
 
 import lombok.Getter;
 import lombok.Setter;

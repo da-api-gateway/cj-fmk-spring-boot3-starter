@@ -18,57 +18,47 @@ public class GlobalExceptionHandler<T> {
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<FmkResult<T>> handleValidationException(ValidationException ex) {
-        log.info("GlobalExceptionHandler|handleValidationException|msgType={}|msgKey={}|ex={}", ex.getMsgType(), ex.getMsgKey(), ex.getMessage(), ex);
-        String msgType = ex.getMsgType();
-        String msgKey = ex.getMsgKey();
-
-        FmkResult<T> result = FmkResult.error(ex.getHttpCode(), msgType, msgKey);
-
-        Optional<FmkTraceId> traceIdOptional = FmkContextUtil.getTraceId();
-        traceIdOptional.ifPresent(result::setTraceId);
-
-        return new ResponseEntity<>(result, HttpStatus.OK);
+        log.info("处理验证异常|类型={}|键={}|消息={}", ex.getErrorType(), ex.getErrorKey(), ex.getMessage(), ex);
+        return createErrorResponse(ex);
     }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<FmkResult<T>> handleBusinessException(BusinessException ex) {
-        log.info("GlobalExceptionHandler|handleBusinessException|msgType={}|msgKey={}|ex={}", ex.getMsgType(), ex.getMsgKey(), ex.getMessage(), ex);
-        String msgType = ex.getMsgType();
-        String msgKey = ex.getMsgKey();
-
-        FmkResult<T> result = FmkResult.error(ex.getHttpCode(), msgType, msgKey);
-
-        Optional<FmkTraceId> traceIdOptional = FmkContextUtil.getTraceId();
-        traceIdOptional.ifPresent(result::setTraceId);
-
-        return new ResponseEntity<>(result, HttpStatus.OK);
+        log.info("处理业务异常|类型={}|键={}|消息={}", ex.getErrorType(), ex.getErrorKey(), ex.getMessage(), ex);
+        return createErrorResponse(ex);
     }
 
-    // 可选：处理其他异常（如兜底异常）
     @ExceptionHandler(SystemException.class)
     public ResponseEntity<FmkResult<T>> handleSystemException(SystemException ex) {
-        log.info("GlobalExceptionHandler|handleSystemException|msgType={}|msgKey={}|ex={}", ex.getMsgType(), ex.getMsgKey(), ex.getMessage(), ex);
-        String msgType = ex.getMsgType();
-        String msgKey = ex.getMsgKey();
-
-        FmkResult<T> result = FmkResult.error(ex.getHttpCode(), msgType, msgKey);
-
-        Optional<FmkTraceId> traceIdOptional = FmkContextUtil.getTraceId();
-        traceIdOptional.ifPresent(result::setTraceId);
-
-        return new ResponseEntity<>(result, HttpStatus.OK);
+        log.error("处理系统异常|类型={}|键={}|消息={}", ex.getErrorType(), ex.getErrorKey(), ex.getMessage(), ex);
+        return createErrorResponse(ex);
     }
 
-    // 可选：处理其他异常（如兜底异常）
     @ExceptionHandler(Exception.class)
     public ResponseEntity<FmkResult<T>> handleException(Exception ex) {
-        log.info("GlobalExceptionHandler|handleException|ex={}", ex.getMessage(), ex);
-
-        FmkResult<T> result = FmkResult.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "SYSTEM_ERROR", "UNKNOWN_ERROR");
-
+        log.error("处理未知异常|消息={}", ex.getMessage(), ex);
+        
+        FmkResult<T> result = FmkResult.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+                "SYSTEM_ERROR", "UNKNOWN_ERROR");
+        
         Optional<FmkTraceId> traceIdOptional = FmkContextUtil.getTraceId();
         traceIdOptional.ifPresent(result::setTraceId);
-
+        
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+    
+    /**
+     * 创建统一的错误响应
+     * 
+     * @param ex 基础异常
+     * @return 响应实体
+     */
+    private ResponseEntity<FmkResult<T>> createErrorResponse(BaseException ex) {
+        FmkResult<T> result = FmkResult.error(ex.getHttpCode(), ex.getErrorType(), ex.getErrorKey());
+        
+        Optional<FmkTraceId> traceIdOptional = FmkContextUtil.getTraceId();
+        traceIdOptional.ifPresent(result::setTraceId);
+        
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 

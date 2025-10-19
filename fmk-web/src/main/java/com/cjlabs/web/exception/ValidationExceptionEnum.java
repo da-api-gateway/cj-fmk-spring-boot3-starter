@@ -6,12 +6,12 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum ExceptionEnum implements IEnumStrException {
+public enum ValidationExceptionEnum implements IEnumStrException {
 
     // code = type
     // msg = key
 
-    SYSTEM_EXCEPTION("EXCEPTION", "SYSTEM_EXCEPTION"),
+    INVALID_PARAMETER("VALIDATION_ERROR", "INVALID_PARAMETER"),
 
 
 

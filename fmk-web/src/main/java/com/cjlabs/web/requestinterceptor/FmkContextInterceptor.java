@@ -1,19 +1,21 @@
 package com.cjlabs.web.requestinterceptor;
 
-import com.xodo.business.common.user.enums.DeviceTypeEnum;
-import com.xodo.fmk.common.LanguageEnum;
-import com.xodo.fmk.core.ClientInfo;
-import com.xodo.fmk.core.FmkContextInfo;
-import com.xodo.fmk.core.FmkUserInfo;
-import com.xodo.fmk.core.enums.IEnumStr;
-import com.xodo.fmk.jdk.basetype.type.FmkToken;
-import com.xodo.fmk.jdk.basetype.type.FmkTraceId;
-import com.xodo.fmk.jdk.basetype.type.FmkUserId;
-import com.xodo.fmk.web.FmkContextUtil;
-import com.xodo.fmk.web.token.DeviceInfo;
-import com.xodo.fmk.web.token.FmkTokenService;
-import com.xodo.fmk.web.trace.FmkTraceService;
-import com.xodo.fmk.web.util.ClientInfoUtil;
+import com.cjlabs.core.types.longs.FmkUserId;
+import com.cjlabs.core.types.strings.FmkToken;
+import com.cjlabs.core.types.strings.FmkTraceId;
+import com.cjlabs.domain.enums.FmkLanguageEnum;
+import com.cjlabs.domain.enums.IEnumStr;
+import com.cjlabs.web.FmkWebConstant;
+import com.cjlabs.web.threadlocal.ClientInfo;
+import com.cjlabs.web.threadlocal.FmkContextInfo;
+import com.cjlabs.web.threadlocal.FmkContextUtil;
+import com.cjlabs.web.threadlocal.FmkUserInfo;
+import com.cjlabs.web.token.DeviceInfo;
+import com.cjlabs.web.token.FmkTokenService;
+import com.cjlabs.web.filter.FmkTraceService;
+import com.cjlabs.web.util.ClientInfoUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
@@ -22,15 +24,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
 
-import static com.xodo.fmk.common.FmkConstant.*;
-
+import static com.cjlabs.domain.common.FmkConstant.HEADER_DEVICE_LANGUAGE;
+import static com.cjlabs.domain.common.FmkConstant.HEADER_DEVICE_VERSION;
+import static com.cjlabs.domain.common.FmkConstant.HEADER_REFERER;
+import static com.cjlabs.domain.common.FmkConstant.HEADER_USER_AGENT;
+import static com.cjlabs.domain.common.FmkConstant.HEADER_USER_TOKEN;
+import static com.cjlabs.domain.common.FmkConstant.MDC_USER_ID;
 
 /**
  * 上下文拦截器
@@ -48,18 +52,14 @@ public class FmkContextInterceptor implements HandlerInterceptor {
 
     /**
      * 系统用户ID - 用于不需要登录的接口
-     * <p>
-     * {@link SYSTEM_USER_PATHS}
      */
     private static final Long SYSTEM_USER_ID = 0L;
 
     /**
      * 需要设置系统用户的接口路径列表
-     * <p>
-     * {@link SYSTEM_USER_ID}
      */
     private static final List<String> SYSTEM_USER_PATHS = Arrays.asList(
-            API_PREFIX + "/front/user/loginOrRegister"
+            // FmkWebConstant.API_PREFIX + "/front/user/loginOrRegister"
             // "/api/front/user/loginByCode",
             // "/api/front/user/sendVerifyCode",
             // "/api/front/user/forgetPassword",
@@ -75,17 +75,21 @@ public class FmkContextInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response,
                              Object handler) {
+        // 对于OPTIONS请求，直接放行
+        if (RequestMethod.OPTIONS.name().equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
         try {
-            // 🔥 对于OPTIONS请求，直接放行，不做任何处理
-            if (RequestMethod.OPTIONS.name().equalsIgnoreCase(request.getMethod())) {
+            // 获取由TraceFilter创建的上下文信息
+            Optional<FmkContextInfo> contextInfoOpt = FmkContextUtil.getContextInfo();
+            if (contextInfoOpt.isEmpty()) {
+                log.warn("FmkContextInterceptor|preHandle|上下文信息不存在，可能TraceFilter未正确执行|uri={}",
+                        request.getRequestURI());
                 return true;
             }
 
-            // 创建上下文信息
-            FmkContextInfo contextInfo = new FmkContextInfo();
-
-            // 设置 TraceId
-            setTraceId(request, response, contextInfo);
+            FmkContextInfo contextInfo = contextInfoOpt.get();
 
             // 设置客户端信息
             setClientInfo(request, contextInfo);
@@ -99,20 +103,17 @@ public class FmkContextInterceptor implements HandlerInterceptor {
             // 设置请求头信息
             setHeaders(request, contextInfo);
 
-            // 设置上下文
-            FmkContextUtil.setContextInfo(contextInfo);
-
-            log.info("FmkContextInterceptor|preHandle|上下文设置完成|uri={}|userId={}|traceId={}|deviceType={}",
-                    request.getRequestURI(),
-                    contextInfo.getUserId() != null ? contextInfo.getUserId().getValue() : null,
-                    contextInfo.getTraceId() != null ? contextInfo.getTraceId().getValue() : null,
-                    contextInfo.getClientInfo().getDeviceType());
-
-            return true;
+            if (log.isDebugEnabled()) {
+                log.debug("FmkContextInterceptor|preHandle|上下文信息增强完成|uri={}|userId={}|traceId={}",
+                        request.getRequestURI(),
+                        Optional.ofNullable(contextInfo.getUserId()).map(FmkUserId::getValue).orElse(null),
+                        Optional.ofNullable(contextInfo.getTraceId()).map(FmkTraceId::getValue).orElse(null));
+            }
         } catch (Exception e) {
             log.error("FmkContextInterceptor|preHandle|设置上下文信息失败|uri={}", request.getRequestURI(), e);
-            return true; // 即使失败也继续处理请求
         }
+
+        return true; // 即使失败也继续处理请求
     }
 
     @Override
@@ -120,39 +121,16 @@ public class FmkContextInterceptor implements HandlerInterceptor {
                                 HttpServletResponse response,
                                 Object handler,
                                 Exception ex) {
+        // 不需要清理上下文，由TraceFilter负责
+        // 只清理MDC中的用户ID，因为这是在拦截器中设置的
         try {
-            // 清理MDC上下文
-            clearMDCContext();
+            MDC.remove(MDC_USER_ID);
 
-            // 清理Framework上下文
-            FmkContextUtil.clear();
-
-            log.info("FmkContextInterceptor|afterCompletion|清理请求上下文完成|uri={}", request.getRequestURI());
-        } catch (Exception e) {
-            log.error("FmkContextInterceptor|afterCompletion|清理上下文信息失败|uri={}", request.getRequestURI(), e);
-        }
-    }
-
-    /**
-     * 设置 TraceId
-     */
-    private void setTraceId(HttpServletRequest request,
-                            HttpServletResponse response,
-                            FmkContextInfo contextInfo) {
-        try {
-            FmkTraceId fmkTraceId = fmkTraceService.getOrGenerateTraceId(request);
-            contextInfo.setTraceId(fmkTraceId);
-
-            // 设置到MDC，用于日志输出
-            if (fmkTraceId != null && StringUtils.isNotBlank(fmkTraceId.getValue())) {
-                MDC.put(MDC_TRACE_ID, fmkTraceId.getValue());
-                response.setHeader(HEADER_TRACE_ID, fmkTraceId.getValue());
-                log.info("FmkContextInterceptor|setTraceId|TraceId设置成功|traceId={}", fmkTraceId.getValue());
-            } else {
-                log.warn("FmkContextInterceptor|setTraceId|生成的TraceId为空");
+            if (log.isDebugEnabled()) {
+                log.debug("FmkContextInterceptor|afterCompletion|清理MDC用户ID|uri={}", request.getRequestURI());
             }
         } catch (Exception e) {
-            log.error("FmkContextInterceptor|setTraceId|TraceId设置失败", e);
+            log.warn("FmkContextInterceptor|afterCompletion|清理MDC用户ID失败|uri={}", request.getRequestURI(), e);
         }
     }
 
@@ -163,45 +141,58 @@ public class FmkContextInterceptor implements HandlerInterceptor {
         try {
             String userToken = request.getHeader(HEADER_USER_TOKEN);
             if (StringUtils.isBlank(userToken)) {
-                log.info("FmkContextInterceptor|setUserInfo|未提供用户Token");
+                if (log.isDebugEnabled()) {
+                    log.debug("FmkContextInterceptor|setUserInfo|未提供用户Token");
+                }
                 // 检查是否需要设置系统用户
                 setSystemUserIfNeeded(request, contextInfo);
                 return;
             }
 
             // 设置 token 到上下文
-            // 通过 FmkTokenService 获取用户信息
             FmkToken fmkToken = FmkToken.ofNullable(userToken);
             contextInfo.setToken(fmkToken);
 
-            Optional<FmkUserInfo> fmkUserInfoOp = fmkTokenService.getUserByToken(fmkToken);
+            // 通过 FmkTokenService 获取用户信息
+            fmkTokenService.getUserByToken(fmkToken).ifPresentOrElse(
+                    fmkUserInfo -> {
+                        // 设置用户信息和ID
+                        contextInfo.setUserInfo(fmkUserInfo);
+                        contextInfo.setUserId(fmkUserInfo.getUserId());
 
-            if (fmkUserInfoOp.isPresent()) {
-                FmkUserInfo fmkUserInfo = fmkUserInfoOp.get();
-                contextInfo.setUserInfo(fmkUserInfo);
+                        // 添加用户ID到MDC，便于日志追踪
+                        MDC.put(MDC_USER_ID, String.valueOf(fmkUserInfo.getUserId().getValue()));
 
-                // 设置用户ID
-                contextInfo.setUserId(fmkUserInfo.getUserId());
+                        // 获取并设置设备信息到Token服务中（用于活跃状态更新）
+                        updateTokenDeviceInfo(request, fmkToken);
 
-                // 添加用户ID到MDC，便于日志追踪
-                MDC.put(MDC_USER_ID, String.valueOf(fmkUserInfo.getUserId()));
-
-                // 获取并设置设备信息到Token服务中（用于活跃状态更新）
-                updateTokenDeviceInfo(request, fmkToken);
-
-                log.info("FmkContextInterceptor|setUserInfo|用户信息设置成功|userId={}", fmkUserInfo.getUserId());
-            } else {
-                log.warn("FmkContextInterceptor|setUserInfo|Token验证失败|token={}",
-                        userToken.substring(0, Math.min(userToken.length(), 10)) + "...");
-                // Token验证失败，检查是否需要设置系统用户
-                setSystemUserIfNeeded(request, contextInfo);
-            }
-
+                        if (log.isDebugEnabled()) {
+                            log.debug("FmkContextInterceptor|setUserInfo|用户信息设置成功|userId={}",
+                                    fmkUserInfo.getUserId().getValue());
+                        }
+                    },
+                    () -> {
+                        log.warn("FmkContextInterceptor|setUserInfo|Token验证失败|token={}",
+                                maskToken(userToken));
+                        // Token验证失败，检查是否需要设置系统用户
+                        setSystemUserIfNeeded(request, contextInfo);
+                    }
+            );
         } catch (Exception e) {
             log.error("FmkContextInterceptor|setUserInfo|设置用户信息失败", e);
             // 异常情况下也检查是否需要设置系统用户
             setSystemUserIfNeeded(request, contextInfo);
         }
+    }
+
+    /**
+     * 掩码处理Token，只显示前几位
+     */
+    private String maskToken(String token) {
+        if (StringUtils.isBlank(token)) {
+            return "";
+        }
+        return token.substring(0, Math.min(token.length(), 10)) + "...";
     }
 
     /**
@@ -217,18 +208,17 @@ public class FmkContextInterceptor implements HandlerInterceptor {
             if (needSystemUser) {
                 // 设置系统用户ID
                 FmkUserId systemUserId = FmkUserId.ofNullable(SYSTEM_USER_ID);
-                FmkUserInfo systemUserInfo = new FmkUserInfo();
-                systemUserInfo.setUserId(systemUserId);
-                contextInfo.setUserInfo(systemUserInfo);
-                contextInfo.setUserId(systemUserId);
+                contextInfo.setUserInfoAndUserId(systemUserId);
 
                 // 添加系统用户ID到MDC，便于日志追踪
                 MDC.put(MDC_USER_ID, String.valueOf(SYSTEM_USER_ID));
 
-                log.info("FmkContextInterceptor|setSystemUserIfNeeded|设置系统用户成功|uri={}|systemUserId={}",
-                        requestUri, SYSTEM_USER_ID);
-            } else {
-                log.info("FmkContextInterceptor|setSystemUserIfNeeded|接口不需要系统用户|uri={}", requestUri);
+                if (log.isDebugEnabled()) {
+                    log.debug("FmkContextInterceptor|setSystemUserIfNeeded|设置系统用户成功|uri={}|systemUserId={}",
+                            requestUri, SYSTEM_USER_ID);
+                }
+            } else if (log.isDebugEnabled()) {
+                log.debug("FmkContextInterceptor|setSystemUserIfNeeded|接口不需要系统用户|uri={}", requestUri);
             }
         } catch (Exception e) {
             log.error("FmkContextInterceptor|setSystemUserIfNeeded|设置系统用户失败", e);
@@ -242,7 +232,7 @@ public class FmkContextInterceptor implements HandlerInterceptor {
         try {
             ClientInfo clientInfo = contextInfo.getClientInfo();
 
-            // 使用优化后的 ClientInfoUtil 来解析客户端信息
+            // 获取客户端IP
             String clientIp = ClientInfoUtil.getClientIp(request);
             clientInfo.setIpAddress(clientIp);
 
@@ -250,19 +240,18 @@ public class FmkContextInterceptor implements HandlerInterceptor {
             String userAgent = request.getHeader(HEADER_USER_AGENT);
             if (StringUtils.isNotBlank(userAgent)) {
                 ClientInfoUtil.parseUserAgent(userAgent, clientInfo);
+                clientInfo.setUserAgent(userAgent);
             } else {
-                log.info("FmkContextInterceptor|setClientInfo|User-Agent为空，使用默认设备信息");
-                clientInfo.setDeviceType(DeviceTypeEnum.WEB);
-                clientInfo.setOperatingSystem("Unknown");
-                clientInfo.setBrowser("Unknown");
+                setDefaultClientInfo(clientInfo);
             }
 
             // 设置自定义请求头信息
             setCustomHeaders(request, clientInfo);
 
-            log.info("FmkContextInterceptor|setClientInfo|客户端信息设置成功|ip={}|deviceType={}|os={}|browser={}",
-                    clientIp, clientInfo.getDeviceType(), clientInfo.getOperatingSystem(), clientInfo.getBrowser());
-
+            if (log.isDebugEnabled()) {
+                log.debug("FmkContextInterceptor|setClientInfo|客户端信息设置成功|ip={}|os={}|browser={}",
+                        clientIp, clientInfo.getOperatingSystem(), clientInfo.getBrowser());
+            }
         } catch (Exception e) {
             log.error("FmkContextInterceptor|setClientInfo|设置客户端信息失败", e);
             // 设置默认值防止后续处理出错
@@ -275,7 +264,7 @@ public class FmkContextInterceptor implements HandlerInterceptor {
      */
     private void setDefaultClientInfo(ClientInfo clientInfo) {
         clientInfo.setIpAddress("unknown");
-        clientInfo.setDeviceType(DeviceTypeEnum.WEB);
+        // clientInfo.setDeviceType(DeviceTypeEnum.WEB);
         clientInfo.setOperatingSystem("Unknown");
         clientInfo.setBrowser("Unknown");
         clientInfo.setUserAgent("Unknown");
@@ -286,29 +275,27 @@ public class FmkContextInterceptor implements HandlerInterceptor {
      */
     private void setCustomHeaders(HttpServletRequest request, ClientInfo clientInfo) {
         try {
-            // 设备相关
+            // 设备版本
             String deviceVersion = request.getHeader(HEADER_DEVICE_VERSION);
-            if (StringUtils.isNotBlank(deviceVersion)) {
-                clientInfo.setDeviceVersion(deviceVersion);
-            } else {
-                clientInfo.setDeviceVersion("unknown");
-            }
+            clientInfo.setDeviceVersion(StringUtils.isNotBlank(deviceVersion) ? deviceVersion : "unknown");
 
-            // 标准HTTP头
+            // 引用页
             String referer = request.getHeader(HEADER_REFERER);
             if (StringUtils.isNotBlank(referer)) {
                 clientInfo.setReferrer(referer);
             }
 
-            // 如果请求头中有设备类型，优先使用请求头的值（覆盖User-Agent解析的结果）
-            String headerDeviceType = request.getHeader(HEADER_DEVICE_TYPE);
-            if (StringUtils.isNotBlank(headerDeviceType)) {
-                DeviceTypeEnum deviceType = ClientInfoUtil.parseDeviceTypeFromString(headerDeviceType);
-                clientInfo.setDeviceType(deviceType);
-                log.info("FmkContextInterceptor|setCustomHeaders|使用请求头设备类型|headerType={}|parsedType={}",
-                        headerDeviceType, deviceType);
-            }
-
+            // 设备类型（如果请求头中有，则覆盖User-Agent解析的结果）
+            // String headerDeviceType = request.getHeader(HEADER_DEVICE_TYPE);
+            // if (StringUtils.isNotBlank(headerDeviceType)) {
+            //     DeviceTypeEnum deviceType = ClientInfoUtil.parseDeviceTypeFromString(headerDeviceType);
+            //     clientInfo.setDeviceType(deviceType);
+            //
+            //     if (log.isDebugEnabled()) {
+            //         log.debug("FmkContextInterceptor|setCustomHeaders|使用请求头设备类型|headerType={}|parsedType={}",
+            //                 headerDeviceType, deviceType);
+            //     }
+            // }
         } catch (Exception e) {
             log.warn("FmkContextInterceptor|setCustomHeaders|设置自定义请求头失败", e);
         }
@@ -319,25 +306,23 @@ public class FmkContextInterceptor implements HandlerInterceptor {
      */
     private void setRequestInfo(HttpServletRequest request, FmkContextInfo contextInfo) {
         try {
-            // 设置请求URI
-            String requestUri = request.getRequestURI();
-            contextInfo.setRequestUri(requestUri);
+            // 设置请求URI（如果TraceFilter已经设置，则不需要再设置）
+            if (contextInfo.getRequestUri() == null) {
+                String requestUri = request.getRequestURI();
+                contextInfo.setRequestUri(requestUri);
+            }
 
             // 设置语言
             String deviceLanguage = request.getHeader(HEADER_DEVICE_LANGUAGE);
             if (StringUtils.isNotBlank(deviceLanguage)) {
-                Optional<LanguageEnum> enumOptional = IEnumStr.getEnumByCode(deviceLanguage, LanguageEnum.class);
-                if (enumOptional.isPresent()) {
-                    contextInfo.setLanguage(enumOptional.get());
-                    log.info("FmkContextInterceptor|setRequestInfo|语言设置成功|language={}", deviceLanguage);
-                } else {
-                    log.warn("FmkContextInterceptor|setRequestInfo|不支持的语言代码|language={}", deviceLanguage);
-                }
+                IEnumStr.getEnumByCode(deviceLanguage, FmkLanguageEnum.class)
+                        .ifPresent(language -> {
+                            contextInfo.setLanguage(language);
+                            if (log.isDebugEnabled()) {
+                                log.debug("FmkContextInterceptor|setRequestInfo|语言设置成功|language={}", deviceLanguage);
+                            }
+                        });
             }
-
-            log.info("FmkContextInterceptor|setRequestInfo|请求信息设置成功|uri={}|language={}",
-                    requestUri, deviceLanguage);
-
         } catch (Exception e) {
             log.error("FmkContextInterceptor|setRequestInfo|设置请求信息失败", e);
         }
@@ -361,8 +346,9 @@ public class FmkContextInterceptor implements HandlerInterceptor {
                 }
             }
 
-            log.info("FmkContextInterceptor|setHeaders|请求头设置完成|count={}", headerCount);
-
+            if (log.isDebugEnabled()) {
+                log.debug("FmkContextInterceptor|setHeaders|请求头设置完成|count={}", headerCount);
+            }
         } catch (Exception e) {
             log.error("FmkContextInterceptor|setHeaders|设置请求头失败", e);
         }
@@ -378,10 +364,7 @@ public class FmkContextInterceptor implements HandlerInterceptor {
             }
 
             // 获取设备信息
-            Optional<DeviceInfo> deviceInfoOp = fmkTokenService.getDeviceInfoByToken(fmkToken);
-            if (deviceInfoOp.isPresent()) {
-                DeviceInfo deviceInfo = deviceInfoOp.get();
-
+            fmkTokenService.getDeviceInfoByToken(fmkToken).ifPresent(deviceInfo -> {
                 // 更新最后活跃时间和IP（如果需要）
                 String currentIp = ClientInfoUtil.getClientIp(request);
                 String storedIp = deviceInfo.getIpAddress();
@@ -391,26 +374,9 @@ public class FmkContextInterceptor implements HandlerInterceptor {
                             storedIp, currentIp);
                     // 这里可以添加更新设备信息的逻辑
                 }
-
-                log.info("FmkContextInterceptor|updateTokenDeviceInfo|设备信息检查完成|currentIp={}", currentIp);
-            } else {
-                log.info("FmkContextInterceptor|updateTokenDeviceInfo|未找到设备信息");
-            }
+            });
         } catch (Exception e) {
             log.error("FmkContextInterceptor|updateTokenDeviceInfo|更新设备信息失败", e);
-        }
-    }
-
-    /**
-     * 清理MDC上下文
-     */
-    private void clearMDCContext() {
-        try {
-            MDC.remove(MDC_TRACE_ID);
-            MDC.remove(MDC_USER_ID);
-            log.info("FmkContextInterceptor|clearMDCContext|MDC清理完成");
-        } catch (Exception e) {
-            log.warn("FmkContextInterceptor|clearMDCContext|清理MDC上下文失败", e);
         }
     }
 }

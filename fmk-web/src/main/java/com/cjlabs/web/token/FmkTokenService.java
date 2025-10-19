@@ -1,9 +1,8 @@
 package com.cjlabs.web.token;
 
-import com.xodo.business.common.user.enums.DeviceTypeEnum;
-import com.xodo.fmk.core.FmkUserInfo;
-import com.xodo.fmk.jdk.basetype.type.FmkToken;
-import com.xodo.fmk.jdk.basetype.type.FmkUserId;
+import com.cjlabs.core.types.longs.FmkUserId;
+import com.cjlabs.core.types.strings.FmkToken;
+import com.cjlabs.web.threadlocal.FmkUserInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

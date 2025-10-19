@@ -18,4 +18,11 @@ public class BaseException extends RuntimeException {
         this.errorKey = errorKey;
         this.httpCode = httpCode;
     }
+
+  public BaseException(String errorType, String errorKey, Integer httpCode, String message) {
+        super(message);
+        this.errorType = errorType;
+        this.errorKey = errorKey;
+        this.httpCode = httpCode;
+    }
 }

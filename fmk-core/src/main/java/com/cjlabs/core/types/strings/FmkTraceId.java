@@ -61,4 +61,5 @@ public class FmkTraceId extends BaseStringType<FmkTraceId> {
     public String getTraceWithoutPrefix() {
         return getValue().substring(TRACE_PREFIX.length());
     }
+
 }

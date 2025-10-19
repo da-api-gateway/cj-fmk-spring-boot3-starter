@@ -1,8 +1,7 @@
-package com.cjlabs.web.trace;
+package com.cjlabs.web.filter;
 
-import com.cjlabs.core.id.FmkSnowflakeIdGenerator;
+import com.cjlabs.core.types.strings.FmkTraceId;
 import com.cjlabs.domain.common.FmkConstant;
-import com.cjlabs.web.types.strings.FmkTraceId;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;

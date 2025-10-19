@@ -1,8 +1,9 @@
 package com.cjlabs.web.responseinterceptor;
 
-import com.xodo.fmk.core.FmkResult;
-import com.xodo.fmk.jdk.basetype.type.FmkTraceId;
-import com.xodo.fmk.web.FmkContextUtil;
+import com.cjlabs.core.types.strings.FmkTraceId;
+import com.cjlabs.domain.common.FmkConstant;
+import com.cjlabs.web.threadlocal.FmkContextUtil;
+import com.cjlabs.web.threadlocal.FmkResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -15,7 +16,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import java.util.Optional;
 
 /**
- * TraceId响应处理器 - 统一为FmkResult添加traceId
+ * TraceId响应处理器
+ * 统一为FmkResult类型的响应添加traceId，确保客户端可以获取到链路追踪ID
  */
 @Slf4j
 @ControllerAdvice
@@ -24,7 +26,8 @@ public class TraceIdResponseAdvice implements ResponseBodyAdvice<Object> {
     @Override
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
         // 只处理FmkResult类型的响应
-        return FmkResult.class.isAssignableFrom(returnType.getParameterType());
+        return returnType.getParameterType() != null &&
+                FmkResult.class.isAssignableFrom(returnType.getParameterType());
     }
 
     @Override
@@ -34,22 +37,29 @@ public class TraceIdResponseAdvice implements ResponseBodyAdvice<Object> {
                                   Class<? extends HttpMessageConverter<?>> selectedConverterType,
                                   ServerHttpRequest request,
                                   ServerHttpResponse response) {
-
-        if (body instanceof FmkResult<?>) {
-            FmkResult<?> fmkResult = (FmkResult<?>) body;
-            try {
-                // 🔥 从上下文获取traceId并设置到响应结果中
-                Optional<FmkTraceId> traceIdOptional = FmkContextUtil.getTraceId();
-                if (traceIdOptional.isPresent()) {
-                    FmkTraceId fmkTraceId = traceIdOptional.get();
-                    fmkResult.setTraceId(fmkTraceId);
-                    log.info("TraceIdResponseAdvice|设置traceId到响应结果: {}", fmkTraceId);
-                }
-            } catch (Exception e) {
-                log.warn("TraceIdResponseAdvice|设置traceId失败: {}", e.getMessage());
-            }
+        // 快速检查，避免不必要的处理
+        if (!(body instanceof FmkResult<?>)) {
+            return body;
         }
 
-        return body;
+        FmkResult<?> fmkResult = (FmkResult<?>) body;
+
+        try {
+            // 从上下文获取traceId并设置到响应结果中
+            FmkContextUtil.getTraceId().ifPresent(traceId -> {
+                fmkResult.setTraceId(traceId);
+
+                // 同时设置到HTTP响应头，确保客户端可以从头信息中获取
+                response.getHeaders().add(FmkConstant.HEADER_TRACE_ID, traceId.getValue());
+
+                if (log.isDebugEnabled()) {
+                    log.debug("TraceIdResponseAdvice|设置traceId|value={}", traceId.getValue());
+                }
+            });
+        } catch (Exception e) {
+            log.warn("TraceIdResponseAdvice|设置traceId失败|error={}", e.getMessage());
+        }
+
+        return fmkResult;
     }
 }

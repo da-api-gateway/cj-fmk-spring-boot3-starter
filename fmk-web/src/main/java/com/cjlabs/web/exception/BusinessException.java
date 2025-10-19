@@ -14,4 +14,17 @@ public class BusinessException extends BaseException {
         super("BUSINESS_ERROR", msgKey, 200);
     }
 
+    public BusinessException(BusinessExceptionEnum businessExceptionEnum) {
+        super("BUSINESS_ERROR", businessExceptionEnum.getType(), 200);
+    }
+
+      /**
+     * 使用业务异常枚举和详细消息创建业务异常
+     * 
+     * @param businessExceptionEnum 业务异常枚举
+     * @param message 详细错误消息
+     */
+    public BusinessException(BusinessExceptionEnum businessExceptionEnum, String message) {
+        super("BUSINESS_ERROR", businessExceptionEnum.getKey(), 200, message);
+    }
 }

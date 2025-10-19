@@ -3,41 +3,24 @@ package com.cjlabs.web.thread;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 /**
- * 线程池配置属性
+ * 线程池配置属性 - 增强版
  */
 @Getter
 @Setter
-@Component
 @ConfigurationProperties(prefix = "thread-pool")
 public class ThreadPoolProperties {
-
-    private int corePoolSize = 8;
-    private int maxPoolSize = 16;
-    private int queueCapacity = 100;
-    private int keepAliveSeconds = 60;
-    private String threadNamePrefix = "ttl-async-";
+    private boolean enabled = true;
     private boolean allowCoreThreadTimeOut = false;
-    private int awaitTerminationSeconds = 60;
+    private boolean preloadCoreThreads = false;
     private boolean throwOnRejection = true;
-
-
-    /**
-     * IO密集型任务配置
-     */
+    private boolean dynamicEnabled = false;
+    private boolean healthCheckEnabled = true;
+    private long healthCheckIntervalMs = 60000;
+    
     private IoConfig io = new IoConfig();
-
-    /**
-     * CPU密集型任务配置
-     */
     private CpuConfig cpu = new CpuConfig();
-
-    /**
-     * 定时任务配置
-     */
-    // private ScheduledConfig scheduled = new ScheduledConfig();
 
     @Getter
     @Setter
@@ -46,6 +29,8 @@ public class ThreadPoolProperties {
         private int maxPoolSize = 100;
         private int queueCapacity = 500;
         private int keepAliveSeconds = 300;
+        private String threadNamePrefix = "io-task-";
+        private QueueType queueType = QueueType.LINKED;
     }
 
     @Getter
@@ -53,11 +38,7 @@ public class ThreadPoolProperties {
     public static class CpuConfig {
         private int queueCapacity = 100;
         private int keepAliveSeconds = 60;
+        private String threadNamePrefix = "cpu-task-";
+        private QueueType queueType = QueueType.LINKED;
     }
-
-    // @Getter
-    // @Setter
-    // public static class ScheduledConfig {
-    //     private int poolSize = 10;
-    // }
 }

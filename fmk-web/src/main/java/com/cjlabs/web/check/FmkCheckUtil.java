@@ -1,101 +1,135 @@
 package com.cjlabs.web.check;
 
 import com.cjlabs.core.types.longs.FmkUserId;
+import com.cjlabs.web.exception.BusinessException;
+import com.cjlabs.web.exception.BusinessExceptionEnum;
 import com.cjlabs.web.exception.SystemException;
+import com.cjlabs.web.exception.SystemExceptionEnum;
+import com.cjlabs.web.exception.ValidationException;
+import com.cjlabs.web.exception.ValidationExceptionEnum;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
 
-import java.util.Objects;
-import java.util.Optional;
-
+/**
+ * 通用验证检查和异常抛出工具类
+ */
 public class FmkCheckUtil {
     /**
-     * 🔥 新增：获取当前用户ID
+     * 检查用户是否已登录并返回用户ID
+     *
+     * @return 当前用户ID
+     * @throws BusinessException 如果用户未登录
      */
     public static FmkUserId checkLogin() {
-        Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
-        if (userIdOptional.isEmpty()) {
-            throwDcxjCommonException(
-                    ExceptionDbInterface.AUTHENTICATION_USER.AUTHENTICATION_USER,
-                    ExceptionDbInterface.AUTHENTICATION_USER.MsgValue.TOKEN_EXPIRED);
-        }
-        return userIdOptional.get();
-    }
-
-    public static void checkInput(boolean flag) {
-        checkInput(flag, "入参", "Input value");
+        return FmkContextUtil.getUserId()
+                .orElseThrow(() -> new BusinessException(BusinessExceptionEnum.UNAUTHORIZED));
     }
 
     /**
-     * 检查数值范围
+     * 检查条件是否为真，如果为真则抛出ValidationException
      *
-     * @param flag        最小值
-     * @param fieldNameZh 字段中文名
-     * @param fieldNameEn 字段英文名
-     * @throws DcxjCommonException 数值超出范围时抛出
+     * @param condition 要检查的条件
      */
-    public static void checkInput(boolean flag, String fieldNameZh, String fieldNameEn) {
-        if (flag) {
-            throwDcxjCommonException(fieldNameZh + "不能为空", fieldNameEn + " cannot be null");
+    public static void checkInput(boolean condition) {
+        if (condition) {
+            throwValidation(ValidationExceptionEnum.INVALID_PARAMETER);
         }
     }
 
     /**
-     * 检查数值范围
+     * 检查条件是否为真，如果为真则抛出指定的ValidationException
      *
-     * @param flag  最小值
-     * @param zhMsg 字段中文名
-     * @param enMsg 字段英文名
-     * @throws DcxjCommonException 数值超出范围时抛出
+     * @param condition     要检查的条件
+     * @param exceptionEnum 要使用的异常枚举
      */
-    public static void checkDateIsTrue(boolean flag, String zhMsg, String enMsg) {
-        if (flag) {
-            throwDcxjCommonException(zhMsg, enMsg);
+    public static void checkInput(boolean condition, ValidationExceptionEnum exceptionEnum) {
+        if (condition) {
+            throwValidation(exceptionEnum);
         }
     }
 
     /**
-     * 检查数值范围
+     * 检查条件是否为真，如果为真则抛出ValidationException
      *
-     * @param value       数值
-     * @param min         最小值
-     * @param max         最大值
-     * @param fieldNameZh 字段中文名
-     * @param fieldNameEn 字段英文名
-     * @throws DcxjCommonException 数值超出范围时抛出
+     * @param condition 要检查的条件
      */
-    public static void checkNumberRange(Number value, Number min, Number max, String fieldNameZh, String fieldNameEn) {
-        if (Objects.isNull(value)) {
-            return; // 空值不做范围检查
-        }
-
-        double val = value.doubleValue();
-        double minVal = min.doubleValue();
-        double maxVal = max.doubleValue();
-
-        if (val < minVal || val > maxVal) {
-            String zhMsg = String.format("%s必须在%s到%s之间", fieldNameZh, min, max);
-            String enMsg = String.format("%s must be between %s and %s", fieldNameEn, min, max);
-            throwDcxjCommonException(zhMsg, enMsg);
+    public static void checkData(boolean condition) {
+        if (condition) {
+            throwValidation(ValidationExceptionEnum.INVALID_PARAMETER);
         }
     }
 
     /**
-     * 抛出通用业务异常
+     * 检查条件是否为真，如果为真则抛出指定的ValidationException
      *
-     * @param zhMsg 中文消息
-     * @param enMsg 英文消息
+     * @param condition     要检查的条件
+     * @param exceptionEnum 要使用的异常枚举
      */
-    public static void throwDcxjCommonException(String zhMsg, String enMsg) {
-        throw new DcxjCommonException(zhMsg, enMsg);
+    public static void checkData(boolean condition, ValidationExceptionEnum exceptionEnum) {
+        if (condition) {
+            throwValidation(exceptionEnum);
+        }
     }
 
     /**
-     * 抛出通用业务异常
+     * 抛出指定的SystemException
      *
-     * @param msgKey  数据库
-     * @param msgType 类型
+     * @param exceptionEnum 要使用的异常枚举
      */
-    public static void throwDcxjException(String msgKey, String msgType) {
-        throw new SystemException(msgKey, msgType);
+    public static void throwSystem(SystemExceptionEnum exceptionEnum) {
+        throw new SystemException(exceptionEnum);
+    }
+
+    /**
+     * 有条件地抛出指定的SystemException
+     *
+     * @param condition     要检查的条件
+     * @param exceptionEnum 要使用的异常枚举
+     */
+    public static void throwSystem(boolean condition, SystemExceptionEnum exceptionEnum) {
+        if (condition) {
+            throw new SystemException(exceptionEnum);
+        }
+    }
+
+    /**
+     * 抛出指定的BusinessException
+     *
+     * @param exceptionEnum 要使用的异常枚举
+     */
+    public static void throwBusiness(BusinessExceptionEnum exceptionEnum) {
+        throw new BusinessException(exceptionEnum);
+    }
+
+    /**
+     * 有条件地抛出指定的BusinessException
+     *
+     * @param condition     要检查的条件
+     * @param exceptionEnum 要使用的异常枚举
+     */
+    public static void throwBusiness(boolean condition, BusinessExceptionEnum exceptionEnum) {
+        if (condition) {
+            throw new BusinessException(exceptionEnum);
+        }
+    }
+
+    /**
+     * 抛出指定的ValidationException
+     *
+     * @param exceptionEnum 要使用的异常枚举
+     */
+    public static void throwValidation(ValidationExceptionEnum exceptionEnum) {
+        throw new ValidationException(exceptionEnum);
+    }
+
+    /**
+     * 有条件地抛出指定的ValidationException
+     *
+     * @param condition     要检查的条件
+     * @param exceptionEnum 要使用的异常枚举
+     */
+    public static void throwValidation(boolean condition, ValidationExceptionEnum exceptionEnum) {
+        if (condition) {
+            throw new ValidationException(exceptionEnum);
+        }
     }
 }
