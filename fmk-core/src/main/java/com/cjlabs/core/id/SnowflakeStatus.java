@@ -16,7 +16,6 @@ import java.time.format.DateTimeFormatter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class SnowflakeStatus {
 
     /**
@@ -40,19 +39,9 @@ public class SnowflakeStatus {
     private long lastTimestamp;
 
     /**
-     * 上次生成时间的格式化字符串 (UTC+0)
-     */
-    private String lastGeneratedTime;
-
-    /**
      * 当前时间戳
      */
     private long currentTimestamp;
-
-    /**
-     * 当前时间的格式化字符串 (UTC+0)
-     */
-    private String currentTime;
 
     /**
      * 时钟回拨容忍时间
@@ -70,51 +59,6 @@ public class SnowflakeStatus {
         this.lastTimestamp = lastTimestamp;
         this.currentTimestamp = currentTimestamp;
         this.clockBackwardToleranceMs = clockBackwardToleranceMs;
-        this.lastGeneratedTime = formatTimestamp(lastTimestamp);
-        this.currentTime = formatTimestamp(currentTimestamp);
-    }
-
-    /**
-     * 获取上次生成时间的格式化字符串 (UTC+0)
-     *
-     * @return 格式化时间
-     */
-    public String getLastGeneratedTime() {
-        if (lastGeneratedTime != null) {
-            return lastGeneratedTime;
-        }
-
-        if (lastTimestamp <= 0) {
-            return "未生成过ID";
-        }
-        return formatTimestamp(lastTimestamp);
-    }
-
-    /**
-     * 获取当前时间的格式化字符串 (UTC+0)
-     *
-     * @return 格式化时间
-     */
-    public String getCurrentTime() {
-        if (currentTime != null) {
-            return currentTime;
-        }
-
-        return formatTimestamp(currentTimestamp);
-    }
-
-    /**
-     * 格式化时间戳为UTC+0时间
-     *
-     * @param timestamp 时间戳
-     * @return 格式化的UTC时间字符串
-     */
-    private String formatTimestamp(long timestamp) {
-        LocalDateTime dateTime = LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(timestamp),
-                ZoneOffset.UTC
-        );
-        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")) + " UTC";
     }
 
     /**

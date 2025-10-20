@@ -9,9 +9,14 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 @Slf4j
 public class FmkContextUtil {
+
+    private FmkContextUtil() {
+        // 私有构造函数，防止实例化
+    }
 
     private static final ThreadLocal<FmkContextInfo> CONTEXT_HOLDER = new TransmittableThreadLocal<>();
 
@@ -27,112 +32,80 @@ public class FmkContextUtil {
         CONTEXT_HOLDER.remove();
     }
 
-    public static FmkLanguageEnum getCurrentLanguageCode() {
+    /**
+     * 通用方法：从上下文中获取指定属性
+     *
+     * @param extractor    属性提取函数
+     * @param defaultValue 默认值
+     * @param <T>          属性类型
+     * @return 属性值或默认值
+     */
+    private static <T> T getFromContext(Function<FmkContextInfo, T> extractor, T defaultValue) {
         try {
-            Optional<FmkContextInfo> contextInfoOptional = FmkContextUtil.getContextInfo();
-            if (contextInfoOptional.isPresent()) {
-                FmkContextInfo fmkContextInfo = contextInfoOptional.get();
-                return Optional.ofNullable(fmkContextInfo.getLanguage()).orElse(FmkLanguageEnum.EN_US);
-            }
+            return getContextInfo()
+                    .map(extractor)
+                    .orElse(defaultValue);
         } catch (Exception e) {
-            log.error("FmkContextUtil|getCurrentLanguageCode|e={}", e.getMessage(), e);
+            log.error("FmkContextUtil|getFromContext|e={}", e.getMessage(), e);
+            return defaultValue;
         }
-        return FmkLanguageEnum.EN_US;
+    }
+
+
+    /**
+     * 通用方法：从上下文中获取可选属性
+     *
+     * @param extractor 属性提取函数
+     * @param <T>       属性类型
+     * @return 包含属性的Optional
+     */
+    private static <T> Optional<T> getOptionalFromContext(Function<FmkContextInfo, T> extractor) {
+        try {
+            return getContextInfo()
+                    .map(extractor);
+        } catch (Exception e) {
+            log.error("FmkContextUtil|getOptionalFromContext|e={}", e.getMessage(), e);
+            return Optional.empty();
+        }
+    }
+
+    public static FmkLanguageEnum getCurrentLanguageCode() {
+        return getFromContext(
+                ctx -> Optional
+                        .ofNullable(ctx.getLanguage())
+                        .orElse(FmkLanguageEnum.EN_US),
+                FmkLanguageEnum.EN_US
+        );
     }
 
     public static Optional<FmkTraceId> getTraceId() {
-        try {
-            Optional<FmkContextInfo> contextInfoOptional = FmkContextUtil.getContextInfo();
-            if (contextInfoOptional.isPresent()) {
-                FmkContextInfo fmkContextInfo = contextInfoOptional.get();
-                return Optional.ofNullable(fmkContextInfo.getTraceId());
-            }
-        } catch (Exception e) {
-            log.info("FmkContextUtil|getTraceId|e={}", e.getMessage(), e);
-        }
-        return Optional.empty();
+        return getOptionalFromContext(
+                FmkContextInfo::getTraceId
+        );
     }
 
-    /**
-     * 🔥 新增：获取当前用户ID
-     */
     public static Optional<FmkToken> getToken() {
-        try {
-            Optional<FmkContextInfo> contextInfoOptional = getContextInfo();
-            if (contextInfoOptional.isPresent()) {
-                FmkContextInfo contextInfo = contextInfoOptional.get();
-                return Optional.ofNullable(contextInfo.getToken());
-            }
-        } catch (Exception e) {
-            log.warn("FmkContextUtil|getToken|获取用户token失败: {}", e.getMessage(), e);
-        }
-        return Optional.empty();
+        return getOptionalFromContext(
+                FmkContextInfo::getToken
+        );
     }
 
-    /**
-     * 🔥 新增：获取当前用户ID
-     */
     public static Optional<FmkUserId> getUserId() {
-        try {
-            Optional<FmkContextInfo> contextInfoOptional = getContextInfo();
-            if (contextInfoOptional.isPresent()) {
-                FmkContextInfo contextInfo = contextInfoOptional.get();
-                return Optional.ofNullable(contextInfo.getUserId());
-            }
-        } catch (Exception e) {
-            log.warn("FmkContextUtil|getUserId|获取用户ID失败: {}", e.getMessage(), e);
-        }
-        return Optional.empty();
+        return getOptionalFromContext(
+                FmkContextInfo::getUserId
+        );
     }
 
-    /**
-     * 🔥 新增：获取当前用户ID
-     */
     public static Optional<FmkUserInfo> getUserInfo() {
-        try {
-            Optional<FmkContextInfo> contextInfoOptional = getContextInfo();
-            if (contextInfoOptional.isPresent()) {
-                FmkContextInfo contextInfo = contextInfoOptional.get();
-                return Optional.ofNullable(contextInfo.getUserInfo());
-            }
-        } catch (Exception e) {
-            log.warn("FmkContextUtil|getUserId|获取用户ID失败: {}", e.getMessage(), e);
-        }
-        return Optional.empty();
+        return getOptionalFromContext(
+                FmkContextInfo::getUserInfo
+        );
     }
 
     public static Optional<ClientInfo> getClientInfo() {
-        try {
-            Optional<FmkContextInfo> contextInfoOptional = FmkContextUtil.getContextInfo();
-            if (contextInfoOptional.isPresent()) {
-                FmkContextInfo fmkContextInfo = contextInfoOptional.get();
-                return Optional.ofNullable(fmkContextInfo.getClientInfo());
-            }
-        } catch (Exception e) {
-            log.info("FmkContextUtil|getCurrentLanguageCode|e={}", e.getMessage(), e);
-        }
-        return Optional.empty();
+        return getOptionalFromContext(
+                FmkContextInfo::getClientInfo
+        );
     }
 
-    public static DeviceTypeEnum getDeviceType() {
-        DeviceTypeEnum result = DeviceTypeEnum.WEB;
-        try {
-            Optional<FmkContextInfo> contextInfoOptional = FmkContextUtil.getContextInfo();
-            if (contextInfoOptional.isPresent()) {
-                FmkContextInfo fmkContextInfo = contextInfoOptional.get();
-                ClientInfo clientInfo = fmkContextInfo.getClientInfo();
-                if (Objects.isNull(clientInfo)) {
-                    return result;
-                }
-                DeviceTypeEnum deviceTypeEnum = clientInfo.getDeviceType();
-                if (Objects.isNull(deviceTypeEnum)) {
-                    return result;
-                }
-                return deviceTypeEnum;
-            }
-        } catch (Exception e) {
-            log.info("FmkContextUtil|getCurrentLanguageCode|e={}", e.getMessage(), e);
-        }
-        return result;
-    }
 }
