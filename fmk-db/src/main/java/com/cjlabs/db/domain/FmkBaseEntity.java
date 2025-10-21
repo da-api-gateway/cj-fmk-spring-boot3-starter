@@ -43,7 +43,7 @@ public abstract class FmkBaseEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_date")
-    private LocalDateTime createDate;
+    private Long createDate;
 
     /**
      * 更新用户
@@ -55,5 +55,5 @@ public abstract class FmkBaseEntity implements Serializable {
      * 更新时间
      */
     @TableField(value = "update_date")
-    private LocalDateTime updateDate;
+    private Long updateDate;
 }

@@ -1,5 +1,7 @@
-package com.cjlabs.db.mp;
+package com.cjlabs.db.tx;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -9,8 +11,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+@Getter
+@Setter
 @Component
-public class TransactionTemplateUtil {
+public class FmkTxTemplateUtil {
 
     @Autowired
     @Qualifier(value = "tx")
@@ -18,8 +22,8 @@ public class TransactionTemplateUtil {
     @Qualifier(value = "txOnlyRead")
     private TransactionTemplate txOnlyRead;
 
-    public TransactionTemplateUtil(TransactionTemplate tx,
-                                   TransactionTemplate txOnlyRead) {
+    public FmkTxTemplateUtil(TransactionTemplate tx,
+                             TransactionTemplate txOnlyRead) {
         this.tx = tx;
         this.txOnlyRead = txOnlyRead;
     }

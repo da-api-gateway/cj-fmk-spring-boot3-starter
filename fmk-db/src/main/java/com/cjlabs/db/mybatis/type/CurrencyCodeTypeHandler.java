@@ -2,8 +2,8 @@
 package com.cjlabs.db.mybatis.type;
 
 import com.cjlabs.core.types.strings.FmkCurrencyCode;
-
 import com.cjlabs.db.mybatis.handler.StringTypeHandler;
+
 import org.apache.ibatis.type.MappedTypes;
 
 /**

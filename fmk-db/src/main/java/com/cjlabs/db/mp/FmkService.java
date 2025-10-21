@@ -1,15 +1,16 @@
-package com.cjlabs.db.mp.mp;
+package com.cjlabs.db.mp;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.cjlabs.core.types.longs.FmkUserId;
 import com.cjlabs.db.domain.FmkBaseEntity;
 import com.cjlabs.db.domain.FmkOrderItem;
-import com.cjlabs.db.mp.TransactionTemplateUtil;
+import com.cjlabs.db.tx.FmkTxTemplateUtil;
 import com.cjlabs.domain.enums.NormalEnum;
 import com.cjlabs.web.json.FmkJacksonUtil;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
@@ -25,6 +26,7 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -48,33 +50,25 @@ import java.util.stream.Collectors;
 @Slf4j
 @Getter
 @Setter
-public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntity> implements IFmkService<T> {
+@Service
+public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntity> {
     public static final int DEFAULT_QUERY_LIMIT = 1000;
     public static final int DEFAULT_BATCH_SIZE = 1000;
+    private static final DateTimeFormatter DEFAULT_DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Autowired
     protected SqlSessionFactory sqlSessionFactory;
 
     @Autowired
-    protected TransactionTemplateUtil transactionTemplateUtil;
+    protected FmkTxTemplateUtil fmkTxTemplateUtil;
 
-    // 添加直接引用TransactionTemplate
+    @Autowired
     protected TransactionTemplate transactionTemplate;
-
-    // 添加日期时间格式化器
-    protected static final DateTimeFormatter DEFAULT_DATETIME_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final M baseMapper;
 
-    public FmkService(M mapper) {
+    protected FmkService(M mapper) {
         this.baseMapper = mapper;
-    }
-
-    @Autowired
-    public void setTransactionTemplate(TransactionTemplateUtil transactionTemplateUtil) {
-        // 从TransactionTemplateUtil中获取默认事务模板
-        this.transactionTemplate = transactionTemplateUtil.getTx();
     }
 
     /**
@@ -94,31 +88,24 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     // ============ 查询条件包装器工厂方法 ============
 
     /**
-     * 构建查询条件包装器
+     * 构建Lambda查询条件包装器
+     */
+    public LambdaQueryWrapper<T> buildLambdaQuery() {
+        return Wrappers.lambdaQuery();
+    }
+
+    /**
+     * 构建Lambda更新条件包装器
+     */
+    public LambdaUpdateWrapper<T> buildLambdaUpdate() {
+        return Wrappers.lambdaUpdate();
+    }
+
+    /**
+     * 构建标准查询条件包装器（用于复杂聚合查询）
      */
     public QueryWrapper<T> buildQueryWrapper() {
         return new QueryWrapper<>();
-    }
-
-    /**
-     * 构建更新条件包装器
-     */
-    public UpdateWrapper<T> buildUpdateWrapper() {
-        return new UpdateWrapper<>();
-    }
-
-    /**
-     * 构建 Lambda 查询条件包装器
-     */
-    public LambdaQueryWrapper<T> buildLambdaQueryWrapper() {
-        return new LambdaQueryWrapper<>();
-    }
-
-    /**
-     * 构建 Lambda 更新条件包装器
-     */
-    public LambdaUpdateWrapper<T> buildLambdaUpdateWrapper() {
-        return new LambdaUpdateWrapper<>();
     }
 
     // ==================== 单个操作方法 ====================
@@ -152,7 +139,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (Objects.isNull(byIdDb)) {
             return 0;
         }
-        byIdDb.setDelFlag(NormalEnum.DISABLED);
+        byIdDb.setDelFlag(NormalEnum.NORMAL);
         setUpdateDefault(byIdDb);
         log.info("FmkService|removeByIdService|id={}", id);
         return this.baseMapper.updateById(byIdDb);
@@ -163,12 +150,12 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             return null;
         }
         log.debug("FmkService|getByIdService|id={}", id);
-        // 使用条件查询，过滤已删除数据
-        QueryWrapper<T> wrapper = buildQueryWrapper();
-        wrapper.eq("id", id)
-                .eq("del_flag", NormalEnum.ENABLED.getCode());
+        // 使用Lambda条件查询，过滤已删除数据
+        LambdaQueryWrapper<T> wrapper = buildLambdaQuery();
+        wrapper.eq(T::getId, id)
+                .eq(T::getDelFlag, NormalEnum.NORMAL.getCode());
 
-        return this.baseMapper.selectOne(wrapper, false);
+        return this.baseMapper.selectOne(wrapper);
     }
 
     public Optional<T> getByIdOpService(Serializable id) {
@@ -281,7 +268,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         }
 
         listByIdsService.forEach(entity -> {
-            entity.setDelFlag(NormalEnum.DISABLED);
+            entity.setDelFlag(NormalEnum.NORMAL);
             setUpdateDefault(entity);
         });
 
@@ -314,9 +301,9 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             return new ArrayList<>();
         }
 
-        QueryWrapper<T> wrapper = buildQueryWrapper();
-        wrapper.in("id", idList)
-                .eq("del_flag", NormalEnum.ENABLED.getCode());
+        LambdaQueryWrapper<T> wrapper = buildLambdaQuery();
+        wrapper.in(T::getId, idList)
+                .eq(T::getDelFlag, NormalEnum.NORMAL);
 
         List<T> result = this.baseMapper.selectList(wrapper);
         log.debug("Batch query completed: requested={}, found={}", idList.size(), result.size());
@@ -332,7 +319,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             return new ArrayList<>();
         }
 
-        List<T> result = this.baseMapper.selectBatchIds(idList);
+        List<T> result = this.baseMapper.selectByIds(idList);
         log.debug("Batch query completed: requested={}, found={}", idList.size(), result.size());
         return result;
     }
@@ -348,9 +335,9 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      * 查询所有数据（限制数量，自动过滤已删除数据）
      */
     public List<T> listAllLimitService(int limit) {
-        QueryWrapper<T> wrapper = buildQueryWrapper();
-        wrapper.eq("del_flag", NormalEnum.ENABLED.getCode())
-                .orderByDesc("create_date")
+        LambdaQueryWrapper<T> wrapper = buildLambdaQuery();
+        wrapper.eq(T::getDelFlag, NormalEnum.NORMAL)
+                .orderByDesc(T::getCreateDate)
                 .last("LIMIT " + Math.min(limit, DEFAULT_QUERY_LIMIT));
 
         List<T> result = this.baseMapper.selectList(wrapper);
@@ -403,41 +390,34 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
     // ==================== 实体默认值设置方法 ====================
 
-    /**
-     * 获取当前时间
-     */
-    protected LocalDateTime now() {
-        return LocalDateTime.now();
-    }
-
     private void setInsertDefault(T entity) {
         if (Objects.isNull(entity)) {
             return;
         }
-        LocalDateTime now = now();
+        long now = System.currentTimeMillis();
         setInsertDefault(entity, now);
     }
 
-    private void setInsertDefault(T entity, LocalDateTime now) {
+    private void setInsertDefault(T entity, Long now) {
         if (Objects.isNull(entity)) {
             return;
         }
         Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
         if (userIdOptional.isPresent()) {
             FmkUserId userId = userIdOptional.get();
-            entity.setCreateUser(userId.get().toString());
-            entity.setUpdateUser(userId.get().toString());
+            entity.setCreateUser(userId.getValue().toString());
+            entity.setUpdateUser(userId.getValue().toString());
         }
         entity.setCreateDate(now);
         entity.setUpdateDate(now);
-        entity.setDelFlag(NormalEnum.ENABLED);
+        entity.setDelFlag(NormalEnum.NORMAL);
     }
 
     private void setInsertDefault(List<T> entityList) {
         if (CollectionUtils.isEmpty(entityList)) {
             return;
         }
-        LocalDateTime now = now();
+        long now = System.currentTimeMillis();
         for (T t : entityList) {
             setInsertDefault(t, now);
         }
@@ -447,18 +427,18 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (Objects.isNull(entity)) {
             return;
         }
-        LocalDateTime now = now();
+        long now = System.currentTimeMillis();
         setUpdateDefault(entity, now);
     }
 
-    private void setUpdateDefault(T entity, LocalDateTime now) {
+    private void setUpdateDefault(T entity, Long now) {
         if (Objects.isNull(entity)) {
             return;
         }
         Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
         if (userIdOptional.isPresent()) {
             FmkUserId userId = userIdOptional.get();
-            entity.setUpdateUser(userId.get().toString());
+            entity.setUpdateUser(userId.getValue().toString());
         }
         entity.setUpdateDate(now);
     }
@@ -467,7 +447,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (CollectionUtils.isEmpty(entityList)) {
             return;
         }
-        LocalDateTime now = now();
+        long now = System.currentTimeMillis();
         for (T t : entityList) {
             setUpdateDefault(t, now);
         }
@@ -480,7 +460,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public T getByCondition(Wrapper<T> queryWrapper) {
         Wrapper<T> finalWrapper = addDeletedFilter(queryWrapper);
-        return this.baseMapper.selectOne(finalWrapper, false);
+        return this.baseMapper.selectOne(finalWrapper);
     }
 
     /**
@@ -536,7 +516,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      * 条件查询 - 单个结果（包含已删除数据）
      */
     public T getByConditionIncludeDeleted(Wrapper<T> queryWrapper) {
-        return this.baseMapper.selectOne(queryWrapper, false);
+        return this.baseMapper.selectOne(queryWrapper);
     }
 
     /**
@@ -565,15 +545,14 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     @Transactional(rollbackFor = Exception.class)
     public int updateBatchDelFlagByCondition(Wrapper<T> queryWrapper) {
-        // 使用 UpdateWrapper 进行逻辑删除
-        UpdateWrapper<T> updateWrapper = buildUpdateWrapper();
-        updateWrapper.set("del_flag", NormalEnum.DISABLED.getCode());
-        setUpdateDefaultForWrapper(updateWrapper);
+        // 使用 LambdaUpdateWrapper 进行逻辑删除
+        LambdaUpdateWrapper<T> updateWrapper = buildLambdaUpdate();
+        updateWrapper.set(T::getDelFlag, NormalEnum.ABNORMAL);
+        setUpdateDefaultForLambdaWrapper(updateWrapper);
 
         // 将查询条件复制到更新条件中
-        if (queryWrapper instanceof QueryWrapper) {
-            QueryWrapper<T> qw = (QueryWrapper<T>) queryWrapper;
-            String sqlSegment = qw.getSqlSegment();
+        if (queryWrapper != null) {
+            String sqlSegment = queryWrapper.getSqlSegment();
             if (sqlSegment != null && !sqlSegment.trim().isEmpty()) {
                 updateWrapper.apply(sqlSegment);
             }
@@ -583,35 +562,37 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     }
 
     /**
-     * 为 UpdateWrapper 设置更新默认值
+     * 为 LambdaUpdateWrapper 设置更新默认值
      */
-    private void setUpdateDefaultForWrapper(UpdateWrapper<T> updateWrapper) {
-        LocalDateTime now = now();
-        updateWrapper.set("update_date", now);
+    private void setUpdateDefaultForLambdaWrapper(LambdaUpdateWrapper<T> updateWrapper) {
+        long now = System.currentTimeMillis();
+        updateWrapper.set(T::getUpdateDate, now);
 
         Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
-        userIdOptional.ifPresent(userId -> updateWrapper.set("update_user", userId.toString()));
+        userIdOptional.ifPresent(userId -> updateWrapper.set(T::getUpdateUser, userId.toString()));
     }
 
     /**
      * 根据字段值查询单个实体
      */
     public T getByField(String fieldName, Object value) {
-        QueryWrapper<T> wrapper = buildQueryWrapper();
-        wrapper.eq(fieldName, value)
-                .eq("del_flag", NormalEnum.ENABLED.getCode())
+        LambdaQueryWrapper<T> wrapper = buildLambdaQuery();
+        // 由于字段名是动态的，这里仍需使用apply方法
+        wrapper.apply(fieldName + " = {0}", value)
+                .eq(T::getDelFlag, NormalEnum.NORMAL)
                 .last("LIMIT 1");
-        return getByCondition(wrapper);
+        return this.baseMapper.selectOne(wrapper);
     }
 
     /**
      * 根据多个字段值查询
      */
     public List<T> listByFields(Map<String, Object> fieldMap) {
-        QueryWrapper<T> wrapper = buildQueryWrapper();
-        fieldMap.forEach(wrapper::eq);
-        wrapper.eq("del_flag", NormalEnum.ENABLED.getCode());
-        return listByCondition(wrapper);
+        LambdaQueryWrapper<T> wrapper = buildLambdaQuery();
+        // 由于字段名是动态的，这里仍需使用apply方法
+        fieldMap.forEach((key, value) -> wrapper.apply(key + " = {0}", value));
+        wrapper.eq(T::getDelFlag, NormalEnum.NORMAL.getCode());
+        return this.baseMapper.selectList(wrapper);
     }
 
     // ==================== 统计相关方法 ====================
@@ -629,9 +610,9 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
         QueryWrapper<T> wrapper = buildQueryWrapper();
         wrapper.in(inField, inValueList)
-                .eq("del_flag", NormalEnum.ENABLED.getCode())
+                .eq("del_flag", NormalEnum.NORMAL.getCode())
                 .groupBy(groupByField)
-                .select(groupByField + ", COUNT( " + inField + ") as count_value");
+                .select(groupByField + ", COUNT(" + inField + ") as count_value");
 
         List<Map<String, Object>> results = this.baseMapper.selectMaps(wrapper);
 
@@ -648,9 +629,43 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public Map<String, BigDecimal> batchSumByField(String sumField,
                                                    String groupByField,
+                                                   String inField,
+                                                   Collection<Long> inValueList) {
+        if (CollectionUtils.isEmpty(inValueList)) {
+            log.warn("FmkService|batchSumByField|filterValues is empty");
+            return new HashMap<>();
+        }
+
+        QueryWrapper<T> wrapper = buildQueryWrapper();
+        wrapper.in(inField, inValueList)
+                .eq("del_flag", NormalEnum.NORMAL.getCode())
+                .groupBy(groupByField)
+                .select(groupByField + ", COALESCE(SUM(" + sumField + "), 0) as sum_value");
+
+        try {
+            List<Map<String, Object>> results = this.baseMapper.selectMaps(wrapper);
+
+            return results.stream()
+                    .collect(Collectors.toMap(
+                            map -> String.valueOf(map.get(groupByField)),
+                            map -> new BigDecimal(map.get("sum_value").toString()),
+                            (existing, replacement) -> existing
+                    ));
+        } catch (Exception e) {
+            log.error("FmkService|batchSumByField|分组求和失败|sumField={}|groupByField={}|error={}",
+                    sumField, groupByField, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * 批量求和 - 根据分组字段进行求和统计（使用已有的查询条件）
+     */
+    public Map<String, BigDecimal> batchSumByField(String sumField,
+                                                   String groupByField,
                                                    QueryWrapper<T> wrapper) {
         try {
-            wrapper.eq("del_flag", NormalEnum.ENABLED.getCode())
+            wrapper.eq("del_flag", NormalEnum.NORMAL.getCode())
                     .groupBy(groupByField)
                     .select(groupByField + ", COALESCE(SUM(" + sumField + "), 0) as sum_value");
 
@@ -662,24 +677,11 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
                             map -> new BigDecimal(map.get("sum_value").toString()),
                             (existing, replacement) -> existing
                     ));
-
         } catch (Exception e) {
             log.error("FmkService|batchSumByField|分组求和失败|sumField={}|groupByField={}|error={}",
                     sumField, groupByField, e.getMessage(), e);
             throw e;
         }
-    }
-
-    /**
-     * 批量求和 - 根据分组字段进行求和统计
-     */
-    public Map<String, BigDecimal> batchSumByField(String sumField,
-                                                   String groupByField,
-                                                   String inField,
-                                                   Collection<Long> inValueList) {
-        QueryWrapper<T> wrapper = buildQueryWrapper();
-        wrapper.in(inField, inValueList);
-        return batchSumByField(sumField, groupByField, wrapper);
     }
 
     // ==================== 私有辅助方法 ====================
@@ -690,37 +692,31 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     @SuppressWarnings("unchecked")
     private Wrapper<T> addDeletedFilter(Wrapper<T> originalWrapper) {
         if (originalWrapper == null) {
-            QueryWrapper<T> wrapper = buildQueryWrapper();
-            wrapper.eq("del_flag", NormalEnum.ENABLED.getCode());
+            LambdaQueryWrapper<T> wrapper = buildLambdaQuery();
+            wrapper.eq(T::getDelFlag, NormalEnum.NORMAL);
             return wrapper;
         }
 
-        // 如果是 LambdaQueryWrapper，转换为 QueryWrapper
+        // 如果是 LambdaQueryWrapper
         if (originalWrapper instanceof LambdaQueryWrapper) {
             LambdaQueryWrapper<T> lambdaWrapper = (LambdaQueryWrapper<T>) originalWrapper;
             // 检查是否已经包含 delFlag 条件
             if (!containsDelFlagCondition(lambdaWrapper)) {
-                // 使用字段名添加条件，但保持在 LambdaQueryWrapper 中
-                lambdaWrapper.apply("del_flag = {0}", NormalEnum.ENABLED.getCode());
+                lambdaWrapper.eq(T::getDelFlag, NormalEnum.NORMAL);
             }
             return lambdaWrapper;
         }
 
-        // 如果是 QueryWrapper
-        if (originalWrapper instanceof QueryWrapper) {
-            QueryWrapper<T> queryWrapper = (QueryWrapper<T>) originalWrapper;
-            // 检查是否已经包含 delFlag 条件
-            if (!containsDelFlagCondition(queryWrapper)) {
-                queryWrapper.eq("del_flag", NormalEnum.ENABLED.getCode());
-            }
-            return queryWrapper;
+        // 其他类型的 Wrapper，创建新的 LambdaQueryWrapper
+        LambdaQueryWrapper<T> newWrapper = buildLambdaQuery();
+        newWrapper.eq(T::getDelFlag, NormalEnum.NORMAL);
+
+        // 如果原始wrapper有SQL片段，尝试应用它
+        if (originalWrapper.getSqlSegment() != null && !originalWrapper.getSqlSegment().isEmpty()) {
+            newWrapper.apply(originalWrapper.getSqlSegment());
         }
 
-        // 其他类型的 Wrapper，创建新的 QueryWrapper
-        QueryWrapper<T> newWrapper = buildQueryWrapper();
-        newWrapper.eq("del_flag", NormalEnum.ENABLED.getCode());
-
-        log.warn("Unsupported wrapper type: {}, using default delete filter only",
+        log.warn("Converting wrapper type: {} to LambdaQueryWrapper with delete filter",
                 originalWrapper.getClass().getSimpleName());
 
         return newWrapper;
@@ -738,7 +734,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     }
 
     /**
-     * 添加创建用户条件 - 支持 QueryWrapper 和 LambdaQueryWrapper
+     * 添加创建用户条件 - 支持 LambdaQueryWrapper
      */
     public void addEqCreateUser(Wrapper<T> wrapper) {
         Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
@@ -746,20 +742,17 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             return;
         }
         FmkUserId fmkUserId = userIdOptional.get();
-        String userId = fmkUserId.get().toString();
+        String userId = fmkUserId.getValue().toString();
 
         // 根据 wrapper 类型添加条件
-        if (wrapper instanceof QueryWrapper) {
-            QueryWrapper<T> queryWrapper = (QueryWrapper<T>) wrapper;
-            queryWrapper.eq("create_user", userId);
-        } else if (wrapper instanceof LambdaQueryWrapper) {
+        if (wrapper instanceof LambdaQueryWrapper) {
             LambdaQueryWrapper<T> lambdaWrapper = (LambdaQueryWrapper<T>) wrapper;
-            lambdaWrapper.apply("create_user = {0}", userId);
+            lambdaWrapper.eq(T::getCreateUser, userId);
         }
     }
 
     /**
-     * 添加排序条件 - 支持 QueryWrapper 和 LambdaQueryWrapper
+     * 添加排序条件 - 支持 LambdaQueryWrapper
      */
     public void addOrderBy(Wrapper<T> wrapper,
                            List<FmkOrderItem> orderItemList,
@@ -782,7 +775,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
                 "status", "status",
                 "userId", "user_id",
                 "username", "username"
-                // 这里可以继续加
+                // 这里可以继续添加
         );
 
         boolean hasValidOrder = false;
@@ -807,15 +800,8 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
             hasValidOrder = true;
 
-            // 根据 wrapper 类型添加排序条件
-            if (wrapper instanceof QueryWrapper) {
-                QueryWrapper<T> queryWrapper = (QueryWrapper<T>) wrapper;
-                if (orderItem.isAsc()) {
-                    queryWrapper.orderByAsc(finalColumn);
-                } else {
-                    queryWrapper.orderByDesc(finalColumn);
-                }
-            } else if (wrapper instanceof LambdaQueryWrapper) {
+            // 使用 LambdaQueryWrapper 添加排序条件
+            if (wrapper instanceof LambdaQueryWrapper) {
                 // 对于 LambdaQueryWrapper，收集排序条件
                 String orderDirection = orderItem.isAsc() ? "ASC" : "DESC";
                 orderClauses.add(finalColumn + " " + orderDirection);
@@ -839,9 +825,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      * 添加默认排序
      */
     private void addDefaultOrder(Wrapper<T> wrapper) {
-        if (wrapper instanceof QueryWrapper) {
-            ((QueryWrapper<T>) wrapper).orderByDesc("create_date");
-        } else if (wrapper instanceof LambdaQueryWrapper) {
+        if (wrapper instanceof LambdaQueryWrapper) {
             ((LambdaQueryWrapper<T>) wrapper).last("ORDER BY create_date DESC");
         }
     }
@@ -849,9 +833,9 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     // ==================== 日期范围查询条件方法 ====================
 
     /**
-     * 添加日期范围查询条件 - QueryWrapper 版本
+     * 添加日期范围查询条件 - LambdaQueryWrapper 版本
      */
-    public void addDateRangeCondition(QueryWrapper<T> queryWrapper,
+    public void addDateRangeCondition(LambdaQueryWrapper<T> queryWrapper,
                                       String dateColumnName,
                                       String startDateStr,
                                       String endDateStr) {
@@ -859,31 +843,24 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     }
 
     /**
-     * 添加日期范围查询条件 - QueryWrapper 版本（带验证控制）
+     * 添加日期范围查询条件 - LambdaQueryWrapper 版本（带验证控制）
      */
-    public void addDateRangeCondition(QueryWrapper<T> queryWrapper,
+    public void addDateRangeCondition(LambdaQueryWrapper<T> queryWrapper,
                                       String dateColumnName,
                                       String startDateStr,
                                       String endDateStr,
                                       boolean validateRange) {
-        if (!isValidDateRangeParams(queryWrapper, dateColumnName)) {
+        if (queryWrapper == null || StringUtils.isBlank(dateColumnName)) {
+            log.warn("FmkService|addDateRangeCondition|invalid params|queryWrapper={}|dateColumnName={}",
+                    queryWrapper != null, dateColumnName);
             return;
         }
 
         DateRange dateRange = parseDateRange(startDateStr, endDateStr, validateRange);
-        applyDateRangeToQueryWrapper(queryWrapper, dateColumnName, dateRange);
+        applyDateRangeToLambdaQueryWrapper(queryWrapper, dateColumnName, dateRange);
     }
 
     // ==================== 常用日期字段的便捷方法 ====================
-
-    /**
-     * 添加创建时间范围查询条件 - QueryWrapper 版本
-     */
-    public void addCreateDateRangeCondition(QueryWrapper<T> queryWrapper,
-                                            String startDateStr,
-                                            String endDateStr) {
-        addDateRangeCondition(queryWrapper, "create_date", startDateStr, endDateStr);
-    }
 
     /**
      * 添加创建时间范围查询条件 - LambdaQueryWrapper 版本
@@ -899,26 +876,35 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         DateRange dateRange = parseDateRange(startDateStr, endDateStr, true);
 
         if (dateRange.getStartTime() != null) {
-            queryWrapper.apply("create_date >= {0}", dateRange.getStartTime());
+            queryWrapper.ge(T::getCreateDate, dateRange.getStartTime());
         }
         if (dateRange.getEndTime() != null) {
-            queryWrapper.apply("create_date <= {0}", dateRange.getEndTime());
+            queryWrapper.le(T::getCreateDate, dateRange.getEndTime());
+        }
+    }
+
+    /**
+     * 添加更新时间范围查询条件 - LambdaQueryWrapper 版本
+     */
+    public void addUpdateDateRangeCondition(LambdaQueryWrapper<T> queryWrapper,
+                                            String startDateStr,
+                                            String endDateStr) {
+        if (queryWrapper == null) {
+            log.warn("FmkService|addUpdateDateRangeCondition|lambda queryWrapper is null");
+            return;
+        }
+
+        DateRange dateRange = parseDateRange(startDateStr, endDateStr, true);
+
+        if (dateRange.getStartTime() != null) {
+            queryWrapper.ge(T::getUpdateDate, dateRange.getStartTime());
+        }
+        if (dateRange.getEndTime() != null) {
+            queryWrapper.le(T::getUpdateDate, dateRange.getEndTime());
         }
     }
 
     // ==================== 日期范围查询私有辅助方法 ====================
-
-    /**
-     * 验证 QueryWrapper 日期范围查询参数
-     */
-    private boolean isValidDateRangeParams(QueryWrapper<T> queryWrapper, String dateColumnName) {
-        if (queryWrapper == null || StringUtils.isBlank(dateColumnName)) {
-            log.warn("FmkService|addDateRangeCondition|invalid params|queryWrapper={}|dateColumnName={}",
-                    queryWrapper != null, dateColumnName);
-            return false;
-        }
-        return true;
-    }
 
     /**
      * 解析日期范围字符串
@@ -985,16 +971,16 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     }
 
     /**
-     * 将日期范围应用到 QueryWrapper
+     * 将日期范围应用到 LambdaQueryWrapper
      */
-    private void applyDateRangeToQueryWrapper(QueryWrapper<T> queryWrapper,
-                                              String dateColumnName,
-                                              DateRange dateRange) {
+    private void applyDateRangeToLambdaQueryWrapper(LambdaQueryWrapper<T> queryWrapper,
+                                                    String dateColumnName,
+                                                    DateRange dateRange) {
         if (dateRange.getStartTime() != null) {
-            queryWrapper.ge(dateColumnName, dateRange.getStartTime());
+            queryWrapper.apply(dateColumnName + " >= {0}", dateRange.getStartTime());
         }
         if (dateRange.getEndTime() != null) {
-            queryWrapper.le(dateColumnName, dateRange.getEndTime());
+            queryWrapper.apply(dateColumnName + " <= {0}", dateRange.getEndTime());
         }
     }
 
