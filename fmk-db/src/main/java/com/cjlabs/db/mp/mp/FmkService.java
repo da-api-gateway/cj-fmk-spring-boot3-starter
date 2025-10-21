@@ -9,11 +9,11 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.cjlabs.db.domain.FmkBaseEntity;
 import com.cjlabs.db.domain.FmkOrderItem;
+import com.cjlabs.db.mp.TransactionTemplateUtil;
 import com.cjlabs.domain.enums.NormalEnum;
 import com.cjlabs.web.json.FmkJacksonUtil;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
-import com.cjlabs.web.time.FmkLocalDateTimeUtil;
-import com.cjlabs.web.types.longs.FmkUserId;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Getter;
@@ -25,7 +25,6 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -33,6 +32,7 @@ import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -56,13 +56,25 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     protected SqlSessionFactory sqlSessionFactory;
 
     @Autowired
-    @Qualifier(value = "tx")
+    protected TransactionTemplateUtil transactionTemplateUtil;
+
+    // 添加直接引用TransactionTemplate
     protected TransactionTemplate transactionTemplate;
+
+    // 添加日期时间格式化器
+    protected static final DateTimeFormatter DEFAULT_DATETIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final M baseMapper;
 
     public FmkService(M mapper) {
         this.baseMapper = mapper;
+    }
+
+    @Autowired
+    public void setTransactionTemplate(TransactionTemplateUtil transactionTemplateUtil) {
+        // 从TransactionTemplateUtil中获取默认事务模板
+        this.transactionTemplate = transactionTemplateUtil.getTx();
     }
 
     /**
@@ -79,7 +91,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         }
     }
 
-    // ============ 新增：精细化查询封装方法 ============
+    // ============ 查询条件包装器工厂方法 ============
 
     /**
      * 构建查询条件包装器
@@ -141,6 +153,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             return 0;
         }
         byIdDb.setDelFlag(NormalEnum.DISABLED);
+        setUpdateDefault(byIdDb);
         log.info("FmkService|removeByIdService|id={}", id);
         return this.baseMapper.updateById(byIdDb);
     }
@@ -149,7 +162,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (Objects.isNull(id)) {
             return null;
         }
-        log.info("FmkService|getByIdService|id={}", id);
+        log.debug("FmkService|getByIdService|id={}", id);
         // 使用条件查询，过滤已删除数据
         QueryWrapper<T> wrapper = buildQueryWrapper();
         wrapper.eq("id", id)
@@ -169,7 +182,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (Objects.isNull(id)) {
             return null;
         }
-        log.info("FmkService|getByIdServiceIncludeDeleted|id={}", id);
+        log.debug("FmkService|getByIdServiceIncludeDeleted|id={}", id);
         return this.baseMapper.selectById(id);
     }
 
@@ -187,7 +200,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public int saveBatchService(Collection<T> entityList, int batchSize) {
         if (CollectionUtils.isEmpty(entityList)) {
-            log.info("Entity list is empty, skipping batch save");
+            log.debug("Entity list is empty, skipping batch save");
             return 0;
         }
 
@@ -221,7 +234,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public int updateBatchByIdService(Collection<T> entityList, int batchSize) {
         if (CollectionUtils.isEmpty(entityList)) {
-            log.info("Entity list is empty, skipping batch update");
+            log.debug("Entity list is empty, skipping batch update");
             return 0;
         }
 
@@ -240,24 +253,25 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             }
             batchNumber++;
         }
-        log.info("Starting batch update: total={}, batchSize={}, processedCount={}", entityList.size(), batchSize, processedCount);
+        log.info("Batch update completed: total={}, batchSize={}, processedCount={}",
+                entityList.size(), batchSize, processedCount);
 
         return processedCount;
     }
 
     /**
-     * 批量删除 - 默认批次大小
+     * 批量逻辑删除 - 默认批次大小
      */
     public int updateBatchDelFlagById(Collection<? extends Serializable> idList) {
         return updateBatchDelFlagById(idList, DEFAULT_BATCH_SIZE);
     }
 
     /**
-     * 批量删除 - 手动控制事务，分批提交
+     * 批量逻辑删除 - 手动控制事务，分批提交
      */
     public int updateBatchDelFlagById(Collection<? extends Serializable> idList, int batchSize) {
         if (CollectionUtils.isEmpty(idList)) {
-            log.info("ID list is empty, skipping batch delete");
+            log.debug("ID list is empty, skipping batch delete");
             return 0;
         }
 
@@ -266,45 +280,46 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             return 0;
         }
 
-        for (T t : listByIdsService) {
-            t.setDelFlag(NormalEnum.DISABLED);
-            setUpdateDefault(t);
-        }
+        listByIdsService.forEach(entity -> {
+            entity.setDelFlag(NormalEnum.DISABLED);
+            setUpdateDefault(entity);
+        });
 
         int updated = updateBatchByIdService(listByIdsService, batchSize);
-        log.info("FmkService|removeBatchByIdService|processedCount={}", updated);
+        log.info("FmkService|updateBatchDelFlagById|processedCount={}", updated);
         return updated;
     }
 
     /**
-     * 批量删除 - 默认批次大小
+     * 批量物理删除 - 直接删除记录
      */
     public int deleteByIdList(Collection<? extends Serializable> idList) {
         if (CollectionUtils.isEmpty(idList)) {
-            log.info("ID list is empty, skipping batch delete");
+            log.debug("ID list is empty, skipping batch delete");
             return 0;
         }
-        return getBaseMapper().deleteBatchIds(idList);
+        int deleted = getBaseMapper().deleteBatchIds(idList);
+        log.info("FmkService|deleteByIdList|deletedCount={}", deleted);
+        return deleted;
     }
 
     // ==================== 查询方法 ====================
 
     /**
-     * 批量查询 - 根据ID列表查询
+     * 批量查询 - 根据ID列表查询（过滤已删除数据）
      */
     public List<T> listByIdListService(Collection<? extends Serializable> idList) {
         if (CollectionUtils.isEmpty(idList)) {
-            log.info("ID list is empty for batch query");
+            log.debug("ID list is empty for batch query");
             return new ArrayList<>();
         }
 
-        // 使用字符串字段名代替 Lambda 表达式
         QueryWrapper<T> wrapper = buildQueryWrapper();
         wrapper.in("id", idList)
                 .eq("del_flag", NormalEnum.ENABLED.getCode());
 
         List<T> result = this.baseMapper.selectList(wrapper);
-        log.info("Batch query completed: requested={}, found={}", idList.size(), result.size());
+        log.debug("Batch query completed: requested={}, found={}", idList.size(), result.size());
         return result;
     }
 
@@ -313,20 +328,18 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public List<T> listByIdsServiceIncludeDeleted(Collection<? extends Serializable> idList) {
         if (CollectionUtils.isEmpty(idList)) {
-            log.info("ID list is empty for batch query");
+            log.debug("ID list is empty for batch query");
             return new ArrayList<>();
         }
 
-        log.info("Batch query by IDs: count={}", idList.size());
         List<T> result = this.baseMapper.selectBatchIds(idList);
-        log.info("Batch query completed: requested={}, found={}", idList.size(), result.size());
+        log.debug("Batch query completed: requested={}, found={}", idList.size(), result.size());
         return result;
     }
 
-    // public long countService() {
-    //     return this.baseMapper.selectCount(null);
-    // }
-
+    /**
+     * 查询所有数据（限制数量，默认限制）
+     */
     public List<T> listAllLimitService() {
         return listAllLimitService(DEFAULT_QUERY_LIMIT);
     }
@@ -341,7 +354,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
                 .last("LIMIT " + Math.min(limit, DEFAULT_QUERY_LIMIT));
 
         List<T> result = this.baseMapper.selectList(wrapper);
-        log.info("listAllLimitService completed: limit={}, actual={}", limit, result.size());
+        log.debug("listAllLimitService completed: limit={}, actual={}", limit, result.size());
         return result;
     }
 
@@ -359,7 +372,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
                     executeOperation(batchMapper, entity, operation);
                 }
 
-                // 关键：执行批量语句并获取结果
+                // 执行批量语句并获取结果
                 batchSession.flushStatements();
                 return true;
 
@@ -388,11 +401,20 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         }
     }
 
+    // ==================== 实体默认值设置方法 ====================
+
+    /**
+     * 获取当前时间
+     */
+    protected LocalDateTime now() {
+        return LocalDateTime.now();
+    }
+
     private void setInsertDefault(T entity) {
         if (Objects.isNull(entity)) {
             return;
         }
-        LocalDateTime now = FmkLocalDateTimeUtil.now();
+        LocalDateTime now = now();
         setInsertDefault(entity, now);
     }
 
@@ -415,7 +437,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (CollectionUtils.isEmpty(entityList)) {
             return;
         }
-        LocalDateTime now = FmkLocalDateTimeUtil.now();
+        LocalDateTime now = now();
         for (T t : entityList) {
             setInsertDefault(t, now);
         }
@@ -425,7 +447,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (Objects.isNull(entity)) {
             return;
         }
-        LocalDateTime now = FmkLocalDateTimeUtil.now();
+        LocalDateTime now = now();
         setUpdateDefault(entity, now);
     }
 
@@ -445,14 +467,13 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (CollectionUtils.isEmpty(entityList)) {
             return;
         }
-        LocalDateTime now = FmkLocalDateTimeUtil.now();
+        LocalDateTime now = now();
         for (T t : entityList) {
             setUpdateDefault(t, now);
         }
     }
 
-    // ==================== 新增：更多查询封装方法 ====================
-
+    // ==================== 条件查询方法 ====================
 
     /**
      * 条件查询 - 单个结果（自动过滤已删除数据）
@@ -479,13 +500,13 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     }
 
     /**
-     * 条件查询 - 分页结果（自动过滤已删除数据）
+     * 条件查询 - 分页结果（自动过滤已删除数据，带排序）
      */
     public IPage<T> pageByCondition(IPage<T> page,
                                     Wrapper<T> queryWrapper,
                                     List<FmkOrderItem> orderItemList) {
         Wrapper<T> finalWrapper = addDeletedFilter(queryWrapper);
-        if (CollectionUtils.isEmpty(orderItemList)) {
+        if (!CollectionUtils.isEmpty(orderItemList)) {
             addOrderBy(finalWrapper, orderItemList, Maps.newHashMap());
         }
 
@@ -509,14 +530,13 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         return this.baseMapper.update(entity, updateWrapper);
     }
 
-
     // ==================== 包含已删除数据的查询方法 ====================
 
     /**
      * 条件查询 - 单个结果（包含已删除数据）
      */
     public T getByConditionIncludeDeleted(Wrapper<T> queryWrapper) {
-        return this.baseMapper.selectOne(queryWrapper);
+        return this.baseMapper.selectOne(queryWrapper, false);
     }
 
     /**
@@ -566,7 +586,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      * 为 UpdateWrapper 设置更新默认值
      */
     private void setUpdateDefaultForWrapper(UpdateWrapper<T> updateWrapper) {
-        LocalDateTime now = FmkLocalDateTimeUtil.now();
+        LocalDateTime now = now();
         updateWrapper.set("update_date", now);
 
         Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
@@ -584,26 +604,6 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         return getByCondition(wrapper);
     }
 
-    // /**
-    //  * 根据字段值查询列表
-    //  */
-    // public List<T> listByField(String fieldName, Object value) {
-    //     QueryWrapper<T> wrapper = buildQueryWrapper();
-    //     wrapper.eq(fieldName, value)
-    //             .eq("del_flag", EnableFlagEnum.ENABLED.getCode());
-    //     return listByCondition(wrapper);
-    // }
-    //
-    // /**
-    //  * 根据字段值模糊查询
-    //  */
-    // public List<T> listByFieldLike(String fieldName, String value) {
-    //     QueryWrapper<T> wrapper = buildQueryWrapper();
-    //     wrapper.like(fieldName, value)
-    //             .eq("del_flag", EnableFlagEnum.ENABLED.getCode());
-    //     return listByCondition(wrapper);
-    // }
-
     /**
      * 根据多个字段值查询
      */
@@ -617,12 +617,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     // ==================== 统计相关方法 ====================
 
     /**
-     * 批量统计 - 针对多个字段值进行统计（适用于批量获取邀请数量等场景）
-     *
-     * @param groupByField 分组字段名
-     * @param inField      过滤字段名
-     * @param inValueList  过滤字段值列表
-     * @return Map<String, Long> 返回 String 类型的 Key-Value 映射
+     * 批量统计 - 针对多个字段值进行统计
      */
     public Map<String, Integer> batchCountByField(String groupByField,
                                                   String inField,
@@ -642,20 +637,14 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
         return results.stream()
                 .collect(Collectors.toMap(
-                        map -> String.valueOf(map.get(groupByField)), // 修正：确保返回 String 类型
+                        map -> String.valueOf(map.get(groupByField)),
                         map -> Integer.valueOf(map.get("count_value").toString()),
                         (existing, replacement) -> existing
                 ));
     }
 
-
     /**
      * 批量求和 - 根据分组字段进行求和统计
-     *
-     * @param sumField     求和字段名
-     * @param groupByField 分组字段名
-     * @param wrapper      查询条件
-     * @return Map<分组字段值, 求和结果>
      */
     public Map<String, BigDecimal> batchSumByField(String sumField,
                                                    String groupByField,
@@ -683,39 +672,14 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
     /**
      * 批量求和 - 根据分组字段进行求和统计
-     *
-     * @param sumField     求和字段名
-     * @param groupByField 分组字段名
-     * @param inField      查询条件
-     * @param inValueList  查询条件
-     * @return Map<分组字段值, 求和结果>
      */
     public Map<String, BigDecimal> batchSumByField(String sumField,
                                                    String groupByField,
                                                    String inField,
                                                    Collection<Long> inValueList) {
-        try {
-            QueryWrapper<T> wrapper = buildQueryWrapper();
-            wrapper
-                    .in(inField, inValueList)
-                    .eq("del_flag", NormalEnum.ENABLED.getCode())
-                    .groupBy(groupByField)
-                    .select(groupByField + ", COALESCE(SUM(" + sumField + "), 0) as sum_value");
-
-            List<Map<String, Object>> results = this.baseMapper.selectMaps(wrapper);
-
-            return results.stream()
-                    .collect(Collectors.toMap(
-                            map -> String.valueOf(map.get(groupByField)),
-                            map -> new BigDecimal(map.get("sum_value").toString()),
-                            (existing, replacement) -> existing
-                    ));
-
-        } catch (Exception e) {
-            log.error("FmkService|batchSumByField|分组求和失败|sumField={}|groupByField={}|inField={}|inValueList={}|error={}",
-                    sumField, groupByField, inField, inValueList, e.getMessage(), e);
-            throw e;
-        }
+        QueryWrapper<T> wrapper = buildQueryWrapper();
+        wrapper.in(inField, inValueList);
+        return batchSumByField(sumField, groupByField, wrapper);
     }
 
     // ==================== 私有辅助方法 ====================
@@ -826,12 +790,12 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         // 对于 LambdaQueryWrapper，收集所有排序条件
         List<String> orderClauses = new ArrayList<>();
 
-        for (FmkOrderItem tItem : orderItemList) {
-            if (tItem == null || StringUtils.isBlank(tItem.getColumn())) {
+        for (FmkOrderItem orderItem : orderItemList) {
+            if (orderItem == null || StringUtils.isBlank(orderItem.getColumn())) {
                 continue;
             }
-            String column = allowedColumns.get(tItem.getColumn());
-            String tempColumn = tempAllowedColumnMap != null ? tempAllowedColumnMap.get(tItem.getColumn()) : null;
+            String column = allowedColumns.get(orderItem.getColumn());
+            String tempColumn = tempAllowedColumnMap != null ? tempAllowedColumnMap.get(orderItem.getColumn()) : null;
 
             // 优先使用临时映射，如果没有则使用默认映射
             String finalColumn = tempColumn != null ? tempColumn : column;
@@ -846,14 +810,14 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             // 根据 wrapper 类型添加排序条件
             if (wrapper instanceof QueryWrapper) {
                 QueryWrapper<T> queryWrapper = (QueryWrapper<T>) wrapper;
-                if (tItem.isAsc()) {
+                if (orderItem.isAsc()) {
                     queryWrapper.orderByAsc(finalColumn);
                 } else {
                     queryWrapper.orderByDesc(finalColumn);
                 }
             } else if (wrapper instanceof LambdaQueryWrapper) {
                 // 对于 LambdaQueryWrapper，收集排序条件
-                String orderDirection = tItem.isAsc() ? "ASC" : "DESC";
+                String orderDirection = orderItem.isAsc() ? "ASC" : "DESC";
                 orderClauses.add(finalColumn + " " + orderDirection);
             }
         }
@@ -878,23 +842,14 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (wrapper instanceof QueryWrapper) {
             ((QueryWrapper<T>) wrapper).orderByDesc("create_date");
         } else if (wrapper instanceof LambdaQueryWrapper) {
-            // 直接使用 orderByDesc 方法，而不是 apply 或 last
-            String orderByClause = "ORDER BY create_date desc";
-            ((LambdaQueryWrapper<T>) wrapper).last(orderByClause);
+            ((LambdaQueryWrapper<T>) wrapper).last("ORDER BY create_date DESC");
         }
     }
-
-    // 在 FmkService 类中添加以下方法，建议放在 buildLambdaUpdateWrapper() 方法后面
 
     // ==================== 日期范围查询条件方法 ====================
 
     /**
      * 添加日期范围查询条件 - QueryWrapper 版本
-     *
-     * @param queryWrapper   查询包装器
-     * @param dateColumnName 日期字段名
-     * @param startDateStr   开始日期字符串
-     * @param endDateStr     结束日期字符串
      */
     public void addDateRangeCondition(QueryWrapper<T> queryWrapper,
                                       String dateColumnName,
@@ -905,12 +860,6 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
     /**
      * 添加日期范围查询条件 - QueryWrapper 版本（带验证控制）
-     *
-     * @param queryWrapper   查询包装器
-     * @param dateColumnName 日期字段名
-     * @param startDateStr   开始日期字符串
-     * @param endDateStr     结束日期字符串
-     * @param validateRange  是否验证时间范围合理性
      */
     public void addDateRangeCondition(QueryWrapper<T> queryWrapper,
                                       String dateColumnName,
@@ -938,7 +887,6 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
     /**
      * 添加创建时间范围查询条件 - LambdaQueryWrapper 版本
-     * 使用字符串字段名避免抽象类 Lambda 缓存问题
      */
     public void addCreateDateRangeCondition(LambdaQueryWrapper<T> queryWrapper,
                                             String startDateStr,
@@ -977,8 +925,8 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     private DateRange parseDateRange(String startDateStr, String endDateStr, boolean validateRange) {
         try {
-            LocalDateTime startTime = FmkLocalDateTimeUtil.strToLocalDateTime(startDateStr);
-            LocalDateTime endTime = FmkLocalDateTimeUtil.strToLocalDateTime(endDateStr);
+            LocalDateTime startTime = parseDateTime(startDateStr);
+            LocalDateTime endTime = parseDateTime(endDateStr);
 
             if (validateRange) {
                 validateDateRange(startTime, endTime, startDateStr, endDateStr);
@@ -995,6 +943,32 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             log.error("FmkService|parseDateRange|parseError|start={}|end={}",
                     startDateStr, endDateStr, e);
             throw new IllegalArgumentException("时间格式不正确: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 解析日期时间字符串为LocalDateTime
+     */
+    private LocalDateTime parseDateTime(String dateTimeStr) {
+        if (StringUtils.isBlank(dateTimeStr)) {
+            return null;
+        }
+
+        try {
+            // 尝试使用标准格式解析
+            if (dateTimeStr.length() == 10) { // yyyy-MM-dd
+                return LocalDateTime.parse(dateTimeStr + "T00:00:00");
+            } else if (dateTimeStr.length() == 19) { // yyyy-MM-dd HH:mm:ss
+                return LocalDateTime.parse(dateTimeStr.replace(" ", "T"));
+            } else if (dateTimeStr.contains("T")) { // ISO格式
+                return LocalDateTime.parse(dateTimeStr);
+            } else {
+                // 尝试使用默认格式解析
+                return LocalDateTime.parse(dateTimeStr, DEFAULT_DATETIME_FORMATTER);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to parse date string: {}", dateTimeStr);
+            throw new IllegalArgumentException("Invalid date format: " + dateTimeStr);
         }
     }
 

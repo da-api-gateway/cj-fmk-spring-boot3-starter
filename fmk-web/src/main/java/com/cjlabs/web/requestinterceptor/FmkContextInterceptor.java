@@ -5,15 +5,12 @@ import com.cjlabs.core.types.strings.FmkToken;
 import com.cjlabs.core.types.strings.FmkTraceId;
 import com.cjlabs.domain.enums.FmkLanguageEnum;
 import com.cjlabs.domain.enums.IEnumStr;
-import com.cjlabs.web.FmkWebConstant;
 import com.cjlabs.web.threadlocal.ClientInfo;
 import com.cjlabs.web.threadlocal.FmkContextInfo;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
-import com.cjlabs.web.threadlocal.FmkUserInfo;
-import com.cjlabs.web.token.DeviceInfo;
 import com.cjlabs.web.token.FmkTokenService;
-import com.cjlabs.web.filter.FmkTraceService;
 import com.cjlabs.web.util.ClientInfoUtil;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -46,9 +43,6 @@ public class FmkContextInterceptor implements HandlerInterceptor {
 
     @Autowired
     private FmkTokenService fmkTokenService;
-
-    @Autowired
-    private FmkTraceService fmkTraceService;
 
     /**
      * 系统用户ID - 用于不需要登录的接口

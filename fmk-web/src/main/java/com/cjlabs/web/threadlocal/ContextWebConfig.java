@@ -31,7 +31,7 @@ public class ContextWebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 1. 首先添加上下文拦截器（优先级最高）
+        // 添加上下文拦截器（优先级最高）
         registry.addInterceptor(fmkContextInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns(EXCLUDE_PATHS)

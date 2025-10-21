@@ -19,6 +19,8 @@ public interface FmkConstant {
     String HEADER_DEVICE_ID = "X-CJ-Device-Id";     // 设备ID
     String HEADER_DEVICE_VERSION = "X-CJ-Device-Version"; // 设备版本
     String HEADER_DEVICE_LANGUAGE = "X-CJ-Accept-Language"; // 设备语言
+
+
     String HEADER_USER_AGENT = "User-Agent";        // 用户代理
     String HEADER_REFERER = "Referer";              // 引用页
 
