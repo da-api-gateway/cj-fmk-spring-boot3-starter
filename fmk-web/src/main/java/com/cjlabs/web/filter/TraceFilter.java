@@ -13,11 +13,9 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -27,12 +25,9 @@ import java.time.LocalDateTime;
  * 负责生成和管理请求的TraceId，并将其设置到ThreadLocal和响应头中
  */
 @Slf4j
-@Order(2) // 在CORS过滤器之后执行
-@Component
-@RequiredArgsConstructor
 public class TraceFilter implements Filter {
-
-    private final FmkTraceService fmkTraceService;
+    @Autowired
+    private FmkTraceService fmkTraceService;
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {

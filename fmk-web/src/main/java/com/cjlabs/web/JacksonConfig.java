@@ -1,13 +1,17 @@
-package com.cjlabs.web.serializer;
+package com.cjlabs.web;
 
 import com.cjlabs.domain.enums.IEnumStr;
+import com.cjlabs.web.serializer.BigDecimalSerializer;
+import com.cjlabs.web.serializer.EmptyStringToNullDeserializer;
+import com.cjlabs.web.serializer.EnumSerializer;
+import com.cjlabs.web.serializer.LongToStringSerializer;
+
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Configuration
 public class JacksonConfig {

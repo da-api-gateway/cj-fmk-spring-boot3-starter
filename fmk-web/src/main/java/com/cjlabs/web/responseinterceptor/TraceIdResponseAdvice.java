@@ -1,9 +1,9 @@
 package com.cjlabs.web.responseinterceptor;
 
-import com.cjlabs.core.types.strings.FmkTraceId;
 import com.cjlabs.domain.common.FmkConstant;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
 import com.cjlabs.web.threadlocal.FmkResult;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -12,8 +12,6 @@ import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
-
-import java.util.Optional;
 
 /**
  * TraceId响应处理器

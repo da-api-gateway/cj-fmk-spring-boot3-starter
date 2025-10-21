@@ -8,7 +8,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class DeviceInfo {
+public class FmkDeviceInfo {
     private String userAgent;
     private String ipAddress;
     private String deviceVersion;
@@ -41,14 +41,14 @@ public class DeviceInfo {
      */
     private String deviceLanguage;
 
-    public DeviceInfo() {
+    public FmkDeviceInfo() {
         long now = System.currentTimeMillis();
 
         this.loginTime = now;
         this.lastActiveTime = now;
     }
 
-    public DeviceInfo(String userAgent, String ipAddress, String deviceVersion) {
+    public FmkDeviceInfo(String userAgent, String ipAddress, String deviceVersion) {
         this();
         this.userAgent = userAgent;
         this.ipAddress = ipAddress;
@@ -59,8 +59,6 @@ public class DeviceInfo {
      * 更新最后活跃时间
      */
     public void updateLastActiveTime() {
-        long now = System.currentTimeMillis();
-
-        this.lastActiveTime = now;
+        this.lastActiveTime = System.currentTimeMillis();
     }
 }

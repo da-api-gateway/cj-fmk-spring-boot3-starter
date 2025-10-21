@@ -16,7 +16,7 @@ public class ValidationException extends BaseException {
 
     // 默认构造函数
     public ValidationException(ValidationExceptionEnum exceptionEnum) {
-        super("VALIDATION_ERROR", exceptionEnum.getType(), 400);
+        super("VALIDATION_ERROR", exceptionEnum.getKey(), 400);
     }
 
   /**

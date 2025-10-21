@@ -9,7 +9,6 @@ import jakarta.servlet.FilterConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.annotation.Order;
 
 import java.io.IOException;
 
@@ -18,7 +17,6 @@ import java.io.IOException;
  * 处理跨域请求，设置CORS响应头
  */
 @Slf4j
-@Order(1) // 最高优先级
 public class CorsFilter implements Filter {
 
     @Override

@@ -6,87 +6,122 @@ import com.cjlabs.web.threadlocal.FmkUserInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 框架级 Token 服务
- * 主要用于请求拦截器中的 token 验证
+ * 主要用于请求拦截器中的 token 验证和用户信息管理
  */
 @Slf4j
 @Component
 public class FmkTokenService {
 
-    // ============ Redis 2: Token设备信息映射 ============
-    // key: token, value: device info
-    private static final Map<FmkToken, DeviceInfo> TOKEN_DEVICE_INFO_MAP = new ConcurrentHashMap<>();
+    // Token到用户ID的映射
+    private static final Map<FmkToken, FmkUserId> TOKEN_USER_MAP = new ConcurrentHashMap<>();
 
-    // ============ Redis 3: 用户信息缓存 ============
-    // key: userid, value: userinfo
+    // Token到设备信息的映射
+    private static final Map<FmkToken, FmkDeviceInfo> TOKEN_DEVICE_INFO_MAP = new ConcurrentHashMap<>();
+
+    // 用户ID到用户信息的映射
     private static final Map<FmkUserId, FmkUserInfo> USER_INFO_CACHE_MAP = new ConcurrentHashMap<>();
 
     /**
-     * 存储用户Token信息
+     * 存储用户登录信息
      *
      * @param userId     用户ID
+     * @param userInfo   用户信息
      * @param token      Token
      * @param deviceInfo 设备信息
      */
-    public void storeUserToken(FmkUserId userId,
+    public void storeUserLogin(FmkUserId userId,
+                               FmkUserInfo userInfo,
                                FmkToken token,
-                               DeviceInfo deviceInfo) {
+                               FmkDeviceInfo deviceInfo) {
         if (userId == null || token == null) {
-            log.warn("FmkTokenService|storeUserToken|参数无效|userId={}|token={}", userId, token);
+            log.warn("FmkTokenService|storeUserLogin|参数无效|userId={}|token={}", userId, token);
             return;
         }
 
         try {
-            // 2. 存储到 TOKEN_DEVICE_INFO_MAP (Redis 2)
-            if (deviceInfo == null) {
-                deviceInfo = new DeviceInfo(null, null, null);
+            // 1. 存储Token到用户ID的映射
+            TOKEN_USER_MAP.put(token, userId);
+
+            // 2. 存储Token到设备信息的映射
+            if (deviceInfo != null) {
+                TOKEN_DEVICE_INFO_MAP.put(token, deviceInfo);
             }
-            TOKEN_DEVICE_INFO_MAP.put(token, deviceInfo);
 
-            log.info("FmkTokenService|storeUserToken|存储成功|userId={}|token={}",
+            // 3. 缓存用户信息
+            if (userInfo != null) {
+                USER_INFO_CACHE_MAP.put(userId, userInfo);
+            }
+
+            log.info("FmkTokenService|storeUserLogin|存储成功|userId={}|token={}",
                     userId.getValue(), token.getValue());
-
         } catch (Exception e) {
-            log.error("FmkTokenService|storeUserToken|存储失败", e);
+            log.error("FmkTokenService|storeUserLogin|存储失败", e);
         }
+    }
+
+    /**
+     * 根据Token获取用户ID
+     */
+    public Optional<FmkUserId> getUserIdByToken(FmkToken token) {
+        if (token == null) {
+            return Optional.empty();
+        }
+
+        return Optional.ofNullable(TOKEN_USER_MAP.get(token));
     }
 
     /**
      * 根据Token获取设备信息
      */
-    public Optional<DeviceInfo> getDeviceInfoByToken(FmkToken token) {
+    public Optional<FmkDeviceInfo> getDeviceInfoByToken(FmkToken token) {
         if (token == null) {
             return Optional.empty();
         }
 
-        DeviceInfo deviceInfo = TOKEN_DEVICE_INFO_MAP.get(token);
+        FmkDeviceInfo deviceInfo = TOKEN_DEVICE_INFO_MAP.get(token);
+        if (deviceInfo != null) {
+            // 更新最后活跃时间
+            deviceInfo.updateLastActiveTime();
+        }
         return Optional.ofNullable(deviceInfo);
     }
 
     /**
      * 根据Token获取用户信息
      */
-    public Optional<FmkUserInfo> getUserByToken(FmkToken token) {
+    public Optional<FmkUserInfo> getUserInfoByToken(FmkToken token) {
         if (token == null) {
-            log.info("FmkTokenService|getUserByToken|token为空");
+            log.info("FmkTokenService|getUserInfoByToken|token为空");
             return Optional.empty();
         }
 
         try {
+            // 1. 获取用户ID
+            FmkUserId userId = TOKEN_USER_MAP.get(token);
+            if (userId == null) {
+                log.info("FmkTokenService|getUserInfoByToken|未找到用户ID|token={}", token.getValue());
+                return Optional.empty();
+            }
 
+            // 2. 获取用户信息
+            FmkUserInfo userInfo = USER_INFO_CACHE_MAP.get(userId);
+            if (userInfo == null) {
+                log.info("FmkTokenService|getUserInfoByToken|未找到用户信息|userId={}", userId.getValue());
+                return Optional.empty();
+            }
 
-            log.info("FmkTokenService|getUserByToken|用户信息缓存中未找到|userId={}", userId.getValue());
-            return Optional.empty();
+            // 3. 更新设备最后活跃时间
+            updateDeviceLastActiveTime(token);
 
+            return Optional.of(userInfo);
         } catch (Exception e) {
-            log.error("FmkTokenService|getUserByToken|获取用户信息异常|token={}", token.getValue(), e);
+            log.error("FmkTokenService|getUserInfoByToken|获取用户信息异常|token={}", token.getValue(), e);
             return Optional.empty();
         }
     }
@@ -116,15 +151,48 @@ public class FmkTokenService {
     }
 
     /**
-     * 移除用户所有设备的Token
+     * 验证Token是否有效
+     */
+    public boolean validateToken(FmkToken token) {
+        if (token == null) {
+            return false;
+        }
+
+        // 检查Token是否存在且对应用户ID
+        FmkUserId userId = TOKEN_USER_MAP.get(token);
+        if (userId == null) {
+            return false;
+        }
+
+        // 更新设备最后活跃时间
+        updateDeviceLastActiveTime(token);
+
+        return true;
+    }
+
+    /**
+     * 移除用户所有Token
      */
     public void removeAllUserTokens(FmkUserId userId) {
         if (userId == null) {
             return;
         }
 
-        // 移除用户信息缓存
+        // 1. 找出该用户的所有Token
+        TOKEN_USER_MAP.entrySet().removeIf(entry -> {
+            if (userId.equals(entry.getValue())) {
+                FmkToken token = entry.getKey();
+                // 2. 从设备信息映射中移除
+                TOKEN_DEVICE_INFO_MAP.remove(token);
+                return true;
+            }
+            return false;
+        });
+
+        // 3. 移除用户信息缓存
         USER_INFO_CACHE_MAP.remove(userId);
+
+        log.info("FmkTokenService|removeAllUserTokens|移除用户所有Token|userId={}", userId.getValue());
     }
 
     /**
@@ -135,23 +203,22 @@ public class FmkTokenService {
             return;
         }
 
-        // 1. 从设备信息映射中移除
+        // 1. 从用户ID映射中移除
+        TOKEN_USER_MAP.remove(token);
+
+        // 2. 从设备信息映射中移除
         TOKEN_DEVICE_INFO_MAP.remove(token);
 
         log.info("FmkTokenService|removeToken|移除Token|token={}", token.getValue());
     }
 
-    // ============ 私有方法 ============
-
-
     /**
      * 更新设备最后活跃时间
      */
     private void updateDeviceLastActiveTime(FmkToken token) {
-        DeviceInfo deviceInfo = TOKEN_DEVICE_INFO_MAP.get(token);
+        FmkDeviceInfo deviceInfo = TOKEN_DEVICE_INFO_MAP.get(token);
         if (deviceInfo != null) {
-            deviceInfo.setLastActiveTime(System.currentTimeMillis());
+            deviceInfo.updateLastActiveTime();
         }
     }
-
 }

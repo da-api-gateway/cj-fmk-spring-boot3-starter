@@ -51,8 +51,12 @@ public class SnowflakeStatus {
     /**
      * 六参数构造函数 (向后兼容)
      */
-    public SnowflakeStatus(long totalGenerated, long clockBackwardCount, long waitCount,
-                           long lastTimestamp, long currentTimestamp, long clockBackwardToleranceMs) {
+    public SnowflakeStatus(long totalGenerated,
+                           long clockBackwardCount,
+                           long waitCount,
+                           long lastTimestamp,
+                           long currentTimestamp,
+                           long clockBackwardToleranceMs) {
         this.totalGenerated = totalGenerated;
         this.clockBackwardCount = clockBackwardCount;
         this.waitCount = waitCount;

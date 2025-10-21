@@ -291,9 +291,7 @@ public class FmkSnowflakeIdGenerator {
                 clockBackwardCount.get(),
                 waitCount.get(),
                 lastTimestamp,
-                formatTimestamp(lastTimestamp),
                 currentTimestamp,
-                formatTimestamp(currentTimestamp),
                 clockBackwardToleranceMs
         );
     }

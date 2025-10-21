@@ -23,40 +23,6 @@
             <artifactId>fmk-domain</artifactId>
             <version>20250924_v1</version>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>io.opentelemetry</groupId>-->
-<!--            <artifactId>opentelemetry-api</artifactId>-->
-<!--        </dependency>-->
-<!--        &lt;!&ndash; SDK &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>io.opentelemetry</groupId>-->
-<!--            <artifactId>opentelemetry-sdk</artifactId>-->
-<!--        </dependency>-->
-<!--        &lt;!&ndash; 自动仪表化 &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>io.opentelemetry.instrumentation</groupId>-->
-<!--            <artifactId>opentelemetry-instrumentation-annotations</artifactId>-->
-<!--        </dependency>-->
-<!--        &lt;!&ndash; Spring Boot集成 &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>io.opentelemetry.instrumentation</groupId>-->
-<!--            <artifactId>opentelemetry-spring-boot-starter</artifactId>-->
-<!--        </dependency>-->
-<!--        &lt;!&ndash; 导出器 - 选择您需要的 &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>io.opentelemetry</groupId>-->
-<!--            <artifactId>opentelemetry-exporter-otlp</artifactId>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>io.opentelemetry</groupId>-->
-<!--            <artifactId>opentelemetry-exporter-prometheus</artifactId>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>io.opentelemetry</groupId>-->
-<!--            <artifactId>opentelemetry-exporter-logging</artifactId>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

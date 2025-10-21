@@ -8,6 +8,7 @@ import com.cjlabs.domain.enums.IEnumStr;
 import com.cjlabs.web.threadlocal.ClientInfo;
 import com.cjlabs.web.threadlocal.FmkContextInfo;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
+import com.cjlabs.web.threadlocal.FmkUserInfo;
 import com.cjlabs.web.token.FmkTokenService;
 import com.cjlabs.web.util.ClientInfoUtil;
 
@@ -147,8 +148,9 @@ public class FmkContextInterceptor implements HandlerInterceptor {
             FmkToken fmkToken = FmkToken.ofNullable(userToken);
             contextInfo.setToken(fmkToken);
 
-            // 通过 FmkTokenService 获取用户信息
-            fmkTokenService.getUserByToken(fmkToken).ifPresentOrElse(
+
+            Optional<FmkUserInfo> userInfoOptional = fmkTokenService.getUserInfoByToken(fmkToken);
+            userInfoOptional.ifPresentOrElse(
                     fmkUserInfo -> {
                         // 设置用户信息和ID
                         contextInfo.setUserInfo(fmkUserInfo);
@@ -172,6 +174,7 @@ public class FmkContextInterceptor implements HandlerInterceptor {
                         setSystemUserIfNeeded(request, contextInfo);
                     }
             );
+
         } catch (Exception e) {
             log.error("FmkContextInterceptor|setUserInfo|设置用户信息失败", e);
             // 异常情况下也检查是否需要设置系统用户

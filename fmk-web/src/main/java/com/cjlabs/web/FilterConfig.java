@@ -1,4 +1,8 @@
-package com.cjlabs.web.filter;
+package com.cjlabs.web;
+
+import com.cjlabs.web.filter.CorsFilter;
+import com.cjlabs.web.filter.FmkTraceService;
+import com.cjlabs.web.filter.TraceFilter;
 
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -32,17 +36,9 @@ public class FilterConfig {
      * 创建 Trace 过滤器
      */
     @Bean
-    public TraceFilter traceFilter(FmkTraceService fmkTraceService) {
-        return new TraceFilter(fmkTraceService);
+    public TraceFilter traceFilter() {
+        return new TraceFilter();
     }
-
-    // /**
-    //  * 创建 CORS 过滤器
-    //  */
-    // @Bean
-    // public TraceFilter traceFilter() {
-    //     return new TraceFilter();
-    // }
 
     /**
      * 请求日志过滤器

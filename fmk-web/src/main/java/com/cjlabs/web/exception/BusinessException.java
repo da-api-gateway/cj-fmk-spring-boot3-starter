@@ -15,7 +15,7 @@ public class BusinessException extends BaseException {
     }
 
     public BusinessException(BusinessExceptionEnum businessExceptionEnum) {
-        super("BUSINESS_ERROR", businessExceptionEnum.getType(), 200);
+        super("BUSINESS_ERROR", businessExceptionEnum.getKey(), 200);
     }
 
       /**

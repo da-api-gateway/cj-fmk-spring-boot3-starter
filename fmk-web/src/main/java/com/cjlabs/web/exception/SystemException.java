@@ -20,7 +20,7 @@ public class SystemException extends BaseException {
      * @param exceptionEnum 系统异常枚举
      */
     public SystemException(SystemExceptionEnum exceptionEnum) {
-        super("SYSTEM_ERROR", exceptionEnum.getType(), 500);
+        super("SYSTEM_ERROR", exceptionEnum.getKey(), 500);
     }
 
       /**
