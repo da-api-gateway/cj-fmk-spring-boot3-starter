@@ -1,12 +1,5 @@
 package com.cjlabs.db.mp;
 
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.cjlabs.core.types.longs.FmkUserId;
 import com.cjlabs.db.domain.FmkBaseEntity;
 import com.cjlabs.db.domain.FmkOrderItem;
@@ -15,6 +8,13 @@ import com.cjlabs.domain.enums.NormalEnum;
 import com.cjlabs.web.json.FmkJacksonUtil;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Getter;
@@ -33,7 +33,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -111,45 +110,45 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     // ==================== 单个操作方法 ====================
 
     @Transactional(rollbackFor = Exception.class)
-    public int saveService(T entity) {
+    public int save(T entity) {
         if (Objects.isNull(entity)) {
             return 0;
         }
         setInsertDefault(entity);
-        log.info("FmkService|saveService|entity={}", FmkJacksonUtil.toJson(entity));
+        log.info("FmkService|save|entity={}", FmkJacksonUtil.toJson(entity));
         return this.baseMapper.insert(entity);
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public int updateByIdService(T entity) {
+    public int updateById(T entity) {
         if (Objects.isNull(entity)) {
             return 0;
         }
         setUpdateDefault(entity);
-        log.info("FmkService|updateByIdService|entity={}", FmkJacksonUtil.toJson(entity));
+        log.info("FmkService|updateById|entity={}", FmkJacksonUtil.toJson(entity));
         return this.baseMapper.updateById(entity);
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public int removeByIdService(Serializable id) {
+    public int removeById(Serializable id) {
         if (Objects.isNull(id)) {
             return 0;
         }
-        T byIdDb = getByIdService(id);
+        T byIdDb = getById(id);
         if (Objects.isNull(byIdDb)) {
             return 0;
         }
         byIdDb.setDelFlag(NormalEnum.ABNORMAL);
         setUpdateDefault(byIdDb);
-        log.info("FmkService|removeByIdService|id={}", id);
+        log.info("FmkService|removeById|id={}", id);
         return this.baseMapper.updateById(byIdDb);
     }
 
-    public T getByIdService(Serializable id) {
+    public T getById(Serializable id) {
         if (Objects.isNull(id)) {
             return null;
         }
-        log.debug("FmkService|getByIdService|id={}", id);
+        log.debug("FmkService|getById|id={}", id);
         // 使用Lambda条件查询，过滤已删除数据
         LambdaQueryWrapper<T> wrapper = buildLambdaQuery();
         wrapper.eq(T::getId, id)
@@ -158,18 +157,18 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         return this.baseMapper.selectOne(wrapper);
     }
 
-    public Optional<T> getByIdOpService(Serializable id) {
-        return Optional.ofNullable(getByIdService(id));
+    public Optional<T> getByIdOp(Serializable id) {
+        return Optional.ofNullable(getById(id));
     }
 
     /**
      * 根据ID查询（包含已删除数据）- 特殊场景使用
      */
-    public T getByIdServiceIncludeDeleted(Serializable id) {
+    public T getByIdIncludeDeleted(Serializable id) {
         if (Objects.isNull(id)) {
             return null;
         }
-        log.debug("FmkService|getByIdServiceIncludeDeleted|id={}", id);
+        log.debug("FmkService|getByIdIncludeDeleted|id={}", id);
         return this.baseMapper.selectById(id);
     }
 
@@ -178,14 +177,14 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     /**
      * 批量保存 - 默认批次大小
      */
-    public int saveBatchService(Collection<T> entityList) {
-        return saveBatchService(entityList, DEFAULT_BATCH_SIZE);
+    public int saveBatch(Collection<T> entityList) {
+        return saveBatch(entityList, DEFAULT_BATCH_SIZE);
     }
 
     /**
      * 批量保存 - 手动控制事务，分批提交
      */
-    public int saveBatchService(Collection<T> entityList, int batchSize) {
+    public int saveBatch(Collection<T> entityList, int batchSize) {
         if (CollectionUtils.isEmpty(entityList)) {
             log.debug("Entity list is empty, skipping batch save");
             return 0;
@@ -205,21 +204,21 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             }
             batchNumber++;
         }
-        log.info("FmkService|saveBatchService|processedCount={}", processedCount);
+        log.info("FmkService|saveBatch|processedCount={}", processedCount);
         return processedCount;
     }
 
     /**
      * 批量更新 - 默认批次大小
      */
-    public int updateBatchByIdService(Collection<T> entityList) {
-        return updateBatchByIdService(entityList, DEFAULT_BATCH_SIZE);
+    public int updateBatchById(Collection<T> entityList) {
+        return updateBatchById(entityList, DEFAULT_BATCH_SIZE);
     }
 
     /**
      * 批量更新 - 手动控制事务，分批提交
      */
-    public int updateBatchByIdService(Collection<T> entityList, int batchSize) {
+    public int updateBatchById(Collection<T> entityList, int batchSize) {
         if (CollectionUtils.isEmpty(entityList)) {
             log.debug("Entity list is empty, skipping batch update");
             return 0;
@@ -272,7 +271,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             setUpdateDefault(entity);
         });
 
-        int updated = updateBatchByIdService(listByIdsService, batchSize);
+        int updated = updateBatchById(listByIdsService, batchSize);
         log.info("FmkService|updateBatchDelFlagById|processedCount={}", updated);
         return updated;
     }
