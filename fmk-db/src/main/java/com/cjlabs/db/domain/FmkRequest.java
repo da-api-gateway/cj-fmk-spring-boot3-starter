@@ -3,6 +3,7 @@ package com.cjlabs.db.domain;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.List;
 
 @Getter
@@ -18,14 +19,13 @@ public class FmkRequest<T> {
     /**
      * 当前页码，从1开始
      */
-    // @Min(value = 1, message = "页码必须大于0")
     private Long current = 1L;
+
+
 
     /**
      * 每页大小
      */
-    // @Min(value = 1, message = "每页大小必须大于0")
-    // @Max(value = 500, message = "每页大小不能超过500")
     private Long size = 10L;
 
 

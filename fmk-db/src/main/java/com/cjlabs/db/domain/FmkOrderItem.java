@@ -33,11 +33,11 @@ public class FmkOrderItem implements Serializable {
         return build(column, false);
     }
 
-    public static List<FmkOrderItem> ascs(String... columns) {
+    public static List<FmkOrderItem> ascList(String... columns) {
         return Arrays.stream(columns).map(FmkOrderItem::asc).collect(Collectors.toList());
     }
 
-    public static List<FmkOrderItem> descs(String... columns) {
+    public static List<FmkOrderItem> descList(String... columns) {
         return Arrays.stream(columns).map(FmkOrderItem::desc).collect(Collectors.toList());
     }
 
