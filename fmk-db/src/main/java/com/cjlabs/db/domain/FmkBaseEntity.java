@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.Instant;
 
 /**
  * 基础实体类
@@ -42,7 +43,7 @@ public abstract class FmkBaseEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_date")
-    private Long createDate;
+    private Instant createDate;
 
     /**
      * 更新用户
@@ -54,5 +55,5 @@ public abstract class FmkBaseEntity implements Serializable {
      * 更新时间
      */
     @TableField(value = "update_date")
-    private Long updateDate;
+    private Instant updateDate;
 }

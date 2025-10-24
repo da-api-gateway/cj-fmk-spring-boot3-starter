@@ -1,9 +1,7 @@
 package com.cjlabs.web;
 
-import com.cjlabs.domain.enums.IEnumStr;
 import com.cjlabs.web.serializer.BigDecimalSerializer;
 import com.cjlabs.web.serializer.EmptyStringToNullDeserializer;
-import com.cjlabs.web.serializer.EnumSerializer;
 import com.cjlabs.web.serializer.LongToStringSerializer;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -29,11 +27,10 @@ public class JacksonConfig {
             customModule.addSerializer(BigDecimal.class, new BigDecimalSerializer());
 
             // 添加枚举序列化器
-            customModule.addSerializer(IEnumStr.class, new EnumSerializer());
+            // customModule.addSerializer(IEnumStr.class, new EnumSerializer());
 
             // 添加空字符串处理
             customModule.addDeserializer(String.class, new EmptyStringToNullDeserializer());
-
 
             // 配置构建器
             builder
