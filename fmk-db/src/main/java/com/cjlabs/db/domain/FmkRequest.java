@@ -21,13 +21,10 @@ public class FmkRequest<T> {
      */
     private Long current = 1L;
 
-
-
     /**
      * 每页大小
      */
     private Long size = 10L;
-
 
     private List<FmkOrderItem> orderItemList;
 

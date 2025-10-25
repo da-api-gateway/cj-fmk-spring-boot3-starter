@@ -1,5 +1,6 @@
 package com.cjlabs.db.mp;
 
+import com.cjlabs.core.time.FmkInstantUtil;
 import com.cjlabs.core.types.longs.FmkUserId;
 import com.cjlabs.db.domain.FmkBaseEntity;
 import com.cjlabs.db.domain.FmkOrderItem;
@@ -33,6 +34,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -152,7 +154,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         // 使用Lambda条件查询，过滤已删除数据
         LambdaQueryWrapper<T> wrapper = buildLambdaQuery();
         wrapper.eq(T::getId, id)
-                .eq(T::getDelFlag, NormalEnum.NORMAL.getCode());
+                .eq(T::getDelFlag, NormalEnum.NORMAL);
 
         return this.baseMapper.selectOne(wrapper);
     }
@@ -284,7 +286,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             log.debug("ID list is empty, skipping batch delete");
             return 0;
         }
-        int deleted = getBaseMapper().deleteBatchIds(idList);
+        int deleted = getBaseMapper().deleteByIds(idList);
         log.info("FmkService|deleteByIdList|deletedCount={}", deleted);
         return deleted;
     }
@@ -363,8 +365,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
                 return true;
 
             } catch (Exception e) {
-                log.error("Batch {} {} operation failed, transaction will rollback",
-                        batchNumber, operation.toLowerCase(), e);
+                log.error("Batch {} {} operation failed, transaction will rollback", batchNumber, operation.toLowerCase(), e);
                 status.setRollbackOnly();
                 return false;
             }
@@ -393,11 +394,11 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (Objects.isNull(entity)) {
             return;
         }
-        long now = System.currentTimeMillis();
+        Instant now = FmkInstantUtil.now();
         setInsertDefault(entity, now);
     }
 
-    private void setInsertDefault(T entity, Long now) {
+    private void setInsertDefault(T entity, Instant now) {
         if (Objects.isNull(entity)) {
             return;
         }
@@ -416,7 +417,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (CollectionUtils.isEmpty(entityList)) {
             return;
         }
-        long now = System.currentTimeMillis();
+        Instant now = FmkInstantUtil.now();
         for (T t : entityList) {
             setInsertDefault(t, now);
         }
@@ -426,11 +427,11 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (Objects.isNull(entity)) {
             return;
         }
-        long now = System.currentTimeMillis();
+        Instant now = FmkInstantUtil.now();
         setUpdateDefault(entity, now);
     }
 
-    private void setUpdateDefault(T entity, Long now) {
+    private void setUpdateDefault(T entity, Instant now) {
         if (Objects.isNull(entity)) {
             return;
         }
@@ -446,7 +447,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         if (CollectionUtils.isEmpty(entityList)) {
             return;
         }
-        long now = System.currentTimeMillis();
+        Instant now = FmkInstantUtil.now();
         for (T t : entityList) {
             setUpdateDefault(t, now);
         }
@@ -590,7 +591,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         LambdaQueryWrapper<T> wrapper = buildLambdaQuery();
         // 由于字段名是动态的，这里仍需使用apply方法
         fieldMap.forEach((key, value) -> wrapper.apply(key + " = {0}", value));
-        wrapper.eq(T::getDelFlag, NormalEnum.NORMAL.getCode());
+        wrapper.eq(T::getDelFlag, NormalEnum.NORMAL);
         return this.baseMapper.selectList(wrapper);
     }
 
@@ -609,7 +610,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
         QueryWrapper<T> wrapper = buildQueryWrapper();
         wrapper.in(inField, inValueList)
-                .eq("del_flag", NormalEnum.NORMAL.getCode())
+                .eq("del_flag", NormalEnum.NORMAL)
                 .groupBy(groupByField)
                 .select(groupByField + ", COUNT(" + inField + ") as count_value");
 
@@ -637,7 +638,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
         QueryWrapper<T> wrapper = buildQueryWrapper();
         wrapper.in(inField, inValueList)
-                .eq("del_flag", NormalEnum.NORMAL.getCode())
+                .eq("del_flag", NormalEnum.NORMAL)
                 .groupBy(groupByField)
                 .select(groupByField + ", COALESCE(SUM(" + sumField + "), 0) as sum_value");
 
@@ -664,7 +665,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
                                                    String groupByField,
                                                    QueryWrapper<T> wrapper) {
         try {
-            wrapper.eq("del_flag", NormalEnum.NORMAL.getCode())
+            wrapper.eq("del_flag", NormalEnum.NORMAL)
                     .groupBy(groupByField)
                     .select(groupByField + ", COALESCE(SUM(" + sumField + "), 0) as sum_value");
 
@@ -697,8 +698,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         }
 
         // 如果是 LambdaQueryWrapper
-        if (originalWrapper instanceof LambdaQueryWrapper) {
-            LambdaQueryWrapper<T> lambdaWrapper = (LambdaQueryWrapper<T>) originalWrapper;
+        if (originalWrapper instanceof LambdaQueryWrapper<T> lambdaWrapper) {
             // 检查是否已经包含 delFlag 条件
             if (!containsDelFlagCondition(lambdaWrapper)) {
                 lambdaWrapper.eq(T::getDelFlag, NormalEnum.NORMAL);
@@ -727,8 +727,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     private boolean containsDelFlagCondition(Wrapper<T> wrapper) {
         String sqlSegment = wrapper.getSqlSegment();
         return sqlSegment != null && (
-                sqlSegment.contains("del_flag") ||
-                        sqlSegment.contains("delFlag")
+                sqlSegment.contains("del_flag") || sqlSegment.contains("delFlag")
         );
     }
 
@@ -744,8 +743,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         String userId = fmkUserId.getValue().toString();
 
         // 根据 wrapper 类型添加条件
-        if (wrapper instanceof LambdaQueryWrapper) {
-            LambdaQueryWrapper<T> lambdaWrapper = (LambdaQueryWrapper<T>) wrapper;
+        if (wrapper instanceof LambdaQueryWrapper<T> lambdaWrapper) {
             lambdaWrapper.eq(T::getCreateUser, userId);
         }
     }
@@ -808,8 +806,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         }
 
         // 对于 LambdaQueryWrapper，使用 last 方法添加 ORDER BY 子句
-        if (wrapper instanceof LambdaQueryWrapper && !orderClauses.isEmpty()) {
-            LambdaQueryWrapper<T> lambdaWrapper = (LambdaQueryWrapper<T>) wrapper;
+        if (wrapper instanceof LambdaQueryWrapper<T> lambdaWrapper && !orderClauses.isEmpty()) {
             String orderByClause = "ORDER BY " + String.join(", ", orderClauses);
             lambdaWrapper.last(orderByClause);
         }

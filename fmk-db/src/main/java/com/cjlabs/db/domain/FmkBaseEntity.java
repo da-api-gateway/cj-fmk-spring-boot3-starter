@@ -56,4 +56,6 @@ public abstract class FmkBaseEntity implements Serializable {
      */
     @TableField(value = "update_date")
     private Instant updateDate;
+
+
 }

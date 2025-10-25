@@ -274,10 +274,15 @@
                     <artifactId>maven-checkstyle-plugin</artifactId>
                     <version>${maven-checkstyle-plugin.version}</version>
                     <configuration>
+                        <!-- 指定 checkstyle 配置文件路径 -->
                         <configLocation>checkstyle.xml</configLocation>
-                        <encoding>UTF-8</encoding>
+                        <!-- 输出到控制台 -->
                         <consoleOutput>true</consoleOutput>
+                        <!-- 有违规直接失败 -->
                         <failOnViolation>true</failOnViolation>
+                        <!-- 关键：在这里指定编码 -->
+                        <inputEncoding>UTF-8</inputEncoding>
+                        <outputEncoding>UTF-8</outputEncoding>
                     </configuration>
                 </plugin>
 
