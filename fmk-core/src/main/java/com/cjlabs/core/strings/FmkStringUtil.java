@@ -88,6 +88,17 @@ public class FmkStringUtil {
         return StringUtils.isAllBlank(strings);
     }
 
+    /**
+     * 检查所有字符串是否有一个为空白字符串
+     *
+     * @param strings 待检查的字符串数组
+     * @return 如果有一个为空白字符串，返回true
+     */
+    public static boolean isAnyBlank(String... strings) {
+        return StringUtils.isAnyBlank(strings);
+    }
+
+
     // ====================== 字符串处理 ======================
 
     /**
