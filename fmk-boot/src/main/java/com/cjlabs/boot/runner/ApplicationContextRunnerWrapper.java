@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
 @Slf4j
-public class ApplicationRunnerWrapper {
+public class ApplicationContextRunnerWrapper {
 
     /**
      * 启动 Spring Boot 应用，捕获异常并处理
