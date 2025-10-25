@@ -1,5 +1,8 @@
 package com.cjlabs.cloud;
 
+import com.cjlabs.web.exception.BusinessException;
+import com.cjlabs.web.exception.BusinessExceptionEnum;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -105,7 +108,7 @@ public class FmkLockUtil {
      *
      * @param key    锁的key
      * @param action 要执行的操作
-     * @throws DcxjCommonException 获取锁超时时抛出
+     * @throws BusinessException 获取锁超时时抛出
      */
     public static <T> T executeWithTryLockOrThrow(String key, LockTask<T> action) {
         return executeWithTryLockOrThrow(key, 5, TimeUnit.SECONDS, action);
@@ -116,7 +119,7 @@ public class FmkLockUtil {
      *
      * @param key    锁的key
      * @param action 要执行的操作
-     * @throws DcxjCommonException 获取锁超时时抛出
+     * @throws BusinessException 获取锁超时时抛出
      */
     public static void executeWithTryLockOrThrow(String key, VoidLockTask action) {
         executeWithTryLockOrThrow(key, 5, TimeUnit.SECONDS, () -> {
@@ -132,7 +135,7 @@ public class FmkLockUtil {
      * @param timeout 超时时间
      * @param unit    时间单位
      * @param action  要执行的操作
-     * @throws DcxjCommonException 获取锁超时时抛出
+     * @throws BusinessException 获取锁超时时抛出
      */
     public static void executeWithTryLockOrThrow(String key, long timeout, TimeUnit unit, VoidLockTask action) {
         executeWithTryLockOrThrow(key, timeout, unit, () -> {
@@ -150,7 +153,7 @@ public class FmkLockUtil {
      * @param supplier 要执行的操作
      * @param <T>      返回值类型
      * @return 操作结果
-     * @throws DcxjCommonException 获取锁超时时抛出
+     * @throws BusinessException 获取锁超时时抛出
      */
     public static <T> T executeWithTryLockOrThrow(String key, long timeout, TimeUnit unit, LockTask<T> supplier) {
         ReentrantLock lock = getReentrantLock(key);
@@ -168,12 +171,12 @@ public class FmkLockUtil {
                 }
             } else {
                 log.warn("FmkLockUtil|executeWithTryLockOrThrow|获取锁超时|key={}|timeout={}ms", key, unit.toMillis(timeout));
-                throw new DcxjCommonException("系统繁忙，请稍后重试", "System is busy, please try again later");
+                throw new BusinessException(BusinessExceptionEnum.RATE_LIMIT_EXCEEDED);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("FmkLockUtil|executeWithTryLockOrThrow|线程被中断|key={}", key);
-            throw new DcxjCommonException("系统繁忙，请稍后重试", "System is busy, please try again later");
+            throw new BusinessException(BusinessExceptionEnum.RATE_LIMIT_EXCEEDED);
         }
     }
 
@@ -184,7 +187,7 @@ public class FmkLockUtil {
      *
      * @param key    锁的key
      * @param action 要执行的操作
-     * @throws DcxjCommonException 获取锁失败时立即抛出
+     * @throws BusinessException 获取锁失败时立即抛出
      */
     public static void executeWithTryLockOrThrowImmediately(String key, VoidLockTask action) {
         executeWithTryLockOrThrow(key, 1, TimeUnit.MILLISECONDS, action);
@@ -197,7 +200,7 @@ public class FmkLockUtil {
      * @param supplier 要执行的操作
      * @param <T>      返回值类型
      * @return 操作结果
-     * @throws DcxjCommonException 获取锁失败时立即抛出
+     * @throws BusinessException 获取锁失败时立即抛出
      */
     public static <T> T executeWithTryLockOrThrowImmediately(String key, LockTask<T> supplier) {
         return executeWithTryLockOrThrow(key, 1, TimeUnit.MILLISECONDS, supplier);
