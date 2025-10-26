@@ -1,6 +1,7 @@
 package com.cjlabs.web.threadlocal;
 
 import com.cjlabs.core.types.longs.FmkUserId;
+import com.cjlabs.core.types.strings.FmkSpanId;
 import com.cjlabs.core.types.strings.FmkToken;
 import com.cjlabs.core.types.strings.FmkTraceId;
 import com.cjlabs.domain.enums.FmkLanguageEnum;
@@ -24,6 +25,12 @@ public class FmkContextInfo {
      */
     @ToString.Include
     private FmkTraceId traceId;
+
+    /**
+     * 追踪ID
+     */
+    @ToString.Include
+    private FmkSpanId spanId;
 
     /**
      * 用户token

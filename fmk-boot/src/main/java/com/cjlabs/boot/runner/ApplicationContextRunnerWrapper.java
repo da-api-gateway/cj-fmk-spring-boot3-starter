@@ -1,6 +1,7 @@
 package com.cjlabs.boot.runner;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
@@ -17,7 +18,10 @@ public class ApplicationContextRunnerWrapper {
     public static ConfigurableApplicationContext run(Class<?> applicationClass, String[] args) {
         try {
             log.info("ApplicationRunnerWrapper|run|name={}", applicationClass.getSimpleName());
-            return SpringApplication.run(applicationClass, args);
+
+            SpringApplication app = new SpringApplication(applicationClass);
+            app.setBannerMode(Banner.Mode.OFF);
+            return app.run(args);
         } catch (Exception e) {
             log.info("ApplicationRunnerWrapper|run|failed={}", e.getMessage(), e);
             // TODO: 可以在这里做补救操作，如通知、释放资源、记录状态等

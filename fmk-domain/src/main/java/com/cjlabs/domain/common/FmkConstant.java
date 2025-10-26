@@ -15,6 +15,7 @@ public interface FmkConstant {
      * HTTP 请求头常量
      */
     String HEADER_TRACE_ID = "X-CJ-Trace-Id";       // 链路追踪ID
+    String HEADER_SPAN_ID = "X-CJ-Span-Id";       // 链路追踪ID
     String HEADER_USER_TOKEN = "X-CJ-Token";        // 用户令牌
     String HEADER_DEVICE_ID = "X-CJ-Device-Id";     // 设备ID
     String HEADER_DEVICE_VERSION = "X-CJ-Device-Version"; // 设备版本

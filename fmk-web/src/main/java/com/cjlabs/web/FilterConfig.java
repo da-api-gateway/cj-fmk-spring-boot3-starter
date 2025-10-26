@@ -1,31 +1,21 @@
 package com.cjlabs.web;
 
+import com.cjlabs.web.filter.AllowPostOptionsFilter;
 import com.cjlabs.web.filter.CorsFilter;
 import com.cjlabs.web.filter.FmkTraceService;
 import com.cjlabs.web.filter.TraceFilter;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 
-/**
- * 过滤器配置类
- * 配置过滤器的注册顺序和参数
- */
 @Configuration
 public class FilterConfig {
 
     /**
-     * 创建 CORS 过滤器
-     */
-    @Bean
-    public CorsFilter corsFilter() {
-        return new CorsFilter();
-    }
-
-    /**
-     * 创建 FmkTraceService
+     * 创建 FmkTraceService Bean
      */
     @Bean
     public FmkTraceService fmkTraceService() {
@@ -33,47 +23,58 @@ public class FilterConfig {
     }
 
     /**
-     * 创建 Trace 过滤器
+     * 仅允许 POST + OPTIONS 请求过滤器
      */
     @Bean
-    public TraceFilter traceFilter() {
-        return new TraceFilter();
+    public FilterRegistrationBean<AllowPostOptionsFilter> allowPostOptionsFilterRegistration() {
+        FilterRegistrationBean<AllowPostOptionsFilter> registration = new FilterRegistrationBean<>(new AllowPostOptionsFilter());
+        // 在这里处理一下，最高优先级
+        registration.setOrder(Integer.MIN_VALUE);
+        registration.addUrlPatterns("/*");
+        return registration;
+    }
+
+    /**
+     * CORS 过滤器
+     */
+    @Bean
+    public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
+        FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>(new CorsFilter());
+        registration.setOrder(1000);
+        registration.addUrlPatterns("/*");
+        return registration;
+    }
+
+    /**
+     * Trace 过滤器
+     */
+    @Bean
+    public FilterRegistrationBean<TraceFilter> traceFilterRegistration(@Autowired FmkTraceService fmkTraceService) {
+        TraceFilter filter = new TraceFilter();
+        filter.setFmkTraceService(fmkTraceService); // 注入服务
+        FilterRegistrationBean<TraceFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setOrder(1001);
+        registration.addUrlPatterns("/*");
+        return registration;
     }
 
     /**
      * 请求日志过滤器
      */
     @Bean
-    public CommonsRequestLoggingFilter logFilter() {
-        CommonsRequestLoggingFilter filter = new CommonsRequestLoggingFilter();
-        filter.setIncludeQueryString(true);  // 打印 query
-        filter.setIncludePayload(true);      // 打印请求体
-        filter.setIncludeHeaders(true);      // 打印请求头
-        filter.setMaxPayloadLength(10000);   // Body 最大长度
-        filter.setBeforeMessagePrefix("请求处理前: ");
-        filter.setAfterMessagePrefix("请求处理后: ");
-        return filter;
-    }
+    public FilterRegistrationBean<CommonsRequestLoggingFilter> logFilterRegistration() {
+        CommonsRequestLoggingFilter logFilter = new CommonsRequestLoggingFilter();
+        logFilter.setIncludeQueryString(true);
+        logFilter.setIncludePayload(true);
+        logFilter.setIncludeHeaders(true);
+        logFilter.setMaxPayloadLength(10000);
+        logFilter.setBeforeMessagePrefix("请求处理前: ");
+        logFilter.setAfterMessagePrefix("请求处理后: ");
 
-    /**
-     * 确保 CORS 过滤器最先执行
-     */
-    @Bean
-    public FilterRegistrationBean<CorsFilter> corsFilterRegistration(CorsFilter corsFilter) {
-        FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>(corsFilter);
-        registration.setOrder(1); // 最高优先级
-        registration.addUrlPatterns("/*"); // 所有路径
-        return registration;
-    }
-
-    /**
-     * 注册 Trace 过滤器
-     */
-    @Bean
-    public FilterRegistrationBean<TraceFilter> traceFilterRegistration(TraceFilter traceFilter) {
-        FilterRegistrationBean<TraceFilter> registration = new FilterRegistrationBean<>(traceFilter);
-        registration.setOrder(2); // 第二优先级，在CORS之后
-        registration.addUrlPatterns("/*"); // 所有路径
+        // 放在最后，保证 TraceFilter 先设置 MDC
+        FilterRegistrationBean<CommonsRequestLoggingFilter> registration = new FilterRegistrationBean<>(logFilter);
+        registration.setOrder(Integer.MAX_VALUE);
+        registration.addUrlPatterns("/*");
         return registration;
     }
 }
