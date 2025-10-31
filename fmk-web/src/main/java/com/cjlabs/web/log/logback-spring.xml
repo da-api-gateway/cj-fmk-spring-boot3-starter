@@ -3,14 +3,14 @@
 
     <!-- ===================== 全局属性 ===================== -->
     <!-- 项目名，默认 app -->
-    <property name="APP_NAME" value="${spring.application.name:app}"/>
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="app"/>
     <!-- profile，默认 dev -->
-    <property name="SPRING_PROFILE" value="${spring.profiles.active:-dev}"/>
+    <springProperty scope="context" name="SPRING_PROFILE" source="spring.profiles.active" defaultValue="dev"/>
     <!-- 日志根目录 -->
     <property name="LOG_HOME" value="logs/${APP_NAME}/${SPRING_PROFILE}"/>
     <!-- 日志输出 pattern -->
     <property name="PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS}{UTC} [%thread{20}] %highlight(%-5level) %logger{36} - [%X{serviceName:-APP}:%X{traceId:-NO-TRACE}:%X{spanId:-NO-SPAN}] %msg%n%ex{full}"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS,UTC}[UTC] [%thread{20}] %highlight(%-5level) ${APP_NAME} [%X{traceId:-NO-TRACE}:%X{spanId:-NO-SPAN}] %logger{36} - %msg%n%ex{full}"/>
 
     <!-- ===================== 控制台日志 ===================== -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
