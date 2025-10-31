@@ -21,7 +21,10 @@ public class ApplicationContextRunnerWrapper {
 
             SpringApplication app = new SpringApplication(applicationClass);
             app.setBannerMode(Banner.Mode.OFF);
-            return app.run(args);
+            ConfigurableApplicationContext context = app.run(args);
+
+            log.info("ApplicationRunnerWrapper|run success|name={}", applicationClass.getSimpleName());
+            return context;
         } catch (Exception e) {
             log.info("ApplicationRunnerWrapper|run|failed={}", e.getMessage(), e);
             // TODO: 可以在这里做补救操作，如通知、释放资源、记录状态等
