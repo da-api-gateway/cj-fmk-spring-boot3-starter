@@ -352,24 +352,26 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      * 手动控制事务执行单个批次 - 核心方法
      */
     private boolean executeManualTransactionBatch(List<T> batchList, String operation, int batchNumber) {
-        return Boolean.TRUE.equals(transactionTemplate.execute(status -> {
-            try (SqlSession batchSession = sqlSessionFactory.openSession(ExecutorType.BATCH, false)) {
-                M batchMapper = batchSession.getMapper(getMapperClass());
+        return Boolean.TRUE.equals(
+                transactionTemplate.execute(status -> {
+                    try (SqlSession batchSession = sqlSessionFactory.openSession(ExecutorType.BATCH, false)) {
+                        M batchMapper = batchSession.getMapper(getMapperClass());
 
-                for (T entity : batchList) {
-                    executeOperation(batchMapper, entity, operation);
-                }
+                        for (T entity : batchList) {
+                            executeOperation(batchMapper, entity, operation);
+                        }
 
-                // 执行批量语句并获取结果
-                batchSession.flushStatements();
-                return true;
+                        // 执行批量语句并获取结果
+                        batchSession.flushStatements();
+                        return true;
 
-            } catch (Exception e) {
-                log.error("Batch {} {} operation failed, transaction will rollback", batchNumber, operation.toLowerCase(), e);
-                status.setRollbackOnly();
-                return false;
-            }
-        }));
+                    } catch (Exception e) {
+                        log.error("Batch {} {} operation failed, transaction will rollback", batchNumber, operation.toLowerCase(), e);
+                        status.setRollbackOnly();
+                        return false;
+                    }
+                })
+        );
     }
 
     /**
