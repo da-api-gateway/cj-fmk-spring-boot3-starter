@@ -8,8 +8,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -400,17 +402,40 @@ public class FmkJacksonUtil {
     /**
      * JSON字符串转Map（指定值类型）
      */
+    /**
+     * JSON字符串转Map（指定值类型）
+     */
     public static <T> Map<String, T> parseMap(String json, Class<T> valueType) {
-        return parseObj(json, new TypeReference<Map<String, T>>() {
-        });
+        if (Objects.isNull(valueType) || StringUtils.isBlank(json)) {
+            log.warn("JacksonUtil|parseMap|参数为空");
+            return Maps.newHashMap();
+        }
+        try {
+            var typeFactory = getMapper().getTypeFactory();
+            var mapType = typeFactory.constructMapType(Map.class, String.class, valueType);
+            return getMapper().readValue(json, mapType);
+        } catch (IOException e) {
+            log.error("JacksonUtil|parseMap|反序列化失败: {}", e.getMessage(), e);
+            return Maps.newHashMap();
+        }
     }
 
     // ================ JsonNode相关方法 ================
 
     /**
      * 创建空的ObjectNode
+     *
+     * @deprecated 因为 jsonNode 不能操作，所以谨慎使用，建议使用 createObjectNode 代替
      */
+    @Deprecated
     public static JsonNode createJsonNode() {
+        return getMapper().createObjectNode();
+    }
+
+    /**
+     * 创建空的ArrayNode
+     */
+    public static ObjectNode createObjectNode() {
         return getMapper().createObjectNode();
     }
 

@@ -558,7 +558,7 @@ class FmkMapUtilTest {
 
     @Nested
     @DisplayName("Parameterized Tests")
-    class ParameterizedTests {
+    static class ParameterizedTests {
         
         static Stream<Arguments> emptyMapTestCases() {
             return Stream.of(

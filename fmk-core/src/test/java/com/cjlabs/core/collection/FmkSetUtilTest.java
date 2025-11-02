@@ -697,7 +697,7 @@ class FmkSetUtilTest {
 
     @Nested
     @DisplayName("Parameterized Tests")
-    class ParameterizedTests {
+    static class ParameterizedTests {
 
         static Stream<Arguments> emptySetTestCases() {
             return Stream.of(
