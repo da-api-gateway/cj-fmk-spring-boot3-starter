@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class FmkApacheHttpClientUtil {
+public final class FmkApacheHttpClientUtil {
     private static volatile CloseableHttpClient httpClient;
     private static volatile FmkHttpConfig config;
 

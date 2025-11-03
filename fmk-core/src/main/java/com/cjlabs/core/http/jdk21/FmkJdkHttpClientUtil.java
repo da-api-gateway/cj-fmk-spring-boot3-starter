@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class FmkJdkHttpClientUtil {
+public final class FmkJdkHttpClientUtil {
     // 默认 logger，类名就是日志的名字
     private static final Logger log = LoggerFactory.getLogger(FmkJdkHttpClientUtil.class);
 
