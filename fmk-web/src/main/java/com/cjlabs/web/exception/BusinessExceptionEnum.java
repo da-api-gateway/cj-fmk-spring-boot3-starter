@@ -34,7 +34,7 @@ public enum BusinessExceptionEnum implements IEnumStrException {
     /**
      * 数据未找到 (data not found)
      */
-    ORDER_NOT_FOUND("BUSINESS_ERROR", "DATA_NOT_FOUND"),
+    DATA_NOT_FOUND("BUSINESS_ERROR", "DATA_NOT_FOUND"),
 
     /**
      * 余额不足 (Insufficient balance)
