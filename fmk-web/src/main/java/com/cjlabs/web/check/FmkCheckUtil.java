@@ -36,41 +36,6 @@ public class FmkCheckUtil {
     }
 
     /**
-     * 检查条件是否为真，如果为真则抛出指定的ValidationException
-     *
-     * @param condition     要检查的条件
-     * @param exceptionEnum 要使用的异常枚举
-     */
-    public static void checkInput(boolean condition, ValidationExceptionEnum exceptionEnum) {
-        if (condition) {
-            throwValidation(exceptionEnum);
-        }
-    }
-
-    /**
-     * 检查条件是否为真，如果为真则抛出ValidationException
-     *
-     * @param condition 要检查的条件
-     */
-    public static void checkData(boolean condition) {
-        if (condition) {
-            throwValidation(ValidationExceptionEnum.INVALID_PARAMETER);
-        }
-    }
-
-    /**
-     * 检查条件是否为真，如果为真则抛出指定的ValidationException
-     *
-     * @param condition     要检查的条件
-     * @param exceptionEnum 要使用的异常枚举
-     */
-    public static void checkData(boolean condition, ValidationExceptionEnum exceptionEnum) {
-        if (condition) {
-            throwValidation(exceptionEnum);
-        }
-    }
-
-    /**
      * 抛出指定的SystemException
      *
      * @param exceptionEnum 要使用的异常枚举

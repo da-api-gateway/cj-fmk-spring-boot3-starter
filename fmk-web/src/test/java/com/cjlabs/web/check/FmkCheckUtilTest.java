@@ -98,7 +98,7 @@ class FmkCheckUtilTest {
         void checkInputWithEnumShouldThrowSpecificExceptionWhenConditionIsTrue() {
             // Act & Assert
             ValidationException exception = assertThrows(ValidationException.class,
-                    () -> FmkCheckUtil.checkInput(true, ValidationExceptionEnum.INVALID_PARAMETER));
+                    () -> FmkCheckUtil.throwValidation(true, ValidationExceptionEnum.INVALID_PARAMETER));
             assertEquals("VALIDATION_ERROR", exception.getErrorType());
             assertEquals(ValidationExceptionEnum.INVALID_PARAMETER.getKey(), exception.getErrorKey());
         }
@@ -107,7 +107,7 @@ class FmkCheckUtilTest {
         @DisplayName("checkInput(boolean, ValidationExceptionEnum) should not throw exception when condition is false")
         void checkInputWithEnumShouldNotThrowExceptionWhenConditionIsFalse() {
             // Act & Assert
-            assertDoesNotThrow(() -> FmkCheckUtil.checkInput(false, ValidationExceptionEnum.INVALID_PARAMETER));
+            assertDoesNotThrow(() -> FmkCheckUtil.throwValidation(false, ValidationExceptionEnum.INVALID_PARAMETER));
         }
     }
 
@@ -120,7 +120,7 @@ class FmkCheckUtilTest {
         void checkDataShouldThrowValidationExceptionWhenConditionIsTrue() {
             // Act & Assert
             ValidationException exception = assertThrows(ValidationException.class,
-                    () -> FmkCheckUtil.checkData(true));
+                    () -> FmkCheckUtil.checkInput(true));
             assertEquals("VALIDATION_ERROR", exception.getErrorType());
             assertEquals(ValidationExceptionEnum.INVALID_PARAMETER.getKey(), exception.getErrorKey());
         }
@@ -129,7 +129,7 @@ class FmkCheckUtilTest {
         @DisplayName("checkData(boolean) should not throw exception when condition is false")
         void checkDataShouldNotThrowExceptionWhenConditionIsFalse() {
             // Act & Assert
-            assertDoesNotThrow(() -> FmkCheckUtil.checkData(false));
+            assertDoesNotThrow(() -> FmkCheckUtil.checkInput(false));
         }
 
         @Test
@@ -137,7 +137,7 @@ class FmkCheckUtilTest {
         void checkDataWithEnumShouldThrowSpecificExceptionWhenConditionIsTrue() {
             // Act & Assert
             ValidationException exception = assertThrows(ValidationException.class,
-                    () -> FmkCheckUtil.checkData(true, ValidationExceptionEnum.INVALID_PARAMETER));
+                    () -> FmkCheckUtil.throwValidation(true, ValidationExceptionEnum.INVALID_PARAMETER));
             assertEquals("VALIDATION_ERROR", exception.getErrorType());
             assertEquals(ValidationExceptionEnum.INVALID_PARAMETER.getKey(), exception.getErrorKey());
         }
@@ -146,7 +146,7 @@ class FmkCheckUtilTest {
         @DisplayName("checkData(boolean, ValidationExceptionEnum) should not throw exception when condition is false")
         void checkDataWithEnumShouldNotThrowExceptionWhenConditionIsFalse() {
             // Act & Assert
-            assertDoesNotThrow(() -> FmkCheckUtil.checkData(false, ValidationExceptionEnum.INVALID_PARAMETER));
+            assertDoesNotThrow(() -> FmkCheckUtil.throwValidation(false, ValidationExceptionEnum.INVALID_PARAMETER));
         }
     }
 
