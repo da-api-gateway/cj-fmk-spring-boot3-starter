@@ -32,9 +32,9 @@ public enum BusinessExceptionEnum implements IEnumStrException {
 
     // ===================== 业务操作 =====================
     /**
-     * 订单未找到 (Order not found)
+     * 数据未找到 (data not found)
      */
-    ORDER_NOT_FOUND("BUSINESS_ERROR", "ORDER_NOT_FOUND"),
+    ORDER_NOT_FOUND("BUSINESS_ERROR", "DATA_NOT_FOUND"),
 
     /**
      * 余额不足 (Insufficient balance)

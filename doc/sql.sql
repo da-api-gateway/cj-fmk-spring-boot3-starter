@@ -2,65 +2,66 @@ create database if not exists hyx_test;
 
 use hyx_test;
 
-#
-# account_type ENUM(
-#     'WALLET',      -- 钱包账户（充值提现入口）
-#     'SPOT',        -- 现货账户（普通买卖）
-#     'MARGIN',      -- 杠杆账户（借币交易）
-#     'CONTRACT',    -- 合约账户（衍生品保证金）
-#     'EARN',        -- 理财账户（锁仓生息）
-#     'STAKING',     -- 质押账户（节点/链上质押）
-#     'BONUS',       -- 赠币账户（游戏或活动赠送）
-#     'FROZEN'       -- 冻结账户（风控冻结或系统冻结）
-# ) NOT NULL DEFAULT 'SPOT' COMMENT '账户类型';
-
-
-CREATE TABLE `user_account_asset`
+-- auto-generated definition
+create table fmk_dict
 (
-    `id`                 BIGINT          NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    `user_id`            BIGINT          NOT NULL COMMENT '用户ID',
-    `account_type`       VARCHAR(30)     NOT NULL COMMENT '账户类型：WALLET,SPOT,CONTRACT,EARN,STAKING,BONUS,FROZEN',
-
-    -- 币种信息
-    `chain_type`         VARCHAR(20)     NOT NULL COMMENT '链类型：ETH,BSC,SOL,TRON等',
-    `coin_symbol`        VARCHAR(20)     NOT NULL COMMENT '币种符号：USDT,ETH,BTC等',
-    `token_contract`     VARCHAR(100)             DEFAULT NULL COMMENT '代币合约地址（主链币为NULL）',
-    `decimals`           INT             NOT NULL DEFAULT 18 COMMENT '币种精度',
-
-    -- 余额信息（使用 DECIMAL 存储，避免精度丢失）
-    `available_balance`  DECIMAL(36, 18) NOT NULL DEFAULT 0 COMMENT '可用余额',
-    `frozen_balance`     DECIMAL(36, 18) NOT NULL DEFAULT 0 COMMENT '冻结余额（订单冻结、提现冻结等）',
-    `locked_balance`     DECIMAL(36, 18) NOT NULL DEFAULT 0 COMMENT '锁定余额（质押锁定、理财锁定等）',
-    `total_balance`      DECIMAL(36, 18) NOT NULL DEFAULT 0 COMMENT '总余额 = 可用 + 冻结 + 锁定',
-
-    -- 统计信息
-    `total_deposit`      DECIMAL(36, 18) NOT NULL DEFAULT 0 COMMENT '累计充值',
-    `total_withdraw`     DECIMAL(36, 18) NOT NULL DEFAULT 0 COMMENT '累计提现',
-    `total_transfer_in`  DECIMAL(36, 18) NOT NULL DEFAULT 0 COMMENT '累计转入',
-    `total_transfer_out` DECIMAL(36, 18) NOT NULL DEFAULT 0 COMMENT '累计转出',
-    `last_update_time`   DATETIME                 DEFAULT NULL COMMENT '最后更新时间',
-
-    -- 基础字段
-    `del_flag`           TINYINT         NOT NULL DEFAULT 0,
-    `create_user`        BIGINT,
-    `create_date`        DATETIME                 DEFAULT CURRENT_TIMESTAMP,
-    `update_user`        BIGINT,
-    `update_date`        DATETIME                 DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_user_account_coin` (`user_id`, `account_type`, `chain_type`, `coin_symbol`, `token_contract`),
-    KEY `idx_user_id` (`user_id`),
-    KEY `idx_account_type` (`account_type`),
-    KEY `idx_chain_coin` (`chain_type`, `coin_symbol`),
-    KEY `idx_user_account` (`user_id`, `account_type`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='用户多账户资产表';
+    id          bigint auto_increment comment '主键ID'
+        primary key,
+    dict_type   varchar(100)                                 not null comment '字典类型，例如 gender, currency, country',
+    dict_key    varchar(100)                                 not null comment '字典键，用于逻辑标识，如 MALE, USD',
+    sort_order  int                         default 0        null comment '排序号',
+    status      enum ('NORMAL', 'ABNORMAL') default 'NORMAL' null comment '状态：NORMAL 启用，ABNORMAL 禁用',
+    remark      varchar(255)                                 null comment '备注说明',
+    del_flag    enum ('NORMAL', 'ABNORMAL') default 'NORMAL' null comment '删除标志',
+    create_user varchar(50)                                  not null comment '创建用户',
+    create_date bigint                                       not null comment '创建时间（UTC毫秒）',
+    update_user varchar(50)                                  null comment '更新用户',
+    update_date bigint                                       not null comment '更新时间（UTC毫秒）',
+    constraint uk_type_key
+        unique (dict_type, dict_key)
+)
+    comment '系统字典主表';
 
 
+-- auto-generated definition
+create table fmk_dict_i18n
+(
+    id            bigint auto_increment comment '主键ID'
+        primary key,
+    dict_type     varchar(100)                                 not null comment '字典类型，与主表一致',
+    dict_key      varchar(100)                                 not null comment '字典键，与主表一致',
+    language_code varchar(10)                                  not null comment '语言代码，例如 zh, en, ja',
+    dict_value    varchar(255)                                 not null comment '显示名称，例如：男 / Male / 男性',
+    remark        varchar(512)                                 null comment '描述信息，可选',
+    del_flag      enum ('NORMAL', 'ABNORMAL') default 'NORMAL' null comment '删除标志',
+    create_user   varchar(50)                                  not null comment '创建用户',
+    create_date   bigint                                       not null comment '创建时间（UTC毫秒）',
+    update_user   varchar(50)                                  null comment '更新用户',
+    update_date   bigint                                       not null comment '更新时间（UTC毫秒）',
+    constraint uk_dict_i18n
+        unique (dict_type, dict_key, language_code)
+)
+    comment '系统字典多语言表';
 
 
-
-
+-- auto-generated definition
+create table fmk_multi_language_message
+(
+    id            bigint auto_increment comment 'Primary key ID; 主键ID'
+        primary key,
+    message_type  varchar(100)                                 not null comment 'Message type; 消息类型',
+    message_key   varchar(100)                                 not null comment 'Message key; 消息键',
+    language_code varchar(10)                                  not null comment 'Language code (en, zh); 语言代码',
+    message_value varchar(512)                                 not null comment 'Message content; 消息内容',
+    del_flag      enum ('NORMAL', 'ABNORMAL') default 'NORMAL' null comment 'Delete flag; 删除标志',
+    create_user   varchar(50)                                  not null comment 'Creator user ID; 创建用户ID',
+    create_date   bigint                                       not null comment 'Creation timestamp (UTC, milliseconds); 创建时间(UTC毫秒时间戳)',
+    update_user   varchar(50)                                  null comment 'Updater user ID or name; 更新用户ID或名称',
+    update_date   bigint                                       not null comment 'Update timestamp (UTC, milliseconds); 更新时间(UTC毫秒时间戳)',
+    constraint uk_message_locale
+        unique (message_type, message_key, language_code) comment 'Unique index on message and locale; 消息和语言唯一索引'
+)
+    comment 'System message content table; 系统消息内容表';
 
 
 
