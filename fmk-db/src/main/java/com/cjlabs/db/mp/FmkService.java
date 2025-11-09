@@ -2,9 +2,9 @@ package com.cjlabs.db.mp;
 
 import com.cjlabs.core.time.FmkInstantUtil;
 import com.cjlabs.core.types.longs.FmkUserId;
+import com.cjlabs.db.datasource.FmkTransactionTemplateUtil;
 import com.cjlabs.db.domain.FmkBaseEntity;
 import com.cjlabs.db.domain.FmkOrderItem;
-import com.cjlabs.db.tx.FmkTxTemplateUtil;
 import com.cjlabs.domain.enums.NormalEnum;
 import com.cjlabs.web.json.FmkJacksonUtil;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
@@ -35,7 +35,6 @@ import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -55,13 +54,12 @@ import java.util.stream.Collectors;
 public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntity> {
     public static final int DEFAULT_QUERY_LIMIT = 1000;
     public static final int DEFAULT_BATCH_SIZE = 1000;
-    private static final DateTimeFormatter DEFAULT_DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Autowired
     protected SqlSessionFactory sqlSessionFactory;
 
     @Autowired
-    protected FmkTxTemplateUtil fmkTxTemplateUtil;
+    protected FmkTransactionTemplateUtil fmkTxTemplateUtil;
 
     @Autowired
     protected TransactionTemplate transactionTemplate;
