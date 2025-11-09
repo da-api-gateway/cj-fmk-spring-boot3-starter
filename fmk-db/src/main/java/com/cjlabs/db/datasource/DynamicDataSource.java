@@ -1,7 +1,6 @@
 // 文件路径：fmk-db/src/main/java/com/cjlabs/db/datasource/DynamicDataSource.java
 package com.cjlabs.db.datasource;
 
-import com.cjlabs.web.json.FmkJacksonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 
