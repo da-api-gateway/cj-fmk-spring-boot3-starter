@@ -1,3 +1,4 @@
+com.cjlabs.db.datasource.FmkDataSourceExcludeConfiguration
 com.cjlabs.db.datasource.FmkMultiDataSourceProperties
 com.cjlabs.db.datasource.FmkMultiDataSourcePropertiesDeal
 com.cjlabs.db.datasource.FmkTransactionTemplateUtil

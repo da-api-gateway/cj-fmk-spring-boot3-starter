@@ -7,7 +7,11 @@ import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -28,6 +32,11 @@ import java.util.*;
 @Slf4j
 @Configuration
 @ConditionalOnProperty(prefix = "fmk.datasource", name = "enabled", havingValue = "true")
+@AutoConfigureBefore(DataSourceAutoConfiguration.class)
+// @EnableAutoConfiguration(exclude = {
+//         DataSourceAutoConfiguration.class,
+//         DataSourceTransactionManagerAutoConfiguration.class
+// })
 public class FmkMultiDataSourcePropertiesDeal {
 
     @Autowired
