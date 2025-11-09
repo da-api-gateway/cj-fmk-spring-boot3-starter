@@ -14,9 +14,9 @@ import java.util.function.Supplier;
  * 提供简洁的手动切换数据源方法
  * <p>
  * 使用示例：
- * 1. 简单切换：FmkDsUtil.use("secondary", () -> userMapper.selectById(id));
- * 2. 事务操作：FmkDsUtil.executeTx("secondary", () -> userMapper.insert(user));
- * 3. 无返回值：FmkDsUtil.run("secondary", () -> logMapper.insert(log));
+ * 1. 简单切换：FmkTransactionTemplateUtil.use("secondary", () -> userMapper.selectById(id));
+ * 2. 事务操作：FmkTransactionTemplateUtil.executeTx("secondary", () -> userMapper.insert(user));
+ * 3. 无返回值：FmkTransactionTemplateUtil.run("secondary", () -> logMapper.insert(log));
  */
 @Slf4j
 @Component
@@ -47,11 +47,14 @@ public class FmkTransactionTemplateUtil {
         String originalDs = DynamicDataSourceContextHolder.getDataSource();
         try {
             DynamicDataSourceContextHolder.setDataSource(dataSourceName);
-            log.debug("切换到数据源: {}", dataSourceName);
+            log.debug("FmkTransactionTemplateUtil|use|切换数据源: {} -> {}", originalDs, dataSourceName);
             return supplier.get();
+        } catch (Exception e) {
+            log.error("FmkTransactionTemplateUtil|use|执行数据源 [{}] 操作失败", dataSourceName, e);
+            throw e;
         } finally {
             DynamicDataSourceContextHolder.setDataSource(originalDs);
-            log.debug("恢复数据源: {}", originalDs);
+            log.debug("FmkTransactionTemplateUtil|use|恢复数据源: {}", originalDs);
         }
     }
 
@@ -77,9 +80,18 @@ public class FmkTransactionTemplateUtil {
      * @return 执行结果
      */
     public static <T> T executeTx(String dataSourceName, Supplier<T> supplier) {
-        return use(dataSourceName, () ->
-                tx.execute(status -> supplier.get())
-        );
+        return use(dataSourceName, () -> {
+            log.debug("FmkTransactionTemplateUtil|executeTx|开始事务: {}", dataSourceName);
+            return tx.execute(status -> {
+                try {
+                    return supplier.get();
+                } catch (Exception e) {
+                    log.error("FmkTransactionTemplateUtil|executeTx|事务执行失败，准备回滚", e);
+                    status.setRollbackOnly();
+                    throw e;
+                }
+            });
+        });
     }
 
     /**
@@ -90,9 +102,16 @@ public class FmkTransactionTemplateUtil {
      */
     public static void executeTx(String dataSourceName, Runnable runnable) {
         use(dataSourceName, () -> {
+            log.debug("FmkTransactionTemplateUtil|executeTx|开始事务: {}", dataSourceName);
             tx.execute(status -> {
-                runnable.run();
-                return null;
+                try {
+                    runnable.run();
+                    return null;
+                } catch (Exception e) {
+                    log.error("FmkTransactionTemplateUtil|executeTx|事务执行失败，准备回滚", e);
+                    status.setRollbackOnly();
+                    throw e;
+                }
             });
             return null;
         });
@@ -107,9 +126,10 @@ public class FmkTransactionTemplateUtil {
      * @return 执行结果
      */
     public static <T> T executeReadOnly(String dataSourceName, Supplier<T> supplier) {
-        return use(dataSourceName, () ->
-                txOnlyRead.execute(status -> supplier.get())
-        );
+        return use(dataSourceName, () -> {
+            log.debug("FmkTransactionTemplateUtil|executeReadOnly|开始只读事务: {}", dataSourceName);
+            return txOnlyRead.execute(status -> supplier.get());
+        });
     }
 
     /**
@@ -120,6 +140,7 @@ public class FmkTransactionTemplateUtil {
      */
     public static void executeReadOnly(String dataSourceName, Runnable runnable) {
         use(dataSourceName, () -> {
+            log.debug("FmkTransactionTemplateUtil|executeReadOnly|开始只读事务: {}", dataSourceName);
             txOnlyRead.execute(status -> {
                 runnable.run();
                 return null;

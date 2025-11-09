@@ -1,7 +1,6 @@
 package com.cjlabs.db.datasource;
 
 import com.alibaba.ttl.TransmittableThreadLocal;
-import com.cjlabs.web.json.FmkJacksonUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -28,11 +27,20 @@ public class DynamicDataSourceContextHolder {
      */
     public static void setDataSource(String dataSource) {
         if (dataSource == null || dataSource.trim().isEmpty()) {
-            log.info("DynamicDataSourceContextHolder|setDataSource|数据源名称为空，将使用默认数据源");
+            log.warn("DynamicDataSourceContextHolder|setDataSource|数据源名称为空，将使用默认数据源");
             CONTEXT_HOLDER.set(DEFAULT_DATASOURCE);
             return;
         }
-        log.info("DynamicDataSourceContextHolder|setDataSource|切换数据源到={}", dataSource);
+
+        // 验证数据源是否存在（可选，通过配置启用严格模式）
+        if (FmkMultiDataSourcePropertiesDeal.isStrictMode()
+                && !FmkMultiDataSourcePropertiesDeal.isDataSourceAvailable(dataSource)) {
+            log.error("DynamicDataSourceContextHolder|setDataSource|数据源 [{}] 不存在，可用数据源: {}",
+                    dataSource, FmkMultiDataSourcePropertiesDeal.getAvailableDataSources());
+            throw new IllegalArgumentException("数据源 [" + dataSource + "] 不存在");
+        }
+
+        log.debug("DynamicDataSourceContextHolder|setDataSource|切换数据源到={}", dataSource);
         CONTEXT_HOLDER.set(dataSource);
     }
 
@@ -50,7 +58,7 @@ public class DynamicDataSourceContextHolder {
      * 清除当前线程的数据源
      */
     public static void clearDataSource() {
-        log.info("DynamicDataSourceContextHolder|clearDataSource|清除数据源");
+        log.debug("DynamicDataSourceContextHolder|clearDataSource|清除数据源");
         CONTEXT_HOLDER.remove();
     }
 
@@ -58,7 +66,7 @@ public class DynamicDataSourceContextHolder {
      * 重置为默认数据源
      */
     public static void resetToDefault() {
-        log.info("DynamicDataSourceContextHolder|resetToDefault|resetToDefault");
+        log.debug("DynamicDataSourceContextHolder|resetToDefault|重置为默认数据源");
         CONTEXT_HOLDER.set(DEFAULT_DATASOURCE);
     }
 }

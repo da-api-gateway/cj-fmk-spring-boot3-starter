@@ -33,6 +33,11 @@ public class FmkMultiDataSourceProperties {
     private boolean validateOnStartup = true;
 
     /**
+     * 严格模式：切换到不存在的数据源时抛异常（默认false使用master）
+     */
+    private boolean strictMode = false;
+
+    /**
      * 多个数据源配置
      */
     private Map<String, HikariConfig> datasources = new LinkedHashMap<>();
