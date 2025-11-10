@@ -1,6 +1,7 @@
 // 文件路径：fmk-db/src/main/java/com/cjlabs/db/datasource/FmkDsUtil.java
 package com.cjlabs.db.datasource;
 
+import com.cjlabs.web.json.FmkJacksonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,19 +22,12 @@ import java.util.function.Supplier;
 @Slf4j
 @Component
 public class FmkTransactionTemplateUtil {
-
-    private static TransactionTemplate tx;
-    private static TransactionTemplate txOnlyRead;
-
     @Autowired
-    public void setTx(@Qualifier("tx") TransactionTemplate tx) {
-        FmkTransactionTemplateUtil.tx = tx;
-    }
-
+    @Qualifier(value = "tx")
+    private TransactionTemplate tx;
     @Autowired
-    public void setTxOnlyRead(@Qualifier("txOnlyRead") TransactionTemplate txOnlyRead) {
-        FmkTransactionTemplateUtil.txOnlyRead = txOnlyRead;
-    }
+    @Qualifier(value = "txOnlyRead")
+    private TransactionTemplate txOnlyRead;
 
     /**
      * 在指定数据源上执行操作（有返回值）
@@ -43,7 +37,7 @@ public class FmkTransactionTemplateUtil {
      * @param <T>            返回值类型
      * @return 执行结果
      */
-    public static <T> T use(String dataSourceName, Supplier<T> supplier) {
+    public <T> T use(String dataSourceName, Supplier<T> supplier) {
         String originalDs = DynamicDataSourceContextHolder.getDataSource();
         try {
             DynamicDataSourceContextHolder.setDataSource(dataSourceName);
@@ -64,7 +58,7 @@ public class FmkTransactionTemplateUtil {
      * @param dataSourceName 数据源名称
      * @param runnable       业务逻辑
      */
-    public static void run(String dataSourceName, Runnable runnable) {
+    public void run(String dataSourceName, Runnable runnable) {
         use(dataSourceName, () -> {
             runnable.run();
             return null;
@@ -79,7 +73,7 @@ public class FmkTransactionTemplateUtil {
      * @param <T>            返回值类型
      * @return 执行结果
      */
-    public static <T> T executeTx(String dataSourceName, Supplier<T> supplier) {
+    public <T> T executeTx(String dataSourceName, Supplier<T> supplier) {
         return use(dataSourceName, () -> {
             log.debug("FmkTransactionTemplateUtil|executeTx|开始事务: {}", dataSourceName);
             return tx.execute(status -> {
@@ -100,7 +94,7 @@ public class FmkTransactionTemplateUtil {
      * @param dataSourceName 数据源名称
      * @param runnable       业务逻辑
      */
-    public static void executeTx(String dataSourceName, Runnable runnable) {
+    public void executeTx(String dataSourceName, Runnable runnable) {
         use(dataSourceName, () -> {
             log.debug("FmkTransactionTemplateUtil|executeTx|开始事务: {}", dataSourceName);
             tx.execute(status -> {
@@ -125,7 +119,7 @@ public class FmkTransactionTemplateUtil {
      * @param <T>            返回值类型
      * @return 执行结果
      */
-    public static <T> T executeReadOnly(String dataSourceName, Supplier<T> supplier) {
+    public <T> T executeReadOnly(String dataSourceName, Supplier<T> supplier) {
         return use(dataSourceName, () -> {
             log.debug("FmkTransactionTemplateUtil|executeReadOnly|开始只读事务: {}", dataSourceName);
             return txOnlyRead.execute(status -> supplier.get());
@@ -138,7 +132,7 @@ public class FmkTransactionTemplateUtil {
      * @param dataSourceName 数据源名称
      * @param runnable       业务逻辑
      */
-    public static void executeReadOnly(String dataSourceName, Runnable runnable) {
+    public void executeReadOnly(String dataSourceName, Runnable runnable) {
         use(dataSourceName, () -> {
             log.debug("FmkTransactionTemplateUtil|executeReadOnly|开始只读事务: {}", dataSourceName);
             txOnlyRead.execute(status -> {
@@ -149,4 +143,49 @@ public class FmkTransactionTemplateUtil {
         });
     }
 
+
+    // ========== 🔥 使用当前数据源的便捷方法（新增） ==========
+
+    /**
+     * 在当前数据源上执行事务（有返回值）
+     */
+    public <T> T executeTx(Supplier<T> supplier) {
+        String currentDs = DynamicDataSourceContextHolder.getDataSource();
+        log.info("FmkTransactionTemplateUtil|executeTx|在当前数据源 [{}] 上执行事务", currentDs);
+        return executeTx(currentDs, supplier);
+    }
+
+    /**
+     * 在当前数据源上执行事务（无返回值）
+     */
+    public void executeTx(Runnable runnable) {
+        String currentDs = DynamicDataSourceContextHolder.getDataSource();
+        log.info("FmkTransactionTemplateUtil|executeTx|在当前数据源 [{}] 上执行事务", currentDs);
+        executeTx(currentDs, runnable);
+    }
+
+    /**
+     * 在当前数据源上执行只读事务（有返回值）
+     */
+    public <T> T executeReadOnly(Supplier<T> supplier) {
+        String currentDs = DynamicDataSourceContextHolder.getDataSource();
+        log.info("FmkTransactionTemplateUtil|executeReadOnly|在当前数据源 [{}] 上执行只读事务", currentDs);
+        return executeReadOnly(currentDs, supplier);
+    }
+
+    /**
+     * 在当前数据源上执行只读事务（无返回值）
+     */
+    public void executeReadOnly(Runnable runnable) {
+        String currentDs = DynamicDataSourceContextHolder.getDataSource();
+        log.info("FmkTransactionTemplateUtil|executeReadOnly|在当前数据源 [{}] 上执行只读事务", currentDs);
+        executeReadOnly(currentDs, runnable);
+    }
+
+    /**
+     * 获取当前数据源名称
+     */
+    public String getCurrentDataSource() {
+        return DynamicDataSourceContextHolder.getDataSource();
+    }
 }

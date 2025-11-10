@@ -29,7 +29,6 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
@@ -59,13 +58,12 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     protected SqlSessionFactory sqlSessionFactory;
 
     @Autowired
-    protected FmkTransactionTemplateUtil fmkTxTemplateUtil;
+    protected FmkTransactionTemplateUtil fmkTransactionTemplateUtil;
+
+    private final M baseMapper;  // ← 保留 final
 
     @Autowired
-    protected TransactionTemplate transactionTemplate;
-
-    private final M baseMapper;
-
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     protected FmkService(M mapper) {
         this.baseMapper = mapper;
     }
@@ -350,8 +348,9 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      * 手动控制事务执行单个批次 - 核心方法
      */
     private boolean executeManualTransactionBatch(List<T> batchList, String operation, int batchNumber) {
+        // 🔥 不需要指定数据源，自动使用当前数据源
         return Boolean.TRUE.equals(
-                transactionTemplate.execute(status -> {
+                fmkTransactionTemplateUtil.executeTx(() -> {
                     try (SqlSession batchSession = sqlSessionFactory.openSession(ExecutorType.BATCH, false)) {
                         M batchMapper = batchSession.getMapper(getMapperClass());
 
@@ -359,14 +358,12 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
                             executeOperation(batchMapper, entity, operation);
                         }
 
-                        // 执行批量语句并获取结果
                         batchSession.flushStatements();
                         return true;
 
                     } catch (Exception e) {
-                        log.error("Batch {} {} operation failed, transaction will rollback", batchNumber, operation.toLowerCase(), e);
-                        status.setRollbackOnly();
-                        return false;
+                        log.error("Batch {} {} operation failed", batchNumber, operation.toLowerCase(), e);
+                        throw e;
                     }
                 })
         );
