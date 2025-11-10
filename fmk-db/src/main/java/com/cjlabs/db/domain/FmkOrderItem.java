@@ -1,6 +1,7 @@
 package com.cjlabs.db.domain;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.cjlabs.db.enums.DbOrderEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,14 +24,14 @@ public class FmkOrderItem implements Serializable {
     /**
      * 是否正序排列，默认 true
      */
-    private boolean asc = true;
+    private DbOrderEnum orderFlag;
 
     public static FmkOrderItem asc(String column) {
-        return build(column, true);
+        return build(column, DbOrderEnum.ASC);
     }
 
     public static FmkOrderItem desc(String column) {
-        return build(column, false);
+        return build(column, DbOrderEnum.DESC);
     }
 
     public static List<FmkOrderItem> ascList(String... columns) {
@@ -41,8 +42,8 @@ public class FmkOrderItem implements Serializable {
         return Arrays.stream(columns).map(FmkOrderItem::desc).collect(Collectors.toList());
     }
 
-    private static FmkOrderItem build(String column, boolean asc) {
-        return new FmkOrderItem().setColumn(column).setAsc(asc);
+    private static FmkOrderItem build(String column, DbOrderEnum orderFlag) {
+        return new FmkOrderItem().setColumn(column).setOrderFlag(orderFlag);
     }
 
     public FmkOrderItem setColumn(String column) {
@@ -50,8 +51,8 @@ public class FmkOrderItem implements Serializable {
         return this;
     }
 
-    public FmkOrderItem setAsc(boolean asc) {
-        this.asc = asc;
+    public FmkOrderItem setOrderFlag(DbOrderEnum orderFlag) {
+        this.orderFlag = orderFlag;
         return this;
     }
 }

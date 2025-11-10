@@ -800,7 +800,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             // 使用 LambdaQueryWrapper 添加排序条件
             if (wrapper instanceof LambdaQueryWrapper) {
                 // 对于 LambdaQueryWrapper，收集排序条件
-                String orderDirection = orderItem.isAsc() ? "ASC" : "DESC";
+                String orderDirection = orderItem.getOrderFlag().getCode();
                 orderClauses.add(finalColumn + " " + orderDirection);
             }
         }

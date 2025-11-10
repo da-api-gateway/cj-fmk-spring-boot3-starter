@@ -13,12 +13,13 @@ public enum DbOrderEnum implements IEnumStr {
     /**
      * 升序
      */
-    ASC("ASC"),
-    
+    ASC("ASC", "升序"),
+
     /**
      * 降序
      */
-    DESC("DESC");
+    DESC("DESC", "降序"),
+    ;
 
     private final String code;
     private final String msg;
