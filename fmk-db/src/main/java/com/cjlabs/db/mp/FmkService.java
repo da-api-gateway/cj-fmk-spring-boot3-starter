@@ -5,6 +5,9 @@ import com.cjlabs.core.types.longs.FmkUserId;
 import com.cjlabs.db.datasource.FmkTransactionTemplateUtil;
 import com.cjlabs.db.domain.FmkBaseEntity;
 import com.cjlabs.db.domain.FmkOrderItem;
+import com.cjlabs.db.enums.BatchOperationTypeEnum;
+import com.cjlabs.db.enums.DbAggregateEnum;
+import com.cjlabs.db.enums.DbFieldNameEnum;
 import com.cjlabs.domain.enums.NormalEnum;
 import com.cjlabs.web.json.FmkJacksonUtil;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
@@ -128,7 +131,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public int removeById(Serializable id) {
+    public int deleteById(Serializable id) {
         if (Objects.isNull(id)) {
             return 0;
         }
@@ -194,7 +197,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
         for (List<T> batchList : Lists.partition(list, batchSize)) {
             setInsertDefault(batchList);
-            boolean batchSuccess = executeManualTransactionBatch(batchList, "INSERT", batchNumber);
+            boolean batchSuccess = executeManualTransactionBatch(batchList, BatchOperationTypeEnum.INSERT, batchNumber);
             if (batchSuccess) {
                 processedCount += batchList.size();
             } else {
@@ -228,7 +231,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
         for (List<T> batchList : Lists.partition(list, batchSize)) {
             setUpdateDefault(batchList);
-            boolean batchSuccess = executeManualTransactionBatch(batchList, "UPDATE", batchNumber);
+            boolean batchSuccess = executeManualTransactionBatch(batchList, BatchOperationTypeEnum.UPDATE, batchNumber);
 
             if (batchSuccess) {
                 processedCount += batchList.size();
@@ -347,7 +350,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     /**
      * 手动控制事务执行单个批次 - 核心方法
      */
-    private boolean executeManualTransactionBatch(List<T> batchList, String operation, int batchNumber) {
+    private boolean executeManualTransactionBatch(List<T> batchList, BatchOperationTypeEnum operation, int batchNumber) {
         // 🔥 不需要指定数据源，自动使用当前数据源
         return Boolean.TRUE.equals(
                 fmkTransactionTemplateUtil.executeTx(() -> {
@@ -362,7 +365,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
                         return true;
 
                     } catch (Exception e) {
-                        log.error("Batch {} {} operation failed", batchNumber, operation.toLowerCase(), e);
+                        log.error("Batch {} {} operation failed", batchNumber, operation, e);
                         throw e;
                     }
                 })
@@ -372,12 +375,12 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     /**
      * 执行具体的操作
      */
-    private void executeOperation(M batchMapper, T entity, String operation) {
+    private void executeOperation(M batchMapper, T entity, BatchOperationTypeEnum operation) {
         switch (operation) {
-            case "INSERT":
+            case BatchOperationTypeEnum.INSERT:
                 batchMapper.insert(entity);
                 break;
-            case "UPDATE":
+            case BatchOperationTypeEnum.UPDATE:
                 batchMapper.updateById(entity);
                 break;
             default:
@@ -607,7 +610,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
         QueryWrapper<T> wrapper = buildQueryWrapper();
         wrapper.in(inField, inValueList)
-                .eq("del_flag", NormalEnum.NORMAL)
+                .eq(DbFieldNameEnum.DEL_FLAG.getCode(), NormalEnum.NORMAL)
                 .groupBy(groupByField)
                 .select(groupByField + ", COUNT(" + inField + ") as count_value");
 
@@ -616,7 +619,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         return results.stream()
                 .collect(Collectors.toMap(
                         map -> String.valueOf(map.get(groupByField)),
-                        map -> Integer.valueOf(map.get("count_value").toString()),
+                        map -> Integer.valueOf(map.get(DbAggregateEnum.COUNT_VALUE.getCode()).toString()),
                         (existing, replacement) -> existing
                 ));
     }
@@ -635,7 +638,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
         QueryWrapper<T> wrapper = buildQueryWrapper();
         wrapper.in(inField, inValueList)
-                .eq("del_flag", NormalEnum.NORMAL)
+                .eq(DbFieldNameEnum.DEL_FLAG.getCode(), NormalEnum.NORMAL)
                 .groupBy(groupByField)
                 .select(groupByField + ", COALESCE(SUM(" + sumField + "), 0) as sum_value");
 
@@ -645,7 +648,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             return results.stream()
                     .collect(Collectors.toMap(
                             map -> String.valueOf(map.get(groupByField)),
-                            map -> new BigDecimal(map.get("sum_value").toString()),
+                            map -> new BigDecimal(map.get(DbAggregateEnum.SUM_VALUE.getCode()).toString()),
                             (existing, replacement) -> existing
                     ));
         } catch (Exception e) {
@@ -662,7 +665,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
                                                    String groupByField,
                                                    QueryWrapper<T> wrapper) {
         try {
-            wrapper.eq("del_flag", NormalEnum.NORMAL)
+            wrapper.eq(DbFieldNameEnum.DEL_FLAG.getCode(), NormalEnum.NORMAL)
                     .groupBy(groupByField)
                     .select(groupByField + ", COALESCE(SUM(" + sumField + "), 0) as sum_value");
 
@@ -671,7 +674,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             return results.stream()
                     .collect(Collectors.toMap(
                             map -> String.valueOf(map.get(groupByField)),
-                            map -> new BigDecimal(map.get("sum_value").toString()),
+                            map -> new BigDecimal(map.get(DbAggregateEnum.SUM_VALUE.getCode()).toString()),
                             (existing, replacement) -> existing
                     ));
         } catch (Exception e) {
@@ -724,7 +727,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     private boolean containsDelFlagCondition(Wrapper<T> wrapper) {
         String sqlSegment = wrapper.getSqlSegment();
         return sqlSegment != null && (
-                sqlSegment.contains("del_flag") || sqlSegment.contains("delFlag")
+                sqlSegment.contains(DbFieldNameEnum.DEL_FLAG.getCode()) || sqlSegment.contains(DbFieldNameEnum.DEL_FLAG.getMsg())
         );
     }
 
