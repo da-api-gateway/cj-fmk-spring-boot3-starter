@@ -52,7 +52,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Getter
 @Setter
-@Service
 public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntity> {
     public static final int DEFAULT_QUERY_LIMIT = 1000;
     public static final int DEFAULT_BATCH_SIZE = 1000;

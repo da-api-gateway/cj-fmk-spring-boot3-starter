@@ -3,4 +3,3 @@ com.cjlabs.db.datasource.FmkMultiDataSourceProperties
 com.cjlabs.db.datasource.FmkMultiDataSourcePropertiesDeal
 com.cjlabs.db.datasource.FmkTransactionTemplateUtil
 com.cjlabs.db.MybatisPlusConfig
-com.cjlabs.db.mp.FmkService
