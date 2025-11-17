@@ -94,7 +94,7 @@ public final class FmkJdkWebSocketClientUtil {
         }
 
         if (subprotocols != null && !subprotocols.isEmpty()) {
-            String mostPreferred = subprotocols.getFirst();
+            String mostPreferred = subprotocols.get(0);
             String[] lesserPreferred = subprotocols.size() > 1
                     ? subprotocols.subList(1, subprotocols.size()).toArray(new String[0])
                     : new String[0];

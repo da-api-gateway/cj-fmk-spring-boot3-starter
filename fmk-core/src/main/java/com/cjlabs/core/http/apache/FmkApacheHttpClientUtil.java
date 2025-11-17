@@ -231,7 +231,7 @@ public final class FmkApacheHttpClientUtil {
         StringBuilder sb = new StringBuilder();
         if (formData != null && !formData.isEmpty()) {
             for (Map.Entry<String, String> entry : formData.entrySet()) {
-                if (!sb.isEmpty()) {
+                if (sb.length() != 0) {
                     sb.append("&");
                 }
                 sb.append(entry.getKey()).append("=").append(entry.getValue());

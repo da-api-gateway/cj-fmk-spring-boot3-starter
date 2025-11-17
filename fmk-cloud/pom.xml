@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.cjlabs</groupId>
-        <artifactId>cj-fmk-spring-boot3-starter</artifactId>
-        <version>20250924_v1</version>
+        <artifactId>cj-fmk-spring-boot2-starter</artifactId>
+        <version>20251117_v1</version>
     </parent>
 
     <artifactId>fmk-cloud</artifactId>
@@ -16,7 +16,7 @@
         <dependency>
             <groupId>com.cjlabs</groupId>
             <artifactId>fmk-web</artifactId>
-            <version>20250924_v1</version>
+            <version>${fmk-web.version}</version>
         </dependency>
 
         <!-- Nacos 服务发现 -->

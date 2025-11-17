@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.cjlabs</groupId>
-        <artifactId>cj-fmk-spring-boot3-starter</artifactId>
-        <version>20250924_v1</version>
+        <artifactId>cj-fmk-spring-boot2-starter</artifactId>
+        <version>20251117_v1</version>
     </parent>
 
     <artifactId>fmk-db</artifactId>
@@ -35,7 +35,7 @@
         <dependency>
             <groupId>com.cjlabs</groupId>
             <artifactId>fmk-domain</artifactId>
-            <version>20250924_v1</version>
+            <version>${fmk-domain.version}</version>
             <scope>compile</scope>
         </dependency>
 

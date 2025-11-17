@@ -4,8 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.cjlabs</groupId>
-    <artifactId>cj-fmk-spring-boot3-starter</artifactId>
-    <version>20250924_v1</version>
+    <artifactId>cj-fmk-spring-boot2-starter</artifactId>
+    <version>20251117_v1</version>
 
     <packaging>pom</packaging>
     <modules>
@@ -19,30 +19,32 @@
     </modules>
 
     <properties>
-        <java.version>21</java.version>
+        <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <fmk-core.version>20250924_v1</fmk-core.version>
-        <fmk-db.version>20250924_v1</fmk-db.version>
-        <fmk-cloud.version>20250924_v1</fmk-cloud.version>
-        <fmk-web.version>20250924_v1</fmk-web.version>
-        <fmk-tg.version>20250924_v1</fmk-tg.version>
-        <fmk-domain.version>20250924_v1</fmk-domain.version>
+        <fmk-boot.version>20251117_v1</fmk-boot.version>
+        <fmk-cloud.version>20251117_v1</fmk-cloud.version>
+        <fmk-core.version>20251117_v1</fmk-core.version>
+        <fmk-db.version>20251117_v1</fmk-db.version>
+        <fmk-domain.version>20251117_v1</fmk-domain.version>
+        <fmk-tg.version>20251117_v1</fmk-tg.version>
+        <fmk-web.version>20251117_v1</fmk-web.version>
 
-        <spring-boot.version>3.5.6</spring-boot.version>
-        <spring-cloud.version>2025.0.0</spring-cloud.version>
-        <spring-cloud-alibaba.version>2023.0.3.3</spring-cloud-alibaba.version>
+        <!-- 修改这些版本 -->
+        <spring-boot.version>2.7.18</spring-boot.version>
+        <spring-cloud.version>2021.0.8</spring-cloud.version>
+        <spring-cloud-alibaba.version>2021.0.5.0</spring-cloud-alibaba.version>
 
-        <opentelemetry.version>1.55.0</opentelemetry.version>
-
-        <telegrambots.version>9.1.0</telegrambots.version>
         <guava.version>33.5.0-jre</guava.version>
         <apache-commons-collections4.version>4.5.0</apache-commons-collections4.version>
         <apache-commons-lang3.version>3.18.0</apache-commons-lang3.version>
         <apache-commons-text.version>1.14.0</apache-commons-text.version>
-        <mybatis-plus.version>3.5.14</mybatis-plus.version>
-        <mysql.version>9.4.0</mysql.version>
+
+        <!-- MyBatis Plus 版本调整 -->
+        <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <mysql.version>8.0.33</mysql.version>  <!-- MySQL 9.x 可能有兼容性问题，降级到 8.x -->
+
         <ttl.version>2.14.5</ttl.version>
         <lombok.version>1.18.40</lombok.version>
         <junit.version>5.11.0</junit.version>
@@ -85,14 +87,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- OpenTelemetry BOM -->
-<!--            <dependency>-->
-<!--                <groupId>io.opentelemetry</groupId>-->
-<!--                <artifactId>opentelemetry-bom</artifactId>-->
-<!--                <version>${opentelemetry.version}</version>-->
-<!--                <type>pom</type>-->
-<!--                <scope>import</scope>-->
-<!--            </dependency>-->
 
             <dependency>
                 <groupId>org.springframework.boot</groupId>
@@ -160,24 +154,8 @@
             </dependency>
 
             <dependency>
-                <groupId>org.telegram</groupId>
-                <artifactId>telegrambots-longpolling</artifactId>
-                <version>${telegrambots.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.telegram</groupId>
-                <artifactId>telegrambots-meta</artifactId>
-                <version>${telegrambots.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.telegram</groupId>
-                <artifactId>telegrambots-client</artifactId>
-                <version>${telegrambots.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
             <dependency>
