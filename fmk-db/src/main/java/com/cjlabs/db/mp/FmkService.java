@@ -30,7 +30,6 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
@@ -284,7 +283,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             log.debug("ID list is empty, skipping batch delete");
             return 0;
         }
-        int deleted = getBaseMapper().deleteByIds(idList);
+        int deleted = getBaseMapper().deleteBatchIds(idList);
         log.info("FmkService|deleteByIdList|deletedCount={}", deleted);
         return deleted;
     }
@@ -318,7 +317,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             return new ArrayList<>();
         }
 
-        List<T> result = this.baseMapper.selectByIds(idList);
+        List<T> result = this.baseMapper.selectBatchIds(idList);
         log.debug("Batch query completed: requested={}, found={}", idList.size(), result.size());
         return result;
     }
@@ -376,10 +375,10 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     private void executeOperation(M batchMapper, T entity, BatchOperationTypeEnum operation) {
         switch (operation) {
-            case BatchOperationTypeEnum.INSERT:
+            case INSERT:
                 batchMapper.insert(entity);
                 break;
-            case BatchOperationTypeEnum.UPDATE:
+            case UPDATE:
                 batchMapper.updateById(entity);
                 break;
             default:
@@ -697,7 +696,10 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         }
 
         // 如果是 LambdaQueryWrapper
-        if (originalWrapper instanceof LambdaQueryWrapper<T> lambdaWrapper) {
+        // JDK 11 兼容写法：不使用 pattern matching
+        if (originalWrapper instanceof LambdaQueryWrapper) {
+            @SuppressWarnings("unchecked")
+            LambdaQueryWrapper<T> lambdaWrapper = (LambdaQueryWrapper<T>) originalWrapper;
             // 检查是否已经包含 delFlag 条件
             if (!containsDelFlagCondition(lambdaWrapper)) {
                 lambdaWrapper.eq(T::getDelFlag, NormalEnum.NORMAL);
@@ -742,11 +744,17 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         String userId = fmkUserId.getValue().toString();
 
         // 根据 wrapper 类型添加条件
-        if (wrapper instanceof LambdaQueryWrapper<T> lambdaWrapper) {
+        // JDK 11 兼容写法：不使用 pattern matching
+        if (wrapper instanceof LambdaQueryWrapper) {
+            @SuppressWarnings("unchecked")
+            LambdaQueryWrapper<T> lambdaWrapper = (LambdaQueryWrapper<T>) wrapper;
             lambdaWrapper.eq(T::getCreateUser, userId);
         }
     }
 
+    /**
+     * 添加排序条件 - 支持 LambdaQueryWrapper
+     */
     /**
      * 添加排序条件 - 支持 LambdaQueryWrapper
      */
@@ -805,7 +813,10 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         }
 
         // 对于 LambdaQueryWrapper，使用 last 方法添加 ORDER BY 子句
-        if (wrapper instanceof LambdaQueryWrapper<T> lambdaWrapper && !orderClauses.isEmpty()) {
+        // JDK 11 兼容写法：不使用 pattern matching
+        if (wrapper instanceof LambdaQueryWrapper && !orderClauses.isEmpty()) {
+            @SuppressWarnings("unchecked")
+            LambdaQueryWrapper<T> lambdaWrapper = (LambdaQueryWrapper<T>) wrapper;
             String orderByClause = "ORDER BY " + String.join(", ", orderClauses);
             lambdaWrapper.last(orderByClause);
         }

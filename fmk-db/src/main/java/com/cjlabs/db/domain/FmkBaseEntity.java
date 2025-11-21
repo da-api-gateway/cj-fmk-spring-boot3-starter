@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 
@@ -18,7 +17,6 @@ import java.time.Instant;
 @Getter
 @Setter
 public abstract class FmkBaseEntity implements Serializable {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     /**

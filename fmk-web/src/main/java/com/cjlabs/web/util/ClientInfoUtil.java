@@ -3,9 +3,9 @@ package com.cjlabs.web.util;
 
 import com.cjlabs.core.strings.FmkStringUtil;
 import com.cjlabs.web.threadlocal.ClientInfo;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
