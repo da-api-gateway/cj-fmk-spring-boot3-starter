@@ -42,7 +42,7 @@
         <apache-commons-text.version>1.14.0</apache-commons-text.version>
 
         <!-- MyBatis Plus 版本调整 -->
-        <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <mybatis-plus.version>3.5.3.1</mybatis-plus.version>
         <mysql.version>8.0.33</mysql.version>  <!-- MySQL 9.x 可能有兼容性问题，降级到 8.x -->
 
         <ttl.version>2.14.5</ttl.version>
