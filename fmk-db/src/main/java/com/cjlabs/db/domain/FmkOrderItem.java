@@ -1,6 +1,7 @@
 package com.cjlabs.db.domain;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.cjlabs.core.strings.FmkStringUtil;
 import com.cjlabs.db.enums.DbOrderEnum;
 import lombok.Getter;
 import lombok.Setter;
@@ -45,7 +46,7 @@ public class FmkOrderItem implements Serializable {
     }
 
     public FmkOrderItem setColumn(String column) {
-        this.column = StringUtils.replaceAllBlank(column);
+        this.column = FmkStringUtil.replaceAllBlank(column);
         return this;
     }
 

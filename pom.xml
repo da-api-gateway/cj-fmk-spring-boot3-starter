@@ -49,8 +49,8 @@
         <lombok.version>1.18.40</lombok.version>
         <junit.version>5.11.0</junit.version>
         <mockito.version>5.8.0</mockito.version>
-        <slf4j.version>2.0.13</slf4j.version>
-        <logbak.version>1.5.12</logbak.version>
+        <slf4j.version>1.7.36</slf4j.version>
+        <logback.version>1.2.12</logback.version>
         <apache-http.version>5.5.1</apache-http.version>
         <apache-http-core.version>5.3.6</apache-http-core.version>
 
@@ -181,12 +181,12 @@
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
-                <version>${logbak.version}</version>
+                <version>${logback.version}</version>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-core</artifactId>
-                <version>${logbak.version}</version>
+                <version>${logback.version}</version>
             </dependency>
 
             <dependency>

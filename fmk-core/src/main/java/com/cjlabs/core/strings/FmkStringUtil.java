@@ -8,6 +8,7 @@ import org.apache.commons.text.WordUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.UUID;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -18,6 +19,7 @@ public class FmkStringUtil {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
     private static final Pattern URL_PATTERN = Pattern.compile("^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
+    private static final Pattern REPLACE_BLANK = Pattern.compile("'|\"|\\<|\\>|&|\\*|\\+|=|#|-|;|\\s*|\t|\r|\n");
 
     /**
      * 私有构造函数，防止实例化
@@ -315,6 +317,11 @@ public class FmkStringUtil {
      */
     public static String replaceAll(String str, String regex, String replacement) {
         return str != null ? str.replaceAll(regex, replacement) : null;
+    }
+
+    public static String replaceAllBlank(String str) {
+        Matcher matcher = REPLACE_BLANK.matcher(str);
+        return matcher.replaceAll("");
     }
 
     // ====================== 字符串生成 ======================
