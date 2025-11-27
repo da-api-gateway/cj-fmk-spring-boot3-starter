@@ -2,7 +2,12 @@ package com.cjlabs.core.time;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+
+import static com.cjlabs.core.time.FmkTimeConstant.*;
 
 public class FmkInstantUtil {
     private FmkInstantUtil() {
@@ -131,5 +136,83 @@ public class FmkInstantUtil {
         return isoString == null ? null : Instant.parse(isoString);
     }
 
+
+    // ---------------------- 格式化方法 ----------------------
+
+    /**
+     * 格式化为指定格式的字符串（默认 UTC 时区）
+     *
+     * @param instant 时间实例
+     * @param pattern 格式模式，如 "yyyy-MM-dd HH:mm:ss"
+     */
+    public static String format(Instant instant, String pattern) {
+        if (instant == null) {
+            return null;
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+        return format(instant, formatter, ZoneId.systemDefault());
+    }
+
+    /**
+     * 格式化为指定格式的字符串（指定时区）
+     *
+     * @param instant   时间实例
+     * @param formatter 格式模式，如 "yyyy-MM-dd HH:mm:ss"
+     * @param zoneId    时区，如 ZoneId.of("Asia/Shanghai")
+     */
+    public static String format(Instant instant, DateTimeFormatter formatter, ZoneId zoneId) {
+        if (instant == null) {
+            return null;
+        }
+        formatter = formatter.withZone(zoneId);
+        return formatter.format(instant);
+    }
+
+    /**
+     * 格式化为 yyyy-MM-dd HH:mm:ss（UTC）
+     */
+    public static String formatDateTime(Instant instant) {
+        return format(instant, yy_MM_dd_HH_mm_ss);
+    }
+
+    /**
+     * 格式化为 yyyy-MM-dd（UTC）
+     */
+    public static String formatDate(Instant instant) {
+        return format(instant, yy_MM_dd);
+    }
+
+    /**
+     * 格式化为 HH:mm:ss（UTC）
+     */
+    public static String formatTime(Instant instant) {
+        return format(instant, HH_mm_ss);
+    }
+
+    /**
+     * 解析字符串为 Instant（默认 UTC 时区）
+     *
+     * @param dateTimeStr 时间字符串
+     * @param pattern     格式模式，如 "yyyy-MM-dd HH:mm:ss"
+     */
+    public static Instant parse(String dateTimeStr, String pattern) {
+        return parse(dateTimeStr, pattern, ZoneId.systemDefault());
+    }
+
+    /**
+     * 解析字符串为 Instant（指定时区）
+     *
+     * @param dateTimeStr 时间字符串
+     * @param pattern     格式模式，如 "yyyy-MM-dd HH:mm:ss"
+     * @param zoneId      时区
+     */
+    public static Instant parse(String dateTimeStr, String pattern, ZoneId zoneId) {
+        if (dateTimeStr == null) {
+            return null;
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern)
+                .withZone(zoneId);
+        return Instant.from(formatter.parse(dateTimeStr));
+    }
 
 }
