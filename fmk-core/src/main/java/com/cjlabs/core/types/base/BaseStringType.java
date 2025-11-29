@@ -14,14 +14,14 @@ public abstract class BaseStringType<S extends BaseStringType<S>> extends BaseTy
     /**
      * 检查字符串是否为空
      */
-    public boolean isEmpty() {
+    public boolean empty() {
         return StringUtils.isEmpty(value);
     }
 
     /**
      * 检查字符串是否为空白
      */
-    public boolean isBlank() {
+    public boolean blank() {
         return StringUtils.isBlank(value);
     }
 
