@@ -14,6 +14,7 @@ public class FmkTimeConstant {
     // 常用时间格式常量
     public static final String yy_MM_dd_HH_mm_ss = "yyyy-MM-dd HH:mm:ss";
     public static final String yy_MM_dd = "yyyy-MM-dd";
+    public static final String HH_mm_ss = "HH:mm:ss";
     // public static final String TIME_PATTERN = "HH:mm:ss";
     // public static final String DATETIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
     // public static final String DATETIME_MS_PATTERN = "yyyy-MM-dd HH:mm:ss.SSS";
