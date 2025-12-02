@@ -38,7 +38,7 @@ public enum BusinessExceptionEnum implements IEnumStrException {
     /**
      * 用户名复杂度不够
      */
-    USERNAME_FORMAT_INVALID("BUSINESS_ERROR", "USERNAME_FORMAT_INVALID"),
+    USERNAME_COMPLEXITY_REQUIREMENT("BUSINESS_ERROR", "USERNAME_COMPLEXITY_REQUIREMENT"),
 
     // ===================== 业务操作 =====================
     /**
