@@ -116,12 +116,13 @@ public class FmkResult<T> implements Serializable {
         return !checkSuccess();
     }
 
-    /**
-     * 获取数据，如果成功
-     */
-    public Optional<T> getData() {
-        return checkSuccess() ? Optional.ofNullable(data) : Optional.empty();
-    }
+//    /**
+//     * 获取数据的 Optional 包装，如果成功
+//     * 注意：此方法不会被 Jackson 序列化，因为方法名不是标准的 getter
+//     */
+//    public Optional<T> getDataOptional() {  // 改名：getData -> getDataOptional
+//        return checkSuccess() ? Optional.ofNullable(data) : Optional.empty();
+//    }
 
     /**
      * 设置TraceId

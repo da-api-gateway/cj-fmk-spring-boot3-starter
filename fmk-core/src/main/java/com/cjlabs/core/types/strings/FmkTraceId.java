@@ -58,7 +58,7 @@ public class FmkTraceId extends BaseStringType<FmkTraceId> {
     /**
      * 获取不带前缀的TraceId值
      */
-    public String getTraceWithoutPrefix() {
+    public String traceWithoutPrefix() {
         return getValue().substring(TRACE_PREFIX.length());
     }
 
