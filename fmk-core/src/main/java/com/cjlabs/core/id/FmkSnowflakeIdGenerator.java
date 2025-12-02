@@ -177,6 +177,16 @@ public class FmkSnowflakeIdGenerator {
     }
 
     /**
+     * 生成下一个ID
+     *
+     * @return 唯一ID
+     * @throws RuntimeException 当时钟回拨超过容忍时间时抛出异常
+     */
+    public static String nextIdStr() {
+        return nextIdStr("");
+    }
+
+    /**
      * 批量生成ID
      *
      * @param count 生成数量
