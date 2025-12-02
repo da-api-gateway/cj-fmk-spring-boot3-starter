@@ -9,7 +9,7 @@ import java.sql.*;
 import java.time.Instant;
 
 @MappedTypes(Instant.class)
-@MappedJdbcTypes(JdbcType.BIGINT)
+@MappedJdbcTypes(value = JdbcType.BIGINT, includeNullJdbcType = true)
 public class InstantEpochMilliTypeHandler extends BaseTypeHandler<Instant> {
 
     @Override

@@ -2,17 +2,36 @@ package com.cjlabs.db;
 
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.cjlabs.core.types.decimal.FmkAmount;
+import com.cjlabs.core.types.longs.FmkUserId;
+import com.cjlabs.core.types.strings.*;
+import com.cjlabs.db.mybatis.type.*;
 import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.ContextRefreshedEvent;
+
+import javax.annotation.PostConstruct;
+import java.time.Instant;
 
 /**
  * MyBatis-Plus配置
  */
 @Slf4j
 @Configuration
+@AutoConfiguration
 public class MybatisPlusConfig {
+
+    // @Autowired
+    // private SqlSessionFactory sqlSessionFactory;
+    //
+    // private boolean typeHandlersRegistered = false;
 
     /**
      * MyBatis-Plus 拦截器配置
@@ -48,6 +67,68 @@ public class MybatisPlusConfig {
 
         return paginationInterceptor;
     }
+
+    // @Override
+    // public void onApplicationEvent(ContextRefreshedEvent event) {
+    //     // 防止多次执行（Spring 容器刷新时会多次触发）
+    //     if (typeHandlersRegistered) {
+    //         return;
+    //     }
+    //
+    //     if (sqlSessionFactory == null) {
+    //         log.warn("MybatisPlusConfig|onApplicationEvent|SqlSessionFactory 未注入，跳过类型处理器注册");
+    //         return;
+    //     }
+    //
+    //     log.info("MybatisPlusConfig|onApplicationEvent|开始注册所有自定义类型处理器");
+    //
+    //     // 🔥 注册 Instant 类型处理器（最重要！）
+    //     sqlSessionFactory.getConfiguration()
+    //             .getTypeHandlerRegistry()
+    //             .register(Instant.class, InstantEpochMilliTypeHandler.class);
+    //     log.info("  ✅ 已注册: Instant -> InstantEpochMilliTypeHandler");
+    //
+    //     // 🔥 注册字符串类型处理器
+    //     sqlSessionFactory.getConfiguration()
+    //             .getTypeHandlerRegistry()
+    //             .register(FmkTraceId.class, FmkTraceIdTypeHandler.class);
+    //     log.info("  ✅ 已注册: FmkTraceId -> FmkTraceIdTypeHandler");
+    //
+    //     sqlSessionFactory.getConfiguration()
+    //             .getTypeHandlerRegistry()
+    //             .register(FmkOrderId.class, OrderIdTypeHandler.class);
+    //     log.info("  ✅ 已注册: FmkOrderId -> OrderIdTypeHandler");
+    //
+    //     sqlSessionFactory.getConfiguration()
+    //             .getTypeHandlerRegistry()
+    //             .register(FmkCurrencyCode.class, CurrencyCodeTypeHandler.class);
+    //     log.info("  ✅ 已注册: FmkCurrencyCode -> CurrencyCodeTypeHandler");
+    //
+    //     sqlSessionFactory.getConfiguration()
+    //             .getTypeHandlerRegistry()
+    //             .register(FmkTxHash.class, TransactionHashTypeHandler.class);
+    //     log.info("  ✅ 已注册: FmkTxHash -> TransactionHashTypeHandler");
+    //
+    //     sqlSessionFactory.getConfiguration()
+    //             .getTypeHandlerRegistry()
+    //             .register(FmkWalletAddress.class, WalletAddressTypeHandler.class);
+    //     log.info("  ✅ 已注册: FmkWalletAddress -> WalletAddressTypeHandler");
+    //
+    //     // 🔥 注册 Long 类型处理器
+    //     sqlSessionFactory.getConfiguration()
+    //             .getTypeHandlerRegistry()
+    //             .register(FmkUserId.class, UserIdTypeHandler.class);
+    //     log.info("  ✅ 已注册: FmkUserId -> UserIdTypeHandler");
+    //
+    //     // 🔥 注册 BigDecimal 类型处理器
+    //     sqlSessionFactory.getConfiguration()
+    //             .getTypeHandlerRegistry()
+    //             .register(FmkAmount.class, AmountTypeHandler.class);
+    //     log.info("  ✅ 已注册: FmkAmount -> AmountTypeHandler");
+    //
+    //     typeHandlersRegistered = true;
+    //     log.info("MybatisPlusConfig|onApplicationEvent|所有类型处理器注册完成");
+    // }
 
 
     // /**
