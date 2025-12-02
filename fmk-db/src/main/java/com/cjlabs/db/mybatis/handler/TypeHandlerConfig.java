@@ -7,31 +7,30 @@ import com.cjlabs.core.types.strings.FmkTraceId;
 import com.cjlabs.core.types.strings.FmkOrderId;
 import com.cjlabs.core.types.strings.FmkTxHash;
 import com.cjlabs.core.types.strings.FmkWalletAddress;
-import com.cjlabs.db.mybatis.type.AmountTypeHandler;
-import com.cjlabs.db.mybatis.type.CurrencyCodeTypeHandler;
-import com.cjlabs.db.mybatis.type.FmkTraceIdTypeHandler;
+import com.cjlabs.db.mybatis.type.*;
 
-import com.cjlabs.db.mybatis.type.OrderIdTypeHandler;
-import com.cjlabs.db.mybatis.type.TransactionHashTypeHandler;
-import com.cjlabs.db.mybatis.type.UserIdTypeHandler;
-import com.cjlabs.db.mybatis.type.WalletAddressTypeHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Instant;
+
 /**
  * 类型处理器配置
  */
+@Slf4j
 @Configuration
 public class TypeHandlerConfig implements InitializingBean {
     
-    @Autowired(required = false)
+    @Autowired
     private SqlSessionFactory sqlSessionFactory;
     
     @Override
     public void afterPropertiesSet() {
         if (sqlSessionFactory != null) {
+            log.info("TypeHandlerConfig|afterPropertiesSet|registerTypeHandlers");
             // 注册自定义类型处理器
             registerTypeHandlers();
         }
@@ -47,6 +46,9 @@ public class TypeHandlerConfig implements InitializingBean {
 
         // 注册Long类型处理器
         sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(FmkUserId.class, UserIdTypeHandler.class);
+        sqlSessionFactory.getConfiguration()
+                .getTypeHandlerRegistry()
+                .register(Instant.class, InstantEpochMilliTypeHandler.class);
 
         // 注册BigDecimal类型处理器
         sqlSessionFactory.getConfiguration().getTypeHandlerRegistry().register(FmkAmount.class, AmountTypeHandler.class);
