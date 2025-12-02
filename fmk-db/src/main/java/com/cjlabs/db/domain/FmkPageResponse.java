@@ -121,6 +121,27 @@ public class FmkPageResponse<T> {
     }
 
     /**
+     * 从MyBatis-Plus的IPage创建
+     */
+    public static <T, R> FmkPageResponse<R> of(FmkPageResponse<T> input, Function<T, R> mapper) {
+        if (input == null) {
+            return empty();
+        }
+
+        List<R> mappedRecords = input.getRecords().stream()
+                .map(mapper)
+                .collect(Collectors.toList());
+
+        return new FmkPageResponse<>(
+                mappedRecords,
+                input.getTotal(),
+                input.getCurrent(),
+                input.getSize(),
+                input.getPages()
+        );
+    }
+
+    /**
      * 创建空的分页结果
      */
     public static <T> FmkPageResponse<T> empty() {
