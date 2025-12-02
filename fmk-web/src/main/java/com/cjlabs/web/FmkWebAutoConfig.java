@@ -1,5 +1,6 @@
 package com.cjlabs.web;
 
+import com.cjlabs.web.exception.GlobalExceptionHandler;
 import com.cjlabs.web.requestinterceptor.FmkContextInterceptor;
 import com.cjlabs.web.token.FmkTokenService;
 
@@ -43,5 +44,10 @@ public class FmkWebAutoConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 .excludePathPatterns(EXCLUDE_PATHS)
                 .order(1);
+    }
+
+    @Bean
+    public GlobalExceptionHandler<Object> globalExceptionHandler() {
+        return new GlobalExceptionHandler<>();
     }
 }
