@@ -31,7 +31,6 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
@@ -109,9 +108,10 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
     // ==================== 单个操作方法 ====================
 
-    @Transactional(rollbackFor = Exception.class)
+    // @Transactional(rollbackFor = Exception.class)
     public int save(T entity) {
         if (Objects.isNull(entity)) {
+            log.info("FmkService|save|entity is null");
             return 0;
         }
         setInsertDefault(entity);
@@ -119,9 +119,10 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         return this.baseMapper.insert(entity);
     }
 
-    @Transactional(rollbackFor = Exception.class)
+    // @Transactional(rollbackFor = Exception.class)
     public int updateById(T entity) {
         if (Objects.isNull(entity)) {
+            log.info("FmkService|updateById|entity is null");
             return 0;
         }
         setUpdateDefault(entity);
@@ -129,13 +130,15 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         return this.baseMapper.updateById(entity);
     }
 
-    @Transactional(rollbackFor = Exception.class)
+    // @Transactional(rollbackFor = Exception.class)
     public int deleteById(Serializable id) {
         if (Objects.isNull(id)) {
+            log.info("FmkService|deleteById|entity is null");
             return 0;
         }
         T byIdDb = getById(id);
         if (Objects.isNull(byIdDb)) {
+            log.info("FmkService|deleteById|byIdDb is null");
             return 0;
         }
         byIdDb.setDelFlag(NormalEnum.ABNORMAL);
@@ -146,6 +149,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
     public T getById(Serializable id) {
         if (Objects.isNull(id)) {
+            log.info("FmkService|getById|id is null");
             return null;
         }
         log.debug("FmkService|getById|id={}", id);
@@ -166,6 +170,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public T getByIdIncludeDeleted(Serializable id) {
         if (Objects.isNull(id)) {
+            log.info("FmkService|getByIdIncludeDeleted|id is null");
             return null;
         }
         log.debug("FmkService|getByIdIncludeDeleted|id={}", id);
@@ -186,7 +191,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public int saveBatch(Collection<T> entityList, int batchSize) {
         if (CollectionUtils.isEmpty(entityList)) {
-            log.debug("Entity list is empty, skipping batch save");
+            log.info("FmkService|saveBatch|entityList is null");
             return 0;
         }
 
@@ -220,7 +225,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public int updateBatchById(Collection<T> entityList, int batchSize) {
         if (CollectionUtils.isEmpty(entityList)) {
-            log.debug("Entity list is empty, skipping batch update");
+            log.info("FmkService|updateBatchById|entityList is null");
             return 0;
         }
 
@@ -257,7 +262,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public int updateBatchDelFlagById(Collection<? extends Serializable> idList, int batchSize) {
         if (CollectionUtils.isEmpty(idList)) {
-            log.debug("ID list is empty, skipping batch delete");
+            log.info("FmkService|updateBatchDelFlagById|entityList is null");
             return 0;
         }
 
@@ -281,7 +286,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public int deleteByIdList(Collection<? extends Serializable> idList) {
         if (CollectionUtils.isEmpty(idList)) {
-            log.debug("ID list is empty, skipping batch delete");
+            log.info("FmkService|deleteByIdList|idList is null");
             return 0;
         }
         int deleted = getBaseMapper().deleteBatchIds(idList);
@@ -296,7 +301,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public List<T> listByIdListService(Collection<? extends Serializable> idList) {
         if (CollectionUtils.isEmpty(idList)) {
-            log.debug("ID list is empty for batch query");
+            log.info("FmkService|listByIdListService|idList is null");
             return new ArrayList<>();
         }
 
@@ -314,7 +319,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      */
     public List<T> listByIdsServiceIncludeDeleted(Collection<? extends Serializable> idList) {
         if (CollectionUtils.isEmpty(idList)) {
-            log.debug("ID list is empty for batch query");
+            log.info("FmkService|listByIdsServiceIncludeDeleted|idList is null");
             return new ArrayList<>();
         }
 
@@ -391,6 +396,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
     private void setInsertDefault(T entity) {
         if (Objects.isNull(entity)) {
+            log.info("FmkService|setInsertDefault|entity is null");
             return;
         }
         Instant now = FmkInstantUtil.now();
@@ -399,6 +405,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
     private void setInsertDefault(T entity, Instant now) {
         if (Objects.isNull(entity)) {
+            log.info("FmkService|setInsertDefault|entity is null");
             return;
         }
         Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
@@ -417,6 +424,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
     private void setInsertDefault(List<T> entityList) {
         if (CollectionUtils.isEmpty(entityList)) {
+            log.info("FmkService|setInsertDefault|entityList is null");
             return;
         }
         Instant now = FmkInstantUtil.now();
@@ -427,6 +435,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
     private void setUpdateDefault(T entity) {
         if (Objects.isNull(entity)) {
+            log.info("FmkService|setUpdateDefault|entity is null");
             return;
         }
         Instant now = FmkInstantUtil.now();
@@ -435,6 +444,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
     private void setUpdateDefault(T entity, Instant now) {
         if (Objects.isNull(entity)) {
+            log.info("FmkService|setUpdateDefault|entity is null");
             return;
         }
         Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
@@ -447,6 +457,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
 
     private void setUpdateDefault(List<T> entityList) {
         if (CollectionUtils.isEmpty(entityList)) {
+            log.info("FmkService|setUpdateDefault|entityList is null");
             return;
         }
         Instant now = FmkInstantUtil.now();
@@ -506,11 +517,21 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     /**
      * 条件更新
      */
-    @Transactional(rollbackFor = Exception.class)
+    // @Transactional(rollbackFor = Exception.class)
     public int updateByCondition(T entity, Wrapper<T> updateWrapper) {
+        // if (Objects.isNull(entity)) {
+        // }
         setUpdateDefault(entity);
         return this.baseMapper.update(entity, updateWrapper);
     }
+
+    // /**
+    //  * 条件更新
+    //  */
+    // @Transactional(rollbackFor = Exception.class)
+    // public int updateByCondition(Wrapper<T> updateWrapper) {
+    //     return this.baseMapper.update(null, updateWrapper);
+    // }
 
     // ==================== 包含已删除数据的查询方法 ====================
 
@@ -545,7 +566,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
     /**
      * 条件删除（逻辑删除）
      */
-    @Transactional(rollbackFor = Exception.class)
+    // @Transactional(rollbackFor = Exception.class)
     public int updateBatchDelFlagByCondition(Wrapper<T> queryWrapper) {
         // 使用 LambdaUpdateWrapper 进行逻辑删除
         LambdaUpdateWrapper<T> updateWrapper = buildLambdaUpdate();
@@ -606,7 +627,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
                                                   String inField,
                                                   Collection<Long> inValueList) {
         if (CollectionUtils.isEmpty(inValueList)) {
-            log.warn("FmkService|batchCountByField|filterValues is empty");
+            log.warn("FmkService|batchCountByField|inValueList is empty");
             return new HashMap<>();
         }
 
@@ -634,7 +655,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
                                                    String inField,
                                                    Collection<Long> inValueList) {
         if (CollectionUtils.isEmpty(inValueList)) {
-            log.warn("FmkService|batchSumByField|filterValues is empty");
+            log.warn("FmkService|batchSumByField|inValueList is empty");
             return new HashMap<>();
         }
 

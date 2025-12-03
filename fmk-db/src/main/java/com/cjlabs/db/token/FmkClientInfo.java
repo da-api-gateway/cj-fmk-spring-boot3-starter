@@ -1,17 +1,28 @@
-package com.cjlabs.web.token;
+package com.cjlabs.db.token;
+
+import com.cjlabs.core.time.FmkInstantUtil;
+import com.cjlabs.domain.enums.ClientTypeEnum;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.Instant;
 
 /**
  * 设备信息
  */
 @Getter
 @Setter
-public class FmkDeviceInfo {
+public class FmkClientInfo {
+
     private String userAgent;
+
     private String ipAddress;
+
     private String deviceVersion;
+
+    private ClientTypeEnum clientType;
+
     /**
      * 操作系统信息
      */
@@ -30,25 +41,25 @@ public class FmkDeviceInfo {
     /**
      * 登录时间
      */
-    private Long loginTime;
+    private Instant loginTime;
 
     /**
      * 最后活跃时间
      */
-    private Long lastActiveTime;
+    private Instant lastActiveTime;
     /**
      * 设备语言
      */
     private String deviceLanguage;
 
-    public FmkDeviceInfo() {
-        long now = System.currentTimeMillis();
+    public FmkClientInfo() {
+        Instant now = FmkInstantUtil.now();
 
         this.loginTime = now;
         this.lastActiveTime = now;
     }
 
-    public FmkDeviceInfo(String userAgent, String ipAddress, String deviceVersion) {
+    public FmkClientInfo(String userAgent, String ipAddress, String deviceVersion) {
         this();
         this.userAgent = userAgent;
         this.ipAddress = ipAddress;
@@ -59,6 +70,6 @@ public class FmkDeviceInfo {
      * 更新最后活跃时间
      */
     public void updateLastActiveTime() {
-        this.lastActiveTime = System.currentTimeMillis();
+        this.lastActiveTime = FmkInstantUtil.now();
     }
 }

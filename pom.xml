@@ -108,6 +108,13 @@
                 <scope>test</scope>
             </dependency>
 
+            <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-redis -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-redis</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+
             <!-- JUnit 5 核心依赖 -->
             <dependency>
                 <groupId>org.junit.jupiter</groupId>

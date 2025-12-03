@@ -2,7 +2,6 @@ package com.cjlabs.web;
 
 import com.cjlabs.web.exception.GlobalExceptionHandler;
 import com.cjlabs.web.requestinterceptor.FmkContextInterceptor;
-import com.cjlabs.web.token.FmkTokenService;
 
 import com.google.common.collect.Lists;
 import org.springframework.context.annotation.Bean;
@@ -16,11 +15,6 @@ import java.util.List;
 @Component
 @Configuration
 public class FmkWebAutoConfig implements WebMvcConfigurer {
-
-    @Bean
-    public FmkTokenService fmkTokenService() {
-        return new FmkTokenService();
-    }
 
     @Bean
     public FmkContextInterceptor fmkContextInterceptor() {

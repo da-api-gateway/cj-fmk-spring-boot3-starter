@@ -10,7 +10,7 @@ import com.cjlabs.web.threadlocal.ClientInfo;
 import com.cjlabs.web.threadlocal.FmkContextInfo;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
 import com.cjlabs.web.threadlocal.FmkUserInfo;
-import com.cjlabs.web.token.FmkTokenService;
+import com.cjlabs.web.token.FmkTokenServiceMemoryImpl;
 import com.cjlabs.web.util.ClientInfoUtil;
 
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ import static com.cjlabs.domain.common.FmkConstant.*;
 public class FmkContextInterceptor implements HandlerInterceptor {
 
     @Autowired
-    private FmkTokenService fmkTokenService;
+    private FmkTokenServiceMemoryImpl fmkTokenService;
 
     /**
      * 系统用户ID - 用于不需要登录的接口
@@ -156,7 +156,7 @@ public class FmkContextInterceptor implements HandlerInterceptor {
                         MDC.put(MDC_USER_ID, String.valueOf(fmkUserInfo.getUserId().getValue()));
 
                         // 获取并设置设备信息到Token服务中（用于活跃状态更新）
-                        updateTokenDeviceInfo(request, fmkToken);
+                        updateTokenClientInfo(request, fmkToken);
 
                         if (log.isDebugEnabled()) {
                             log.debug("FmkContextInterceptor|setUserInfo|用户信息设置成功|userId={}",
@@ -350,7 +350,7 @@ public class FmkContextInterceptor implements HandlerInterceptor {
     /**
      * 更新Token的设备信息（用于活跃状态追踪）
      */
-    private void updateTokenDeviceInfo(HttpServletRequest request, FmkToken fmkToken) {
+    private void updateTokenClientInfo(HttpServletRequest request, FmkToken fmkToken) {
         try {
             if (fmkToken == null || StringUtils.isBlank(fmkToken.getValue())) {
                 return;

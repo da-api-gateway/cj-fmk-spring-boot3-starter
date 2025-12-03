@@ -2,9 +2,12 @@ package com.cjlabs.web.thread;
 
 import com.alibaba.ttl.TtlRunnable;
 import com.alibaba.ttl.TtlCallable;
+import com.cjlabs.core.time.FmkInstantUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.*;
 
 /**
@@ -19,7 +22,7 @@ public class FmkTtlThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
     /**
      * 最后一次监控的时间戳
      */
-    private long lastMonitorTime = System.currentTimeMillis();
+    private Instant lastMonitorTime = FmkInstantUtil.now();
 
     /**
      * 提交的任务总数
@@ -138,8 +141,10 @@ public class FmkTtlThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
             return;
         }
 
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastMonitorTime >= monitoringPeriodMs) {
+        Instant currentTime = FmkInstantUtil.now();  // 👈 改为 Instant
+        Duration duration = Duration.between(lastMonitorTime, currentTime);  // 👈 使用 Duration 计算间隔
+
+        if (duration.toMillis() >= monitoringPeriodMs) {  // 👈 转换为毫秒比较
             logMetrics();
             lastMonitorTime = currentTime;
         }

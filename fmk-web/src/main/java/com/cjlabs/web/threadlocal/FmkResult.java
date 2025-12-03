@@ -1,5 +1,6 @@
 package com.cjlabs.web.threadlocal;
 
+import com.cjlabs.core.time.FmkInstantUtil;
 import com.cjlabs.core.types.strings.FmkTraceId;
 
 import lombok.Getter;
@@ -7,6 +8,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.Optional;
 
 /**
@@ -31,7 +33,7 @@ public class FmkResult<T> implements Serializable {
     /**
      * 时间戳
      */
-    private long timestamp;
+    private Instant timestamp;
 
     /**
      * 追踪ID
@@ -52,7 +54,7 @@ public class FmkResult<T> implements Serializable {
     private FmkResult(int code, T data) {
         this.code = code;
         this.data = data;
-        this.timestamp = System.currentTimeMillis();
+        this.timestamp = FmkInstantUtil.now();
 
         // 自动从上下文获取TraceId
         FmkContextUtil.getTraceId().ifPresent(this::setTraceId);
@@ -62,7 +64,7 @@ public class FmkResult<T> implements Serializable {
         this.code = code;
         this.errorType = errorType;
         this.errorKey = errorKey;
-        this.timestamp = System.currentTimeMillis();
+        this.timestamp = FmkInstantUtil.now();
 
         // 自动从上下文获取TraceId
         FmkContextUtil.getTraceId().ifPresent(this::setTraceId);
