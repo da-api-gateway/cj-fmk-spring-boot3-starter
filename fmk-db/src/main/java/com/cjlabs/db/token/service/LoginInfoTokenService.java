@@ -4,17 +4,14 @@ import com.cjlabs.core.time.FmkInstantUtil;
 import com.cjlabs.core.types.strings.FmkToken;
 import com.cjlabs.db.domain.FmkPageResponse;
 import com.cjlabs.db.domain.FmkRequest;
-import com.cjlabs.domain.sysuserinfotoken.enums.TokenStatusEnum;
-import com.cjlabs.domain.sysuserinfotoken.reqquery.SysUserInfoTokenReqQuery;
-import com.cjlabs.domain.sysuserinfotoken.requpdate.SysUserInfoTokenReqSave;
-import com.cjlabs.domain.sysuserinfotoken.requpdate.SysUserInfoTokenReqUpdate;
-import com.cjlabs.service.sysuserinfotoken.convert.SysUserInfoTokenReqConvert;
-import com.cjlabs.service.sysuserinfotoken.mapper.SysUserInfoTokenWrapMapper;
-import com.cjlabs.service.sysuserinfotoken.mysql.SysUserInfoToken;
+import com.cjlabs.db.token.enums.TokenStatusEnum;
+import com.cjlabs.db.token.mapper.LoginInfoTokenWrapMapper;
+import com.cjlabs.db.token.mysql.LoginInfoToken;
 import com.cjlabs.web.check.FmkCheckUtil;
 import com.cjlabs.web.exception.BusinessExceptionEnum;
 import com.cjlabs.web.threadlocal.ClientInfo;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,23 +30,23 @@ import java.util.Optional;
  */
 @Slf4j
 @Service
-public class SysUserInfoTokenService {
+public class LoginInfoTokenService {
 
     @Autowired
-    private SysUserInfoTokenWrapMapper sysUserInfoTokenWrapMapper;
+    private LoginInfoTokenWrapMapper loginInfoTokenWrapMapper;
 
-    public SysUserInfoToken getById(FmkRequest<Void> input) {
+    public LoginInfoToken getById(FmkRequest<Void> input) {
         // 参数校验
         FmkCheckUtil.checkInput(Objects.isNull(input));
         FmkCheckUtil.checkInput(StringUtils.isBlank(input.getBusinessKey()));
 
         String id = input.getBusinessKey();
-        return sysUserInfoTokenWrapMapper.getById(id);
+        return loginInfoTokenWrapMapper.getById(id);
     }
 
-    public SysUserInfoToken save(SysUserInfoTokenReqSave request) {
+    public LoginInfoToken save(LoginInfoToken request) {
         if (Objects.isNull(request)) {
-            log.info("SysUserInfoTokenService|save|request is null");
+            log.info("LoginInfoTokenService|save|request is null");
             return null;
         }
         Optional<ClientInfo> clientInfoOptional = FmkContextUtil.getClientInfo();
@@ -64,29 +61,28 @@ public class SysUserInfoTokenService {
         request.setExpireTime(expireAt);
         FmkToken fmkToken = FmkToken.generate();
         request.setToken(fmkToken);
-        SysUserInfoToken sysUserInfoToken = SysUserInfoTokenReqConvert.toDb(request);
 
-        int saved = sysUserInfoTokenWrapMapper.save(sysUserInfoToken);
+        int saved = loginInfoTokenWrapMapper.save(request);
         FmkCheckUtil.throwBusiness(saved == 0, BusinessExceptionEnum.DATA_NOT_FOUND);
-        return sysUserInfoToken;
+        return request;
     }
 
-    public boolean update(SysUserInfoTokenReqUpdate request) {
+    public boolean update(LoginInfoToken request) {
         if (Objects.isNull(request)) {
-            log.info("SysUserInfoTokenService|update|request is null");
+            log.info("LoginInfoTokenService|update|request is null");
             return false;
         }
 
         Long inputId = request.getId();
-        SysUserInfoToken sysUserInfoToken = sysUserInfoTokenWrapMapper.getById(inputId);
-        if (Objects.isNull(sysUserInfoToken)) {
-            log.info("SysUserInfoTokenService|update|db sysUserInfoToken is null");
+        LoginInfoToken dbLoginInfoToken = loginInfoTokenWrapMapper.getById(inputId);
+        if (Objects.isNull(dbLoginInfoToken)) {
+            log.info("LoginInfoTokenService|update|dbLoginInfoToken is null");
             return false;
         }
 
-        int updated = sysUserInfoTokenWrapMapper.updateById(sysUserInfoToken);
+        int updated = loginInfoTokenWrapMapper.updateById(dbLoginInfoToken);
         if (updated > 0) {
-            log.info("SysUserInfoTokenService|update|update={}|id={}", updated, request.getId());
+            log.info("LoginInfoTokenService|update|update={}|id={}", updated, request.getId());
             return true;
         }
         return false;
@@ -94,12 +90,12 @@ public class SysUserInfoTokenService {
 
     public boolean deleteById(String businessKey) {
         if (StringUtils.isBlank(businessKey)) {
-            log.info("SysUserInfoTokenService|deleteById|businessKey is null");
+            log.info("LoginInfoTokenService|deleteById|businessKey is null");
             return false;
         }
-        int deleted = sysUserInfoTokenWrapMapper.deleteById(businessKey);
+        int deleted = loginInfoTokenWrapMapper.deleteById(businessKey);
         if (deleted > 0) {
-            log.info("SysUserInfoTokenService|deleteById|deleteById={}|id={}", deleted, businessKey);
+            log.info("LoginInfoTokenService|deleteById|deleteById={}|id={}", deleted, businessKey);
             return true;
         }
         return false;
@@ -108,21 +104,21 @@ public class SysUserInfoTokenService {
     /**
      * 查询所有（不分页）
      */
-    public List<SysUserInfoToken> listAll() {
-        List<SysUserInfoToken> entityList = sysUserInfoTokenWrapMapper.listAllLimitService();
+    public List<LoginInfoToken> listAll() {
+        List<LoginInfoToken> entityList = loginInfoTokenWrapMapper.listAllLimitService();
         return entityList;
     }
 
     /**
      * 分页查询
      */
-    public FmkPageResponse<SysUserInfoToken> pageQuery(FmkRequest<SysUserInfoTokenReqQuery> input) {
+    public FmkPageResponse<LoginInfoToken> pageQuery(FmkRequest<LoginInfoToken> input) {
         // 参数校验
         FmkCheckUtil.checkInput(Objects.isNull(input));
         FmkCheckUtil.checkInput(Objects.isNull(input.getRequest()));
 
         // 执行分页查询
-        FmkPageResponse<SysUserInfoToken> entityPage = sysUserInfoTokenWrapMapper.pageQuery(input);
+        FmkPageResponse<LoginInfoToken> entityPage = loginInfoTokenWrapMapper.pageQuery(input);
 
         return entityPage;
     }

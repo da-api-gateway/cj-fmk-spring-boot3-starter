@@ -1,8 +1,13 @@
 package com.cjlabs.db.token.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cjlabs.core.time.FmkInstantUtil;
 import com.cjlabs.core.types.longs.FmkUserId;
 import com.cjlabs.core.types.strings.FmkToken;
+import com.cjlabs.db.domain.FmkOrderItem;
+import com.cjlabs.db.domain.FmkPageResponse;
+import com.cjlabs.db.domain.FmkRequest;
 import com.cjlabs.db.mp.FmkService;
 import com.cjlabs.db.token.enums.TokenStatusEnum;
 import com.cjlabs.db.token.mysql.LoginInfoToken;
@@ -10,11 +15,14 @@ import com.cjlabs.domain.enums.NormalEnum;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.cjlabs.web.check.FmkCheckUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -267,5 +275,27 @@ public class LoginInfoTokenWrapMapper extends FmkService<LoginInfoTokenMapper, L
             return "***";
         }
         return token.substring(0, 10) + "...";
+    }
+
+    /**
+     * 分页查询
+     */
+    public FmkPageResponse<LoginInfoToken> pageQuery(FmkRequest<LoginInfoToken> input) {
+        // 参数校验
+        FmkCheckUtil.checkInput(Objects.isNull(input));
+        FmkCheckUtil.checkInput(Objects.isNull(input.getRequest()));
+
+        // 构建分页对象
+        Page<LoginInfoToken> page = new Page<>(input.getCurrent(), input.getSize());
+        LoginInfoToken request = input.getRequest();
+
+        // 构建查询条件
+        LambdaQueryWrapper<LoginInfoToken> lambdaQuery = buildLambdaQuery();
+        List<FmkOrderItem> orderItemList = input.getOrderItemList();
+
+        // 执行分页查询
+        IPage<LoginInfoToken> dbPage = super.pageByCondition(page, lambdaQuery, orderItemList);
+
+        return FmkPageResponse.of(dbPage);
     }
 }
