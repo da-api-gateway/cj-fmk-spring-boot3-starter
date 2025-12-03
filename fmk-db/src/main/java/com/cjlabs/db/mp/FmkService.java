@@ -2,6 +2,7 @@ package com.cjlabs.db.mp;
 
 import com.cjlabs.core.time.FmkInstantUtil;
 import com.cjlabs.core.types.longs.FmkUserId;
+import com.cjlabs.core.types.strings.FmkTraceId;
 import com.cjlabs.db.datasource.FmkTransactionTemplateUtil;
 import com.cjlabs.db.domain.FmkBaseEntity;
 import com.cjlabs.db.domain.FmkOrderItem;
@@ -409,6 +410,9 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         entity.setCreateDate(now);
         entity.setUpdateDate(now);
         entity.setDelFlag(NormalEnum.NORMAL);
+
+        Optional<FmkTraceId> traceIdOptional = FmkContextUtil.getTraceId();
+        traceIdOptional.ifPresent(entity::setTraceId);
     }
 
     private void setInsertDefault(List<T> entityList) {
@@ -434,11 +438,11 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
             return;
         }
         Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
-        if (userIdOptional.isPresent()) {
-            FmkUserId userId = userIdOptional.get();
-            entity.setUpdateUser(userId.getValue().toString());
-        }
+        userIdOptional.ifPresent(userId -> entity.setUpdateUser(userId.getValue().toString()));
         entity.setUpdateDate(now);
+
+        Optional<FmkTraceId> traceIdOptional = FmkContextUtil.getTraceId();
+        traceIdOptional.ifPresent(entity::setTraceId);
     }
 
     private void setUpdateDefault(List<T> entityList) {

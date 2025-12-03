@@ -1,5 +1,6 @@
 package com.cjlabs.db.domain;
 
+import com.cjlabs.core.types.strings.FmkTraceId;
 import com.cjlabs.domain.enums.NormalEnum;
 
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -54,6 +55,10 @@ public abstract class FmkBaseEntity implements Serializable {
      */
     @TableField(value = "update_date")
     private Instant updateDate;
+
+
+    @TableField(value = "trace_id")
+    private FmkTraceId traceId;
 
 
 }
