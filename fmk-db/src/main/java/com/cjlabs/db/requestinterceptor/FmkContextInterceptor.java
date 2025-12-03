@@ -1,8 +1,9 @@
-package com.cjlabs.web.requestinterceptor;
+package com.cjlabs.db.requestinterceptor;
 
 import com.cjlabs.core.types.longs.FmkUserId;
 import com.cjlabs.core.types.strings.FmkToken;
 import com.cjlabs.core.types.strings.FmkTraceId;
+import com.cjlabs.db.token.IFmkTokenService;
 import com.cjlabs.domain.enums.ClientTypeEnum;
 import com.cjlabs.domain.enums.FmkLanguageEnum;
 import com.cjlabs.domain.enums.IEnumStr;
@@ -38,7 +39,7 @@ import static com.cjlabs.domain.common.FmkConstant.*;
 public class FmkContextInterceptor implements HandlerInterceptor {
 
     @Autowired
-    private IFmk fmkTokenService;
+    private IFmkTokenService fmkTokenService;
 
     /**
      * 系统用户ID - 用于不需要登录的接口
@@ -144,7 +145,7 @@ public class FmkContextInterceptor implements HandlerInterceptor {
             contextInfo.setToken(fmkToken);
 
 
-            Optional<FmkUserInfo> userInfoOptional = fmkTokenService.getUserInfoByToken(fmkToken);
+            Optional<FmkUserInfo> userInfoOptional = fmkTokenService.getUserIdByToken(fmkToken);
             userInfoOptional.ifPresentOrElse(
                     fmkUserInfo -> {
                         // 设置用户信息和ID
