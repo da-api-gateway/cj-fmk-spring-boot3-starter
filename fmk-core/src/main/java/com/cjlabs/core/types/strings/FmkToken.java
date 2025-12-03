@@ -20,17 +20,14 @@ import java.util.stream.Collectors;
 public class FmkToken extends BaseStringType<FmkToken> {
 
     private static final String TOKEN_PREFIX = "TOKEN_";
-    
+
     // Token 格式正则表达式
     private static final Pattern TOKEN_PATTERN = Pattern.compile(
             "^TOKEN_[a-zA-Z0-9\\-_]{16,64}$"
     );
-    
+
     private static final DateTimeFormatter TIMESTAMP_FORMATTER =
             DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-    
-    // 线程本地变量存储当前线程的Token
-    private static final ThreadLocal<FmkToken> THREAD_LOCAL = new ThreadLocal<>();
 
     // ==================== 静态工厂方法 ====================
 
@@ -97,7 +94,7 @@ public class FmkToken extends BaseStringType<FmkToken> {
                 .map(FmkToken::getValue)
                 .collect(Collectors.toList());
     }
-    
+
     /**
      * 将字符串集合转换为Token集合
      */
@@ -109,34 +106,6 @@ public class FmkToken extends BaseStringType<FmkToken> {
                 .filter(StringUtils::isNotBlank)
                 .map(FmkToken::of)
                 .collect(Collectors.toList());
-    }
-    
-    // ==================== 线程本地存储方法 ====================
-    
-    /**
-     * 获取当前线程的Token
-     */
-    public static FmkToken current() {
-        FmkToken token = THREAD_LOCAL.get();
-        if (token == null) {
-            token = generate();
-            THREAD_LOCAL.set(token);
-        }
-        return token;
-    }
-    
-    /**
-     * 设置当前线程的Token
-     */
-    public static void setCurrent(FmkToken token) {
-        THREAD_LOCAL.set(token);
-    }
-    
-    /**
-     * 清除当前线程的Token
-     */
-    public static void clear() {
-        THREAD_LOCAL.remove();
     }
 
     // ==================== 构造方法 ====================
@@ -177,67 +146,16 @@ public class FmkToken extends BaseStringType<FmkToken> {
     /**
      * 获取不带前缀的Token值
      */
-    public String getTokenWithoutPrefix() {
+    public String convertTokenWithoutPrefix() {
         return value.substring(TOKEN_PREFIX.length());
     }
 
     /**
      * 获取Token的简短形式（前8个字符，包含前缀）
      */
-    public String getShortForm() {
-        return value.length() > TOKEN_PREFIX.length() + 8 ? 
-               value.substring(0, TOKEN_PREFIX.length() + 8) : value;
+    public String convertShort() {
+        return value.length() > TOKEN_PREFIX.length() + 8 ?
+                value.substring(0, TOKEN_PREFIX.length() + 8) : value;
     }
 
-    /**
-     * 提取时间戳部分（如果包含）
-     */
-    public String extractTimestamp() {
-        if (!hasTimestamp()) {
-            return null;
-        }
-        String tokenWithoutPrefix = getTokenWithoutPrefix();
-        String[] parts = tokenWithoutPrefix.split("-");
-        // 尝试解析第一部分是否为时间戳
-        try {
-            Long.parseLong(parts[0]);
-            return parts[0];
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    /**
-     * 检查是否为临时Token
-     */
-    public boolean isTemporary() {
-        return value.contains("TEMP");
-    }
-
-    /**
-     * 生成临时Token
-     */
-    public FmkToken toTemporary() {
-        if (isTemporary()) {
-            return this;
-        }
-        return new FmkToken(TOKEN_PREFIX + "TEMP-" + getTokenWithoutPrefix());
-    }
-
-    /**
-     * 检查Token是否已过期（仅当Token包含时间戳时有效）
-     */
-    public boolean isExpired(long expirationMillis) {
-        String timestamp = extractTimestamp();
-        if (timestamp == null) {
-            return false;
-        }
-        try {
-            LocalDateTime tokenTime = LocalDateTime.parse(timestamp, TIMESTAMP_FORMATTER);
-            LocalDateTime expirationTime = tokenTime.plusNanos(expirationMillis * 1000000);
-            return LocalDateTime.now().isAfter(expirationTime);
-        } catch (Exception e) {
-            return false;
-        }
-    }
 }
