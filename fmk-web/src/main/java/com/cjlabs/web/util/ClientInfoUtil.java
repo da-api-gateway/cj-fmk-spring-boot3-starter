@@ -2,10 +2,14 @@ package com.cjlabs.web.util;
 
 
 import com.cjlabs.core.strings.FmkStringUtil;
+import com.cjlabs.domain.enums.ClientTypeEnum;
+import com.cjlabs.domain.enums.IEnumStr;
 import com.cjlabs.web.threadlocal.ClientInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -288,35 +292,16 @@ public class ClientInfoUtil {
         }
     }
 
-    // /**
-    //  * 从设备类型字符串转换为枚举
-    //  */
-    // public static DeviceTypeEnum parseDeviceTypeFromString(String deviceTypeStr) {
-    //     if (StringUtils.isBlank(deviceTypeStr)) {
-    //         return DeviceTypeEnum.WEB;
-    //     }
-    //
-    //     // 尝试直接匹配枚举值
-    //     try {
-    //         return DeviceTypeEnum.valueOf(deviceTypeStr.toUpperCase());
-    //     } catch (IllegalArgumentException e) {
-    //         // 如果直接匹配失败，进行模糊匹配
-    //         String upperStr = deviceTypeStr.toUpperCase();
-    //
-    //         if (upperStr.contains("API") || upperStr.contains("CURL") ||
-    //                 upperStr.contains("POSTMAN") || upperStr.contains("CLIENT")) {
-    //             return DeviceTypeEnum.API;
-    //         } else if (upperStr.contains("APP") || upperStr.contains("NATIVE") ||
-    //                 upperStr.contains("MOBILE APP")) {
-    //             return DeviceTypeEnum.APP;
-    //         } else if (upperStr.contains("MOBILE") || upperStr.contains("ANDROID") ||
-    //                 upperStr.contains("IOS") || upperStr.contains("IPHONE")) {
-    //             return DeviceTypeEnum.MOBILE;
-    //         } else if (upperStr.contains("DESKTOP") || upperStr.contains("ELECTRON")) {
-    //             return DeviceTypeEnum.DESKTOP;
-    //         } else {
-    //             return DeviceTypeEnum.WEB;
-    //         }
-    //     }
-    // }
+    /**
+     * 从设备类型字符串转换为枚举
+     */
+    public static ClientTypeEnum parseClientTypeFromString(String clientTypeStr) {
+        if (StringUtils.isBlank(clientTypeStr)) {
+            return ClientTypeEnum.WEB;
+        }
+
+        // 尝试直接匹配枚举值
+        Optional<ClientTypeEnum> enumOptional = IEnumStr.getEnumByCode(clientTypeStr, ClientTypeEnum.class);
+        return enumOptional.orElse(ClientTypeEnum.WEB);
+    }
 }

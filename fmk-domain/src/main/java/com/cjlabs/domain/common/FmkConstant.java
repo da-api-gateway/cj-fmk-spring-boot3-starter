@@ -19,6 +19,7 @@ public interface FmkConstant {
     String HEADER_USER_TOKEN = "X-CJ-Token";        // 用户令牌
     String HEADER_DEVICE_ID = "X-CJ-Device-Id";     // 设备ID
     String HEADER_DEVICE_VERSION = "X-CJ-Device-Version"; // 设备版本
+    String HEADER_CLIENT_TYPE = "X-CJ-CLIENT_TYPE"; // 设备类型
     String HEADER_DEVICE_LANGUAGE = "X-CJ-Accept-Language"; // 设备语言
 
 

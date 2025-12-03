@@ -1,5 +1,6 @@
 package com.cjlabs.web.threadlocal;
 
+import com.cjlabs.domain.enums.ClientTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -25,7 +26,7 @@ public class ClientInfo {
     /**
      * 设备类型
      */
-    // private DeviceTypeEnum deviceType;
+    private ClientTypeEnum clientType;
 
     /**
      * 应用版本

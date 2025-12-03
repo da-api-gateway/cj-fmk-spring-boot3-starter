@@ -3,6 +3,7 @@ package com.cjlabs.web.requestinterceptor;
 import com.cjlabs.core.types.longs.FmkUserId;
 import com.cjlabs.core.types.strings.FmkToken;
 import com.cjlabs.core.types.strings.FmkTraceId;
+import com.cjlabs.domain.enums.ClientTypeEnum;
 import com.cjlabs.domain.enums.FmkLanguageEnum;
 import com.cjlabs.domain.enums.IEnumStr;
 import com.cjlabs.web.threadlocal.ClientInfo;
@@ -27,12 +28,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
 
-import static com.cjlabs.domain.common.FmkConstant.HEADER_DEVICE_LANGUAGE;
-import static com.cjlabs.domain.common.FmkConstant.HEADER_DEVICE_VERSION;
-import static com.cjlabs.domain.common.FmkConstant.HEADER_REFERER;
-import static com.cjlabs.domain.common.FmkConstant.HEADER_USER_AGENT;
-import static com.cjlabs.domain.common.FmkConstant.HEADER_USER_TOKEN;
-import static com.cjlabs.domain.common.FmkConstant.MDC_USER_ID;
+import static com.cjlabs.domain.common.FmkConstant.*;
 
 /**
  * 上下文拦截器
@@ -273,7 +269,7 @@ public class FmkContextInterceptor implements HandlerInterceptor {
     private void setCustomHeaders(HttpServletRequest request, ClientInfo clientInfo) {
         try {
             // 设备版本
-            String deviceVersion = request.getHeader(HEADER_DEVICE_VERSION);
+            String deviceVersion = request.getHeader(HEADER_CLIENT_TYPE);
             clientInfo.setDeviceVersion(StringUtils.isNotBlank(deviceVersion) ? deviceVersion : "unknown");
 
             // 引用页
@@ -283,16 +279,16 @@ public class FmkContextInterceptor implements HandlerInterceptor {
             }
 
             // 设备类型（如果请求头中有，则覆盖User-Agent解析的结果）
-            // String headerDeviceType = request.getHeader(HEADER_DEVICE_TYPE);
-            // if (StringUtils.isNotBlank(headerDeviceType)) {
-            //     DeviceTypeEnum deviceType = ClientInfoUtil.parseDeviceTypeFromString(headerDeviceType);
-            //     clientInfo.setDeviceType(deviceType);
-            //
-            //     if (log.isDebugEnabled()) {
-            //         log.debug("FmkContextInterceptor|setCustomHeaders|使用请求头设备类型|headerType={}|parsedType={}",
-            //                 headerDeviceType, deviceType);
-            //     }
-            // }
+            String headerClientType = request.getHeader(HEADER_CLIENT_TYPE);
+            if (StringUtils.isNotBlank(headerClientType)) {
+                ClientTypeEnum clientTypeEnum = ClientInfoUtil.parseClientTypeFromString(headerClientType);
+                clientInfo.setClientType(clientTypeEnum);
+
+                if (log.isDebugEnabled()) {
+                    log.debug("FmkContextInterceptor|setCustomHeaders|使用请求头设备类型|headerType={}|parsedType={}",
+                            headerClientType, clientTypeEnum);
+                }
+            }
         } catch (Exception e) {
             log.warn("FmkContextInterceptor|setCustomHeaders|设置自定义请求头失败", e);
         }
