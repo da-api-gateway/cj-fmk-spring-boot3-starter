@@ -567,7 +567,7 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      * 为 LambdaUpdateWrapper 设置更新默认值
      */
     private void setUpdateDefaultForLambdaWrapper(LambdaUpdateWrapper<T> updateWrapper) {
-        long now = System.currentTimeMillis();
+        Instant now = FmkInstantUtil.now();
         updateWrapper.set(T::getUpdateDate, now);
 
         Optional<FmkUserId> userIdOptional = FmkContextUtil.getUserId();
