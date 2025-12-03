@@ -2,11 +2,7 @@ package com.cjlabs.db.mybatis.handler;
 
 import com.cjlabs.core.types.decimal.FmkAmount;
 import com.cjlabs.core.types.longs.FmkUserId;
-import com.cjlabs.core.types.strings.FmkCurrencyCode;
-import com.cjlabs.core.types.strings.FmkTraceId;
-import com.cjlabs.core.types.strings.FmkOrderId;
-import com.cjlabs.core.types.strings.FmkTxHash;
-import com.cjlabs.core.types.strings.FmkWalletAddress;
+import com.cjlabs.core.types.strings.*;
 import com.cjlabs.db.mybatis.type.*;
 
 import lombok.extern.slf4j.Slf4j;
@@ -97,5 +93,11 @@ public class TypeHandlerConfig implements ApplicationListener<ContextRefreshedEv
                 .getTypeHandlerRegistry()
                 .register(FmkAmount.class, AmountTypeHandler.class);
         log.info("  ✅ 已注册: FmkAmount -> AmountTypeHandler");
+
+        // 🔥 注册 FmkToken 类型处理器（新增）
+        sqlSessionFactory.getConfiguration()
+                .getTypeHandlerRegistry()
+                .register(FmkToken.class, FmkTokenTypeHandler.class);
+        log.info("  ✅ 已注册: FmkToken -> FmkTokenTypeHandler");
     }
 }
