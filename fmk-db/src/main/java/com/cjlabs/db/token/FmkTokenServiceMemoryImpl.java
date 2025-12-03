@@ -2,22 +2,30 @@ package com.cjlabs.db.token;
 
 import com.cjlabs.core.types.longs.FmkUserId;
 import com.cjlabs.core.types.strings.FmkToken;
+import com.cjlabs.domain.enums.ClientTypeEnum;
 import com.cjlabs.web.threadlocal.FmkUserInfo;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 框架级 Token 服务
- * 主要用于请求拦截器中的 token 验证和用户信息管理
+ * Token 服务内存实现
+ * 使用内存存储 Token，适合开发环境和单机环境
+ * 当 fmk.token.save=memory 时启用（默认）
  */
 @Slf4j
-@Component
-public class FmkTokenServiceMemoryImpl {
+@Service("fmkTokenService")
+@ConditionalOnProperty(name = "fmk.token.save", havingValue = "memory", matchIfMissing = true)
+public class FmkTokenServiceMemoryImpl implements IFmkTokenService {
+
+    @Autowired
+    private FmkTokenProperties tokenProperties;  // 🔥 注入配置
 
     // Token到用户ID的映射
     private static final Map<FmkToken, FmkUserId> TOKEN_INFO_USER_ID_MAP = new ConcurrentHashMap<>();
@@ -41,11 +49,19 @@ public class FmkTokenServiceMemoryImpl {
                                FmkToken token,
                                FmkClientInfo clientInfo) {
         if (userId == null || token == null) {
-            log.warn("FmkTokenService|storeUserLogin|参数无效|userId={}|token={}", userId, token);
+            log.warn("FmkTokenServiceMemoryImpl|storeUserLogin|参数无效|userId={}|token={}", userId, token);
             return;
         }
 
         try {
+            // 检查缓存大小限制
+            int maxSize = tokenProperties.getMemory().getMaxSize();
+            if (TOKEN_INFO_USER_ID_MAP.size() >= maxSize) {
+                log.warn("FmkTokenServiceMemoryImpl|storeUserLogin|缓存已满|maxSize={}|currentSize={}",
+                        maxSize, TOKEN_INFO_USER_ID_MAP.size());
+                // TODO: 实现LRU淘汰策略
+            }
+
             // 1. 存储Token到用户ID的映射
             TOKEN_INFO_USER_ID_MAP.put(token, userId);
 
@@ -59,10 +75,10 @@ public class FmkTokenServiceMemoryImpl {
                 USER_ID_USER_INFO_MAP.put(userId, userInfo);
             }
 
-            log.info("FmkTokenService|storeUserLogin|存储成功|userId={}|token={}",
-                    userId.getValue(), token.getValue());
+            log.info("FmkTokenServiceMemoryImpl|storeUserLogin|存储成功|userId={}|token={}|maxSize={}",
+                    userId.getValue(), maskToken(token.getValue()), maxSize);
         } catch (Exception e) {
-            log.error("FmkTokenService|storeUserLogin|存储失败", e);
+            log.error("FmkTokenServiceMemoryImpl|storeUserLogin|存储失败", e);
         }
     }
 
@@ -98,7 +114,7 @@ public class FmkTokenServiceMemoryImpl {
      */
     public Optional<FmkUserInfo> getUserInfoByToken(FmkToken token) {
         if (token == null) {
-            log.info("FmkTokenService|getUserInfoByToken|token为空");
+            log.info("FmkTokenServiceMemoryImpl|getUserInfoByToken|token为空");
             return Optional.empty();
         }
 
@@ -106,14 +122,14 @@ public class FmkTokenServiceMemoryImpl {
             // 1. 获取用户ID
             FmkUserId userId = TOKEN_INFO_USER_ID_MAP.get(token);
             if (userId == null) {
-                log.info("FmkTokenService|getUserInfoByToken|未找到用户ID|token={}", token.getValue());
+                log.info("FmkTokenServiceMemoryImpl|getUserInfoByToken|未找到用户ID|token={}", maskToken(token.getValue()));
                 return Optional.empty();
             }
 
             // 2. 获取用户信息
             FmkUserInfo userInfo = USER_ID_USER_INFO_MAP.get(userId);
             if (userInfo == null) {
-                log.info("FmkTokenService|getUserInfoByToken|未找到用户信息|userId={}", userId.getValue());
+                log.info("FmkTokenServiceMemoryImpl|getUserInfoByToken|未找到用户信息|userId={}", userId.getValue());
                 return Optional.empty();
             }
 
@@ -122,7 +138,7 @@ public class FmkTokenServiceMemoryImpl {
 
             return Optional.of(userInfo);
         } catch (Exception e) {
-            log.error("FmkTokenService|getUserInfoByToken|获取用户信息异常|token={}", token.getValue(), e);
+            log.error("FmkTokenServiceMemoryImpl|getUserInfoByToken|获取用户信息异常|token={}", maskToken(token.getValue()), e);
             return Optional.empty();
         }
     }
@@ -136,7 +152,7 @@ public class FmkTokenServiceMemoryImpl {
         }
 
         USER_ID_USER_INFO_MAP.put(userId, userInfo);
-        log.info("FmkTokenService|cacheUserInfo|缓存用户信息|userId={}", userId.getValue());
+        log.info("FmkTokenServiceMemoryImpl|cacheUserInfo|缓存用户信息|userId={}", userId.getValue());
     }
 
     /**
@@ -193,7 +209,7 @@ public class FmkTokenServiceMemoryImpl {
         // 3. 移除用户信息缓存
         USER_ID_USER_INFO_MAP.remove(userId);
 
-        log.info("FmkTokenService|removeAllUserTokens|移除用户所有Token|userId={}", userId.getValue());
+        log.info("FmkTokenServiceMemoryImpl|removeAllUserTokens|移除用户所有Token|userId={}", userId.getValue());
     }
 
     /**
@@ -210,7 +226,7 @@ public class FmkTokenServiceMemoryImpl {
         // 2. 从设备信息映射中移除
         TOKEN_INFO_CLIENT_TYPE_MAP.remove(token);
 
-        log.info("FmkTokenService|removeToken|移除Token|token={}", token.getValue());
+        log.info("FmkTokenServiceMemoryImpl|removeToken|移除Token|token={}", maskToken(token.getValue()));
     }
 
     /**
@@ -221,5 +237,67 @@ public class FmkTokenServiceMemoryImpl {
         if (clientInfo != null) {
             clientInfo.updateLastActiveTime();
         }
+    }
+
+    /**
+     * Token 掩码处理
+     */
+    private String maskToken(String token) {
+        if (token == null || token.length() <= 10) {
+            return "***";
+        }
+        return token.substring(0, 10) + "...";
+    }
+
+    // ==================== IFmkTokenService 接口实现（需要补充） ====================
+
+    @Override
+    public FmkToken createAndSaveToken(FmkUserId userId, FmkUserInfo userInfo, FmkTokenInfo tokenInfo) {
+        FmkToken token = FmkToken.generate();
+
+        // 🔥 使用构造函数代替 of() 方法
+        FmkClientInfo clientInfo = new FmkClientInfo();
+        ClientTypeEnum clientType = tokenInfo.getClientType();
+        clientInfo.setClientType(clientType);
+        clientInfo.setIpAddress(tokenInfo.getIpAddress());
+        clientInfo.setUserAgent(tokenInfo.getUserAgent());
+
+        storeUserLogin(userId, userInfo, token, clientInfo);
+        return token;
+    }
+
+    @Override
+    public Optional<FmkTokenInfo> getTokenInfo(FmkToken token) {
+        // 内存实现暂不支持完整的TokenInfo，只返回基本信息
+        return getUserIdByToken(token)
+                .map(userId -> FmkTokenInfo.builder()
+                        .token(token)
+                        .userId(userId)
+                        .build());
+    }
+
+    @Override
+    public boolean refreshToken(FmkToken token) {
+        // 内存实现暂不支持刷新过期时间
+        return validateToken(token);
+    }
+
+    @Override
+    public boolean revokeToken(FmkToken token) {
+        removeToken(token);
+        return true;
+    }
+
+    @Override
+    public int revokeAllUserTokens(FmkUserId userId) {
+        removeAllUserTokens(userId);
+        return 1; // 简化处理，返回1表示成功
+    }
+
+    @Override
+    public int cleanExpiredTokens() {
+        // 内存实现暂不支持自动清理过期Token
+        log.info("FmkTokenServiceMemoryImpl|cleanExpiredTokens|内存实现暂不支持自动清理");
+        return 0;
     }
 }

@@ -28,6 +28,8 @@ public class FmkTokenServiceDbImpl implements IFmkTokenService {
 
     @Autowired
     private LoginInfoTokenWrapMapper loginInfoTokenWrapMapper;
+    @Autowired
+    private FmkTokenProperties tokenProperties;
 
     @Override
     public FmkToken createAndSaveToken(FmkUserId userId, FmkUserInfo userInfo, FmkTokenInfo tokenInfo) {

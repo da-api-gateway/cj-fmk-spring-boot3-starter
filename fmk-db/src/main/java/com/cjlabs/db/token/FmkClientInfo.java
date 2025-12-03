@@ -67,6 +67,22 @@ public class FmkClientInfo {
     }
 
     /**
+     * 创建 FmkClientInfo 实例（使用 ClientTypeEnum）
+     *
+     * @param clientType 客户端类型枚举
+     * @param ipAddress  IP地址
+     * @param userAgent  User Agent
+     * @return FmkClientInfo 实例
+     */
+    public static FmkClientInfo of(ClientTypeEnum clientType, String ipAddress, String userAgent) {
+        FmkClientInfo clientInfo = new FmkClientInfo();
+        clientInfo.setClientType(clientType);
+        clientInfo.setIpAddress(ipAddress);
+        clientInfo.setUserAgent(userAgent);
+        return clientInfo;
+    }
+
+    /**
      * 更新最后活跃时间
      */
     public void updateLastActiveTime() {
