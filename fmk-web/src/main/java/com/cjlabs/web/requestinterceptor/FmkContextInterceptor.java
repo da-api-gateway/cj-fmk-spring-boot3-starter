@@ -141,14 +141,13 @@ public class FmkContextInterceptor implements HandlerInterceptor {
                     log.debug("FmkContextInterceptor|setUserInfo|未提供用户Token");
                 }
                 // 检查是否需要设置系统用户
-                setSystemUserIfNeeded(request, contextInfo);
+                // setSystemUserIfNeeded(request, contextInfo);
                 return;
             }
 
             // 设置 token 到上下文
             FmkToken fmkToken = FmkToken.ofNullable(userToken);
             contextInfo.setToken(fmkToken);
-
 
             Optional<FmkUserInfo> userInfoOptional = fmkTokenService.getUserInfoByToken(fmkToken);
             userInfoOptional.ifPresentOrElse(
@@ -172,14 +171,14 @@ public class FmkContextInterceptor implements HandlerInterceptor {
                         log.warn("FmkContextInterceptor|setUserInfo|Token验证失败|token={}",
                                 maskToken(userToken));
                         // Token验证失败，检查是否需要设置系统用户
-                        setSystemUserIfNeeded(request, contextInfo);
+                        // setSystemUserIfNeeded(request, contextInfo);
                     }
             );
 
         } catch (Exception e) {
             log.error("FmkContextInterceptor|setUserInfo|设置用户信息失败", e);
             // 异常情况下也检查是否需要设置系统用户
-            setSystemUserIfNeeded(request, contextInfo);
+            // setSystemUserIfNeeded(request, contextInfo);
         }
     }
 
@@ -193,35 +192,35 @@ public class FmkContextInterceptor implements HandlerInterceptor {
         return token.substring(0, Math.min(token.length(), 10)) + "...";
     }
 
-    /**
-     * 为特定接口设置系统用户信息
-     */
-    private void setSystemUserIfNeeded(HttpServletRequest request, FmkContextInfo contextInfo) {
-        try {
-            String requestUri = request.getRequestURI();
-
-            // 检查当前请求是否需要设置系统用户
-            boolean needSystemUser = SYSTEM_USER_PATHS.stream().anyMatch(requestUri::contains);
-
-            if (needSystemUser) {
-                // 设置系统用户ID
-                FmkUserId systemUserId = FmkUserId.ofNullable(SYSTEM_USER_ID);
-                contextInfo.setUserInfoAndUserId(systemUserId);
-
-                // 添加系统用户ID到MDC，便于日志追踪
-                MDC.put(MDC_USER_ID, String.valueOf(SYSTEM_USER_ID));
-
-                if (log.isDebugEnabled()) {
-                    log.debug("FmkContextInterceptor|setSystemUserIfNeeded|设置系统用户成功|uri={}|systemUserId={}",
-                            requestUri, SYSTEM_USER_ID);
-                }
-            } else if (log.isDebugEnabled()) {
-                log.debug("FmkContextInterceptor|setSystemUserIfNeeded|接口不需要系统用户|uri={}", requestUri);
-            }
-        } catch (Exception e) {
-            log.error("FmkContextInterceptor|setSystemUserIfNeeded|设置系统用户失败", e);
-        }
-    }
+    // /**
+    //  * 为特定接口设置系统用户信息
+    //  */
+    // private void setSystemUserIfNeeded(HttpServletRequest request, FmkContextInfo contextInfo) {
+    //     try {
+    //         String requestUri = request.getRequestURI();
+    //
+    //         // 检查当前请求是否需要设置系统用户
+    //         boolean needSystemUser = SYSTEM_USER_PATHS.stream().anyMatch(requestUri::contains);
+    //
+    //         if (needSystemUser) {
+    //             // 设置系统用户ID
+    //             FmkUserId systemUserId = FmkUserId.ofNullable(SYSTEM_USER_ID);
+    //             contextInfo.setUserInfoAndUserId(systemUserId);
+    //
+    //             // 添加系统用户ID到MDC，便于日志追踪
+    //             MDC.put(MDC_USER_ID, String.valueOf(SYSTEM_USER_ID));
+    //
+    //             if (log.isDebugEnabled()) {
+    //                 log.debug("FmkContextInterceptor|setSystemUserIfNeeded|设置系统用户成功|uri={}|systemUserId={}",
+    //                         requestUri, SYSTEM_USER_ID);
+    //             }
+    //         } else if (log.isDebugEnabled()) {
+    //             log.debug("FmkContextInterceptor|setSystemUserIfNeeded|接口不需要系统用户|uri={}", requestUri);
+    //         }
+    //     } catch (Exception e) {
+    //         log.error("FmkContextInterceptor|setSystemUserIfNeeded|设置系统用户失败", e);
+    //     }
+    // }
 
     /**
      * 设置客户端信息
@@ -239,9 +238,10 @@ public class FmkContextInterceptor implements HandlerInterceptor {
             if (StringUtils.isNotBlank(userAgent)) {
                 ClientInfoUtil.parseUserAgent(userAgent, clientInfo);
                 clientInfo.setUserAgent(userAgent);
-            } else {
-                setDefaultClientInfo(clientInfo);
             }
+            // else {
+            // setDefaultClientInfo(clientInfo);
+            // }
 
             // 设置自定义请求头信息
             setCustomHeaders(request, clientInfo);
@@ -253,20 +253,20 @@ public class FmkContextInterceptor implements HandlerInterceptor {
         } catch (Exception e) {
             log.error("FmkContextInterceptor|setClientInfo|设置客户端信息失败", e);
             // 设置默认值防止后续处理出错
-            setDefaultClientInfo(contextInfo.getClientInfo());
+            // setDefaultClientInfo(contextInfo.getClientInfo());
         }
     }
 
-    /**
-     * 设置默认客户端信息（异常情况下使用）
-     */
-    private void setDefaultClientInfo(ClientInfo clientInfo) {
-        clientInfo.setIpAddress("unknown");
-        // clientInfo.setDeviceType(DeviceTypeEnum.WEB);
-        clientInfo.setOperatingSystem("Unknown");
-        clientInfo.setBrowser("Unknown");
-        clientInfo.setUserAgent("Unknown");
-    }
+    // /**
+    //  * 设置默认客户端信息（异常情况下使用）
+    //  */
+    // private void setDefaultClientInfo(ClientInfo clientInfo) {
+    //     clientInfo.setIpAddress("unknown");
+    //     // clientInfo.setDeviceType(DeviceTypeEnum.WEB);
+    //     clientInfo.setOperatingSystem("Unknown");
+    //     clientInfo.setBrowser("Unknown");
+    //     clientInfo.setUserAgent("Unknown");
+    // }
 
     /**
      * 设置自定义请求头信息
