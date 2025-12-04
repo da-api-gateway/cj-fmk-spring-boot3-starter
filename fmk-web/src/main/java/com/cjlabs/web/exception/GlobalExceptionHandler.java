@@ -16,20 +16,20 @@ import java.util.Optional;
 @RestControllerAdvice
 public class GlobalExceptionHandler<T> {
 
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<FmkResult<T>> handleValidationException(ValidationException ex) {
+    @ExceptionHandler(Error400Exception.class)
+    public ResponseEntity<FmkResult<T>> handleValidationException(Error400Exception ex) {
         log.info("处理验证异常|类型={}|键={}|消息={}", ex.getErrorType(), ex.getErrorKey(), ex.getMessage(), ex);
         return createErrorResponse(ex);
     }
 
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<FmkResult<T>> handleBusinessException(BusinessException ex) {
+    @ExceptionHandler(Error200Exception.class)
+    public ResponseEntity<FmkResult<T>> handleBusinessException(Error200Exception ex) {
         log.info("处理业务异常|类型={}|键={}|消息={}", ex.getErrorType(), ex.getErrorKey(), ex.getMessage(), ex);
         return createErrorResponse(ex);
     }
 
-    @ExceptionHandler(SystemException.class)
-    public ResponseEntity<FmkResult<T>> handleSystemException(SystemException ex) {
+    @ExceptionHandler(Error500Exception.class)
+    public ResponseEntity<FmkResult<T>> handleSystemException(Error500Exception ex) {
         log.error("处理系统异常|类型={}|键={}|消息={}", ex.getErrorType(), ex.getErrorKey(), ex.getMessage(), ex);
         return createErrorResponse(ex);
     }

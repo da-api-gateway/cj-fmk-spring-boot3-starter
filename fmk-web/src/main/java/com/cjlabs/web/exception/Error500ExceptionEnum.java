@@ -5,6 +5,8 @@ import com.cjlabs.domain.enums.IEnumStrException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import static com.cjlabs.web.exception.Error500Exception.ERROR_500_TYPE_STR;
+
 /**
  * 系统异常枚举（System Exception Enum）
  * 对应 multi_language_message 表中的 SYSTEM_ERROR 类型
@@ -12,23 +14,23 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum SystemExceptionEnum implements IEnumStrException {
+public enum Error500ExceptionEnum implements IEnumStrException {
 
     // ===================== 系统异常 =====================
     /**
      * 系统未知错误 (Unknown system error)
      */
-    UNKNOWN_ERROR("SYSTEM_ERROR", "UNKNOWN_ERROR"),
+    UNKNOWN_ERROR(ERROR_500_TYPE_STR, "UNKNOWN_ERROR"),
 
     /**
      * 服务暂时不可用 (Service temporarily unavailable)
      */
-    SERVICE_UNAVAILABLE("SYSTEM_ERROR", "SERVICE_UNAVAILABLE"),
+    SERVICE_UNAVAILABLE(ERROR_500_TYPE_STR, "SERVICE_UNAVAILABLE"),
 
     /**
      * 请求超时 (Request timeout)
      */
-    TIMEOUT("SYSTEM_ERROR", "TIMEOUT");
+    TIMEOUT(ERROR_500_TYPE_STR, "TIMEOUT");
 
     /**
      * 对应 message_type

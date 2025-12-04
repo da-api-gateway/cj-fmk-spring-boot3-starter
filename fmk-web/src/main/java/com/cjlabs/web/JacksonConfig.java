@@ -46,13 +46,13 @@ public class JacksonConfig {
 
     @Bean
     public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
-        // ObjectMapper objectMapper = builder.createXmlMapper(false).build();
+        ObjectMapper objectMapper = builder.createXmlMapper(false).build();
 
         // 注册 JavaTimeModule 支持 Java 8 时间类型
-        // objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.registerModule(new JavaTimeModule());
         // 禁用将日期写为时间戳的功能（使用 ISO-8601 格式）
         // objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        return FmkJacksonUtil.createDefaultMapper();
+        return objectMapper;
     }
 }

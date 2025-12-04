@@ -28,5 +28,11 @@
             <artifactId>fmk-web</artifactId>
             <version>${fmk-web.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.cjlabs</groupId>
+            <artifactId>fmk-db</artifactId>
+            <version>${fmk-db.version}</version>
+        </dependency>
     </dependencies>
 </project>

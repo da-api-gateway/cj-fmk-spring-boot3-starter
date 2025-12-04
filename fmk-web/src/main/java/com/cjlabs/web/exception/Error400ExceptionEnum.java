@@ -5,6 +5,8 @@ import com.cjlabs.domain.enums.IEnumStrException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import static com.cjlabs.web.exception.Error400Exception.ERROR_400_TYPE_STR;
+
 /**
  * 参数校验异常枚举（Validation Exception Enum）
  * 对应 multi_language_message 表中的 VALIDATION_ERROR 类型
@@ -12,18 +14,21 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum ValidationExceptionEnum implements IEnumStrException {
+public enum Error400ExceptionEnum implements IEnumStrException {
 
     // ===================== 参数校验异常 =====================
-    /**
-     * 请求参数无效 (Invalid request parameter)
-     */
-    INVALID_PARAMETER("VALIDATION_ERROR", "INVALID_PARAMETER"),
 
     /**
-     * 缺少必要字段 (Required field is missing)
+     * 未授权，请登录 (Unauthorized, please log in)
      */
-    MISSING_FIELD("VALIDATION_ERROR", "MISSING_FIELD");
+    UNAUTHORIZED(ERROR_400_TYPE_STR, "UNAUTHORIZED"),
+
+    /**
+     * 登录凭证已过期，请重新登录 (Token expired, please log in again)
+     */
+    TOKEN_EXPIRED(ERROR_400_TYPE_STR, "TOKEN_EXPIRED"),
+
+    ;
 
     /**
      * 对应 message_type
