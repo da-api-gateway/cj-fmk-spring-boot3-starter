@@ -26,6 +26,11 @@ public enum BusinessExceptionEnum implements IEnumStrException {
     TOKEN_EXPIRED("BUSINESS_ERROR", "TOKEN_EXPIRED"),
 
     /**
+     * 账户已被锁定
+     */
+    ACCOUNT_LOCKED("BUSINESS_ERROR", "ACCOUNT_LOCKED"),
+
+    /**
      * 用户名或密码错误 (Invalid username or password)
      */
     INVALID_CREDENTIALS("BUSINESS_ERROR", "INVALID_CREDENTIALS"),
