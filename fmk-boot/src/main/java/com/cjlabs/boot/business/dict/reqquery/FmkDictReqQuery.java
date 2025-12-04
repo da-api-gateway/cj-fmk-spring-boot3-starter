@@ -13,6 +13,8 @@ import java.time.Instant;
 @Data
 public class FmkDictReqQuery {
 
+    private Long id;
+
     /**
      * 字典类型，例如 gender, currency, country
      */
