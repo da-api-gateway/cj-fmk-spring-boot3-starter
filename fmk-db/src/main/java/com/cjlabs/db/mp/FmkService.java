@@ -69,6 +69,10 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
         this.baseMapper = mapper;
     }
 
+    protected abstract Class<T> getEntityClass();
+
+    // 获取实体类的 Class（需要通过反射或其他方式）
+
     /**
      * 获取Mapper类型
      */
@@ -89,14 +93,14 @@ public abstract class FmkService<M extends BaseMapper<T>, T extends FmkBaseEntit
      * 构建Lambda查询条件包装器
      */
     public LambdaQueryWrapper<T> buildLambdaQuery() {
-        return Wrappers.lambdaQuery();
+        return Wrappers.lambdaQuery(getEntityClass());
     }
 
     /**
      * 构建Lambda更新条件包装器
      */
     public LambdaUpdateWrapper<T> buildLambdaUpdate() {
-        return Wrappers.lambdaUpdate();
+        return Wrappers.lambdaUpdate(getEntityClass());
     }
 
     /**

@@ -39,7 +39,7 @@ public class FmkJacksonUtil {
     /**
      * 创建默认配置的ObjectMapper
      */
-    private static ObjectMapper createDefaultMapper() {
+    public static ObjectMapper createDefaultMapper() {
         ObjectMapper mapper = new ObjectMapper();
 
         // ============== 模块注册 ==============

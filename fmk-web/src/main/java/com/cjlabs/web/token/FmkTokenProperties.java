@@ -4,14 +4,12 @@ import com.cjlabs.web.token.enums.TokenSaveTypeEnum;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 /**
  * Token 模块配置属性
  * 对应配置前缀：fmk.token
  */
 @Data
-@Component
 @ConfigurationProperties(prefix = "fmk.token")
 public class FmkTokenProperties {
 
