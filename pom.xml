@@ -35,7 +35,7 @@
         <!-- 修改这些版本 -->
         <spring-boot.version>2.7.18</spring-boot.version>
         <spring-cloud.version>2021.0.8</spring-cloud.version>
-        <spring-cloud-alibaba.version>2021.0.5.0</spring-cloud-alibaba.version>
+        <spring-cloud-alibaba.version>2021.0.6.2</spring-cloud-alibaba.version>
 
         <guava.version>33.5.0-jre</guava.version>
         <apache-commons-collections4.version>4.5.0</apache-commons-collections4.version>
