@@ -10,6 +10,7 @@ import com.cjlabs.web.threadlocal.ClientInfo;
 import com.cjlabs.web.threadlocal.FmkContextInfo;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
 import com.cjlabs.web.threadlocal.FmkUserInfo;
+import com.cjlabs.web.token.IFmkTokenService;
 import com.cjlabs.web.util.ClientInfoUtil;
 
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +38,8 @@ import static com.cjlabs.domain.common.FmkConstant.*;
 @Component
 public class FmkContextInterceptor implements HandlerInterceptor {
 
-    @Autowired
-    private IFmk fmkTokenService;
+    @Autowired(required = false)
+    private IFmkTokenService fmkTokenService;
 
     /**
      * 系统用户ID - 用于不需要登录的接口
@@ -128,6 +129,11 @@ public class FmkContextInterceptor implements HandlerInterceptor {
      * 设置用户信息
      */
     private void setUserInfo(HttpServletRequest request, FmkContextInfo contextInfo) {
+        if (fmkTokenService == null) {
+            log.warn("FmkContextInterceptor|setUserInfo|Token服务未启用");
+            return;
+        }
+
         try {
             String userToken = request.getHeader(HEADER_USER_TOKEN);
             if (StringUtils.isBlank(userToken)) {
@@ -356,7 +362,7 @@ public class FmkContextInterceptor implements HandlerInterceptor {
             }
 
             // 获取设备信息
-            fmkTokenService.getDeviceInfoByToken(fmkToken).ifPresent(deviceInfo -> {
+            fmkTokenService.getClientInfoByToken(fmkToken).ifPresent(deviceInfo -> {
                 // 更新最后活跃时间和IP（如果需要）
                 String currentIp = ClientInfoUtil.getClientIp(request);
                 String storedIp = deviceInfo.getIpAddress();
