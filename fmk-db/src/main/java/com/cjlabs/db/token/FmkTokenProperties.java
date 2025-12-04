@@ -1,72 +1,72 @@
-// package com.cjlabs.db.token;
+//package com.cjlabs.db.token;
 //
-// import lombok.Data;
-// import org.springframework.boot.context.properties.ConfigurationProperties;
-// import org.springframework.stereotype.Component;
+//import lombok.Data;
+//import org.springframework.boot.context.properties.ConfigurationProperties;
+//import org.springframework.stereotype.Component;
 //
-// /**
-//  * Token 模块配置属性
-//  * 对应配置前缀：fmk.token
-//  */
-// @Data
-// @Component
-// @ConfigurationProperties(prefix = "fmk.token")
-// public class FmkTokenProperties {
+///**
+// * Token 模块配置属性
+// * 对应配置前缀：fmk.token
+// */
+//@Data
+//@Component
+//@ConfigurationProperties(prefix = "fmk.token")
+//public class FmkTokenProperties {
 //
-//     /**
-//      * 是否启用 Token 模块
-//      */
-//     private boolean enabled = true;
+//    /**
+//     * 是否启用 Token 模块
+//     */
+//    private boolean enabled = true;
 //
-//     /**
-//      * Token 存储方式：memory（内存）/ database（数据库）/ redis（Redis）
-//      */
-//     private String save = "database";
+//    /**
+//     * Token 存储方式：memory（内存）/ database（数据库）/ redis（Redis）
+//     */
+//    private String save = "database";
 //
-//     /**
-//      * Token 过期时间（小时）
-//      */
-//     private int expireHours = 12;
+//    /**
+//     * Token 过期时间（小时）
+//     */
+//    private int expireHours = 12;
 //
-//     /**
-//      * Redis 配置（当 save=redis 时生效）
-//      */
-//     private RedisConfig redis = new RedisConfig();
+//    /**
+//     * Redis 配置（当 save=redis 时生效）
+//     */
+//    private RedisConfig redis = new RedisConfig();
 //
-//     /**
-//      * 内存配置（当 save=memory 时生效）
-//      */
-//     private MemoryConfig memory = new MemoryConfig();
+//    /**
+//     * 内存配置（当 save=memory 时生效）
+//     */
+//    private MemoryConfig memory = new MemoryConfig();
 //
-//     /**
-//      * Redis 配置类
-//      */
-//     @Data
-//     public static class RedisConfig {
-//         /**
-//          * Redis Key 前缀
-//          */
-//         private String keyPrefix = "fmk:token:";
+//    /**
+//     * Redis 配置类
+//     */
+//    @Data
+//    public static class RedisConfig {
+//        /**
+//         * Redis Key 前缀
+//         */
+//        private String keyPrefix = "fmk:token:";
 //
-//         /**
-//          * TTL 时间（小时）
-//          */
-//         private int ttlHours = 12;
-//     }
+//        /**
+//         * TTL 时间（小时）
+//         */
+//        private int ttlHours = 12;
+//    }
 //
-//     /**
-//      * 内存配置类
-//      */
-//     @Data
-//     public static class MemoryConfig {
-//         /**
-//          * 最大缓存数量
-//          */
-//         private int maxSize = 10000;
+//    /**
+//     * 内存配置类
+//     */
+//    @Data
+//    public static class MemoryConfig {
+//        /**
+//         * 最大缓存数量
+//         */
+//        private int maxSize = 10000;
 //
-//         /**
-//          * 过期时间（小时）
-//          */
-//         private int expireHours = 12;
-//     }
-// }
+//        /**
+//         * 过期时间（小时）
+//         */
+//        private int expireHours = 12;
+//    }
+//}
