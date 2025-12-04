@@ -4,7 +4,7 @@ package com.cjlabs.web.util;
 import com.cjlabs.core.strings.FmkStringUtil;
 import com.cjlabs.domain.enums.ClientTypeEnum;
 import com.cjlabs.domain.enums.IEnumStr;
-import com.cjlabs.web.threadlocal.ClientInfo;
+import com.cjlabs.web.threadlocal.FmkClientInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -105,14 +105,14 @@ public class ClientInfoUtil {
     /**
      * 解析 User-Agent 获取设备和浏览器信息
      */
-    public static void parseUserAgent(String userAgent, ClientInfo clientInfo) {
-        if (FmkStringUtil.isBlank(userAgent) || clientInfo == null) {
+    public static void parseUserAgent(String userAgent, FmkClientInfo fmkClientInfo) {
+        if (FmkStringUtil.isBlank(userAgent) || fmkClientInfo == null) {
             return;
         }
 
         try {
             // 设置原始 User-Agent
-            clientInfo.setUserAgent(userAgent);
+            fmkClientInfo.setUserAgent(userAgent);
 
             // 判断设备类型
             // DeviceTypeEnum deviceType = parseDeviceType(userAgent);
@@ -120,12 +120,12 @@ public class ClientInfoUtil {
 
             // 解析操作系统
             String operatingSystem = parseOperatingSystem(userAgent);
-            clientInfo.setOperatingSystem(operatingSystem);
+            fmkClientInfo.setOperatingSystem(operatingSystem);
 
             // 解析浏览器
-            parseBrowser(userAgent, clientInfo);
+            parseBrowser(userAgent, fmkClientInfo);
 
-            log.info("ClientInfoUtil|parseUserAgent|解析完成|os={}|browser={}", operatingSystem, clientInfo.getBrowser());
+            log.info("ClientInfoUtil|parseUserAgent|解析完成|os={}|browser={}", operatingSystem, fmkClientInfo.getBrowser());
 
         } catch (Exception e) {
             log.warn("ClientInfoUtil|parseUserAgent|解析User-Agent失败|userAgent={}", userAgent, e);
@@ -222,10 +222,10 @@ public class ClientInfoUtil {
     /**
      * 解析浏览器
      */
-    public static void parseBrowser(String userAgent, ClientInfo clientInfo) {
-        if (FmkStringUtil.isBlank(userAgent) || clientInfo == null) {
-            clientInfo.setBrowser("Unknown");
-            clientInfo.setBrowserVersion("Unknown");
+    public static void parseBrowser(String userAgent, FmkClientInfo fmkClientInfo) {
+        if (FmkStringUtil.isBlank(userAgent) || fmkClientInfo == null) {
+            fmkClientInfo.setBrowser("Unknown");
+            fmkClientInfo.setBrowserVersion("Unknown");
             return;
         }
 
@@ -234,38 +234,38 @@ public class ClientInfoUtil {
         // Edge (需要在 Chrome 之前检查，因为 Edge 也包含 Chrome)
         matcher = EDGE_PATTERN.matcher(userAgent);
         if (matcher.find()) {
-            clientInfo.setBrowser("Edge");
-            clientInfo.setBrowserVersion(matcher.group(1));
+            fmkClientInfo.setBrowser("Edge");
+            fmkClientInfo.setBrowserVersion(matcher.group(1));
             return;
         }
 
         // Chrome
         matcher = CHROME_PATTERN.matcher(userAgent);
         if (matcher.find()) {
-            clientInfo.setBrowser("Chrome");
-            clientInfo.setBrowserVersion(matcher.group(1));
+            fmkClientInfo.setBrowser("Chrome");
+            fmkClientInfo.setBrowserVersion(matcher.group(1));
             return;
         }
 
         // Firefox
         matcher = FIREFOX_PATTERN.matcher(userAgent);
         if (matcher.find()) {
-            clientInfo.setBrowser("Firefox");
-            clientInfo.setBrowserVersion(matcher.group(1));
+            fmkClientInfo.setBrowser("Firefox");
+            fmkClientInfo.setBrowserVersion(matcher.group(1));
             return;
         }
 
         // Safari
         matcher = SAFARI_PATTERN.matcher(userAgent);
         if (matcher.find()) {
-            clientInfo.setBrowser("Safari");
-            clientInfo.setBrowserVersion(matcher.group(1));
+            fmkClientInfo.setBrowser("Safari");
+            fmkClientInfo.setBrowserVersion(matcher.group(1));
             return;
         }
 
         // 其他浏览器
-        clientInfo.setBrowser("Unknown");
-        clientInfo.setBrowserVersion("Unknown");
+        fmkClientInfo.setBrowser("Unknown");
+        fmkClientInfo.setBrowserVersion("Unknown");
     }
 
     /**

@@ -3,10 +3,10 @@ package com.cjlabs.web.token.service;
 import com.cjlabs.core.time.FmkInstantUtil;
 import com.cjlabs.core.types.longs.FmkUserId;
 import com.cjlabs.core.types.strings.FmkToken;
+import com.cjlabs.web.threadlocal.FmkClientInfo;
 import com.cjlabs.web.threadlocal.FmkUserInfo;
 import com.cjlabs.web.token.FmkTokenProperties;
 import com.cjlabs.web.token.IFmkTokenService;
-import com.cjlabs.web.token.bo.FmkClientInfo;
 import com.cjlabs.web.token.bo.FmkTokenInfo;
 
 import lombok.extern.slf4j.Slf4j;

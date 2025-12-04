@@ -2,8 +2,8 @@ package com.cjlabs.web.token;
 
 import com.cjlabs.core.types.longs.FmkUserId;
 import com.cjlabs.core.types.strings.FmkToken;
+import com.cjlabs.web.threadlocal.FmkClientInfo;
 import com.cjlabs.web.threadlocal.FmkUserInfo;
-import com.cjlabs.web.token.bo.FmkClientInfo;
 import com.cjlabs.web.token.bo.FmkTokenInfo;
 
 import java.util.Optional;

@@ -6,7 +6,7 @@ import com.cjlabs.core.types.strings.FmkTraceId;
 import com.cjlabs.domain.enums.ClientTypeEnum;
 import com.cjlabs.domain.enums.FmkLanguageEnum;
 import com.cjlabs.domain.enums.IEnumStr;
-import com.cjlabs.web.threadlocal.ClientInfo;
+import com.cjlabs.web.threadlocal.FmkClientInfo;
 import com.cjlabs.web.threadlocal.FmkContextInfo;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
 import com.cjlabs.web.threadlocal.FmkUserInfo;
@@ -227,28 +227,28 @@ public class FmkContextInterceptor implements HandlerInterceptor {
      */
     private void setClientInfo(HttpServletRequest request, FmkContextInfo contextInfo) {
         try {
-            ClientInfo clientInfo = contextInfo.getClientInfo();
+            FmkClientInfo fmkClientInfo = contextInfo.getFmkClientInfo();
 
             // 获取客户端IP
             String clientIp = ClientInfoUtil.getClientIp(request);
-            clientInfo.setIpAddress(clientIp);
+            fmkClientInfo.setIpAddress(clientIp);
 
             // 解析 User-Agent 获取设备信息
             String userAgent = request.getHeader(HEADER_USER_AGENT);
             if (StringUtils.isNotBlank(userAgent)) {
-                ClientInfoUtil.parseUserAgent(userAgent, clientInfo);
-                clientInfo.setUserAgent(userAgent);
+                ClientInfoUtil.parseUserAgent(userAgent, fmkClientInfo);
+                fmkClientInfo.setUserAgent(userAgent);
             }
             // else {
             // setDefaultClientInfo(clientInfo);
             // }
 
             // 设置自定义请求头信息
-            setCustomHeaders(request, clientInfo);
+            setCustomHeaders(request, fmkClientInfo);
 
             if (log.isDebugEnabled()) {
                 log.debug("FmkContextInterceptor|setClientInfo|客户端信息设置成功|ip={}|os={}|browser={}",
-                        clientIp, clientInfo.getOperatingSystem(), clientInfo.getBrowser());
+                        clientIp, fmkClientInfo.getOperatingSystem(), fmkClientInfo.getBrowser());
             }
         } catch (Exception e) {
             log.error("FmkContextInterceptor|setClientInfo|设置客户端信息失败", e);
@@ -271,23 +271,23 @@ public class FmkContextInterceptor implements HandlerInterceptor {
     /**
      * 设置自定义请求头信息
      */
-    private void setCustomHeaders(HttpServletRequest request, ClientInfo clientInfo) {
+    private void setCustomHeaders(HttpServletRequest request, FmkClientInfo fmkClientInfo) {
         try {
             // 设备版本
             String deviceVersion = request.getHeader(HEADER_CLIENT_TYPE);
-            clientInfo.setDeviceVersion(StringUtils.isNotBlank(deviceVersion) ? deviceVersion : "unknown");
+            fmkClientInfo.setDeviceVersion(StringUtils.isNotBlank(deviceVersion) ? deviceVersion : "unknown");
 
             // 引用页
             String referer = request.getHeader(HEADER_REFERER);
             if (StringUtils.isNotBlank(referer)) {
-                clientInfo.setReferrer(referer);
+                fmkClientInfo.setReferrer(referer);
             }
 
             // 设备类型（如果请求头中有，则覆盖User-Agent解析的结果）
             String headerClientType = request.getHeader(HEADER_CLIENT_TYPE);
             if (StringUtils.isNotBlank(headerClientType)) {
                 ClientTypeEnum clientTypeEnum = ClientInfoUtil.parseClientTypeFromString(headerClientType);
-                clientInfo.setClientType(clientTypeEnum);
+                fmkClientInfo.setClientType(clientTypeEnum);
 
                 if (log.isDebugEnabled()) {
                     log.debug("FmkContextInterceptor|setCustomHeaders|使用请求头设备类型|headerType={}|parsedType={}",

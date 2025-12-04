@@ -61,7 +61,7 @@ public class FmkContextInfo {
     /**
      * 客户端信息
      */
-    private ClientInfo clientInfo = new ClientInfo();
+    private FmkClientInfo fmkClientInfo = new FmkClientInfo();
 
     /**
      * 请求头信息

@@ -5,13 +5,15 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.Instant;
+
 /**
  * 客户端信息，包含请求来源的设备、浏览器和网络信息
  */
 @Getter
 @Setter
 @ToString(onlyExplicitlyIncluded = true)
-public class ClientInfo {
+public class FmkClientInfo {
     /**
      * IP地址
      */
@@ -66,26 +68,14 @@ public class ClientInfo {
     private String referrer;
 
     /**
-     * 创建默认的客户端信息实例
+     * 最后活跃时间
      */
-    public static ClientInfo createDefault() {
-        ClientInfo info = new ClientInfo();
-        info.setIpAddress("unknown");
-        info.setUserAgent("unknown");
-        info.setDeviceVersion("unknown");
-        info.setOperatingSystem("unknown");
-        info.setBrowser("unknown");
-        info.setBrowserVersion("unknown");
-        info.setScreenResolution("unknown");
-        info.setChannel("unknown");
-        info.setReferrer("unknown");
-        return info;
-    }
+    private Instant lastActiveTime;
 
     /**
-     * 是否为有效的客户端信息
+     * 更新最后活跃时间
      */
-    public boolean checkValid() {
-        return ipAddress != null && !"unknown".equalsIgnoreCase(ipAddress);
+    public void updateLastActiveTime() {
+        this.lastActiveTime = Instant.now();
     }
 }

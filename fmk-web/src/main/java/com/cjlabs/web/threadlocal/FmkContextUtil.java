@@ -144,8 +144,8 @@ public class FmkContextUtil {
     /**
      * 获取客户端信息
      */
-    public static Optional<ClientInfo> getClientInfo() {
-        return getOptionalFromContext(FmkContextInfo::getClientInfo);
+    public static Optional<FmkClientInfo> getClientInfo() {
+        return getOptionalFromContext(FmkContextInfo::getFmkClientInfo);
     }
 
     /**
