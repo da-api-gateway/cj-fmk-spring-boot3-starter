@@ -14,11 +14,6 @@ import java.time.Instant;
 public class FmkDictI18nReqSave {
 
     /**
-     * ID（更新时必填）
-     */
-    private Long id;
-
-    /**
      * 字典类型，与主表一致
      */
     private String dictType;
@@ -42,6 +37,8 @@ public class FmkDictI18nReqSave {
      * 描述信息，可选
      */
     private String remark;
+
+    private Integer orderNumber;
 
     /**
      * 创建用户

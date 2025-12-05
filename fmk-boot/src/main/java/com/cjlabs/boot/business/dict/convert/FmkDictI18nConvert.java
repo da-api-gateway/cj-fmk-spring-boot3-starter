@@ -18,11 +18,13 @@ public class FmkDictI18nConvert {
         }
         FmkDictI18nResp fmkDictI18nResp = new FmkDictI18nResp();
 
+        fmkDictI18nResp.setId(input.getId());
         fmkDictI18nResp.setDictType(input.getDictType());
         fmkDictI18nResp.setDictKey(input.getDictKey());
         fmkDictI18nResp.setLanguageCode(input.getLanguageCode());
         fmkDictI18nResp.setDictValue(input.getDictValue());
         fmkDictI18nResp.setRemark(input.getRemark());
+        fmkDictI18nResp.setOrderNumber(input.getOrderNumber());
 
         return fmkDictI18nResp;
     }

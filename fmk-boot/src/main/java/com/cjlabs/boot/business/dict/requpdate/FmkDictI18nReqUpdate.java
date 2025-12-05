@@ -38,6 +38,8 @@ public class FmkDictI18nReqUpdate {
      */
     private String dictValue;
 
+    private Integer orderNumber;
+
     /**
      * 描述信息，可选
      */

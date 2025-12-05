@@ -20,4 +20,6 @@ public class FmkDictI18nReqQuery {
      */
     private String dictKey;
 
+    private Integer orderNumber;
+
 }
