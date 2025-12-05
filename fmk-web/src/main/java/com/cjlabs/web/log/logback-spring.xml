@@ -10,7 +10,7 @@
     <property name="LOG_HOME" value="logs/${APP_NAME}/${SPRING_PROFILE}"/>
     <!-- 日志输出 pattern -->
     <property name="PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS,UTC}[UTC] [%thread{20}] %highlight(%-5level) ${APP_NAME} [%X{traceId:-NO-TRACE}:%X{spanId:-NO-SPAN}] %logger{36} - %msg%n%ex{full}"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS,UTC}[UTC] [%thread{20}] %highlight(%-5level) ${APP_NAME} [%X{X-CJ-Trace-Id:-NO-TRACE}:%X{X-CJ-Span-Id:-NO-SPAN}] %logger{36} - %msg%n%ex{full}"/>
 
     <!-- ===================== 控制台日志 ===================== -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -79,6 +79,9 @@
     <springProfile name="dev">
         <logger name="com.cjlabs.web.controller" level="DEBUG"/>
         <logger name="com.cjlabs.web.service" level="DEBUG"/>
+<!--        <logger name="com.alibaba.nacos" level="DEBUG"/>-->
+<!--        <logger name="com.alibaba.cloud" level="DEBUG"/>-->
+<!--        <logger name="org.springframework.cloud" level="DEBUG"/>-->
     </springProfile>
 
 </configuration>
