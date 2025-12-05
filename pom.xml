@@ -54,6 +54,7 @@
         <logback.version>1.2.12</logback.version>
         <apache-http.version>5.5.1</apache-http.version>
         <apache-http-core.version>5.3.6</apache-http-core.version>
+        <caffeine.version>3.2.3</caffeine.version>
 
         <!-- 插件版本 -->
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
@@ -217,6 +218,12 @@
                 <groupId>org.apache.httpcomponents.core5</groupId>
                 <artifactId>httpcore5</artifactId>
                 <version>${apache-http-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
             </dependency>
 
         </dependencies>
