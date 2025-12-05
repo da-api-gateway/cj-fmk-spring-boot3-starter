@@ -1,16 +1,23 @@
 package com.cjlabs.memory.local;
 
+import com.cjlabs.memory.lock.FmkLockUtil;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
- * Caffeine 缓存封装组件
- * 提供简单易用的缓存操作接口
+ * Caffeine 缓存封装组件（防缓存击穿版本）
+ * 结合 FmkLockUtil 防止缓存击穿
+ * <p>
+ * 工作原理：
+ * 1. 先查缓存，有则直接返回
+ * 2. 缓存未命中时，使用 FmkLockUtil 获取互斥锁（3s 超时）
+ * 3. 只有一个线程可以进入加载数据，其他线程等待
+ * 4. 加载完成后，所有等待的线程都能从缓存获取数据
  */
 @Slf4j
 public class LocalCache<K, V> {
@@ -36,17 +43,71 @@ public class LocalCache<K, V> {
     }
 
     /**
-     * 获取缓存数据，如果不存在则加载
+     * 获取缓存数据（防缓存击穿版本）
+     * <p>
+     * 流程：
+     * 1. 尝试从缓存获取数据
+     * 2. 如果命中，直接返回
+     * 3. 如果未命中，使用互斥锁保证只有一个线程加载
+     * 4. 其他线程超时后降级处理
      *
      * @param key    缓存 key
-     * @param loader 数据加载器（缓存未命中时调用）
+     * @param loader 数据加载器（缓存未命中时调用，通常是数据库查询）
      * @return 缓存的值
      */
-    public V get(K key, Supplier<V> loader) {
-        return cache.get(key, k -> {
-            log.debug("缓存未命中: {} - key: {}", cacheName, key);
-            return loader.get();
-        });
+    public V get(K key, Function<K, V> loader) {
+        // 第一步：尝试从缓存获取
+        V value = cache.getIfPresent(key);
+        if (value != null) {
+            log.debug("缓存命中: {} - key: {}", cacheName, key);
+            return value;
+        }
+
+        log.debug("缓存未命中，尝试使用互斥锁获取: {} - key: {}", cacheName, key);
+
+        try {
+            // 第二步：使用互斥锁，防止缓存击穿
+            // 只有一个线程能进去加载，其他线程等待 500ms 后直接加载
+            return FmkLockUtil.executeTryLock(
+                    generateLockKey(key),
+                    3,
+                    TimeUnit.SECONDS,
+                    () -> {
+                        // 双重检查：可能其他线程已经加载了
+                        V cachedValue = cache.getIfPresent(key);
+                        if (cachedValue != null) {
+                            log.debug("其他线程已加载缓存: {} - key: {}", cacheName, key);
+                            return cachedValue;
+                        }
+
+                        // 真正的加载
+                        log.info("加载数据到缓存: {} - key: {}", cacheName, key);
+                        long startTime = System.currentTimeMillis();
+
+                        V loadedValue = loader.apply(key);
+
+                        long costTime = System.currentTimeMillis() - startTime;
+                        log.info("数据加载完成: {} - key: {}, 耗时: {}ms", cacheName, key, costTime);
+
+                        // 放入缓存
+                        if (loadedValue != null) {
+                            cache.put(key, loadedValue);
+                        }
+
+                        return loadedValue;
+                    }
+            );
+
+        } catch (com.cjlabs.domain.exception.Error200Exception e) {
+            // 获取锁超时（500ms）降级处理：直接查询数据库
+            log.warn("获取锁超时（500ms），降级直接查询: {} - key: {}", cacheName, key);
+
+            V loadedValue = loader.apply(key);
+            if (loadedValue != null) {
+                cache.put(key, loadedValue);
+            }
+            return loadedValue;
+        }
     }
 
     /**
@@ -102,9 +163,10 @@ public class LocalCache<K, V> {
      */
     public void logStats() {
         CacheStats stats = cache.stats();
-        log.info("缓存统计 [{}] - 命中率: {}, 命中: {}, 未命中: {}, 加载: {}, 驱逐: {}",
+        double hitRate = stats.hitRate() * 100;
+        log.info("缓存统计 [{}] - 命中率: {}%, 命中: {}, 未命中: {}, 加载: {}, 驱逐: {}",
                 cacheName,
-                stats.hitRate() * 100,
+                String.format("%.2f", hitRate),
                 stats.hitCount(),
                 stats.missCount(),
                 stats.loadCount(),
@@ -118,5 +180,13 @@ public class LocalCache<K, V> {
      */
     public long size() {
         return cache.estimatedSize();
+    }
+
+    /**
+     * 生成锁的 key（缓存名 + 数据 key）
+     * 确保不同的缓存数据使用不同的锁
+     */
+    private String generateLockKey(K key) {
+        return cacheName + ":" + key;
     }
 }

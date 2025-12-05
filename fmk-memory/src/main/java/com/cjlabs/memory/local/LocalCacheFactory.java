@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Caffeine 缓存工厂
- * 统一管理所有缓存实例
+ * 统一管理所有缓存实例（已支持防缓存击穿）
  */
 public class LocalCacheFactory {
 
@@ -17,7 +17,7 @@ public class LocalCacheFactory {
      * @param cacheName     缓存名称
      * @param maxSize       最大容量
      * @param expireSeconds 过期时间（秒）
-     * @return 缓存实例
+     * @return 缓存实例（已支持防缓存击穿）
      */
     @SuppressWarnings("unchecked")
     public <K, V> LocalCache<K, V> getCache(String cacheName, long maxSize, long expireSeconds) {
@@ -27,10 +27,13 @@ public class LocalCacheFactory {
 
     /**
      * 创建缓存（使用默认配置）
-     * 默认：最大 1000 条，5 分钟过期
+     * 默认：最大 10000 条，5 分钟过期
+     * 
+     * @param cacheName 缓存名称
+     * @return 缓存实例
      */
     public <K, V> LocalCache<K, V> getCache(String cacheName) {
-        return getCache(cacheName, 1000, 5);
+        return getCache(cacheName, 10000, 300); // 300 秒 = 5 分钟
     }
 
     /**
