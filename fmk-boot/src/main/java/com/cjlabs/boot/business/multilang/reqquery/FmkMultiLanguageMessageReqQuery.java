@@ -1,6 +1,10 @@
 package com.cjlabs.boot.business.multilang.reqquery;
 
+import com.cjlabs.domain.enums.FmkLanguageEnum;
 import lombok.Data;
+
+import java.time.Instant;
+import java.util.List;
 
 /**
  * fmk_multi_language_message System message content table; 系统消息内容表
@@ -21,6 +25,11 @@ public class FmkMultiLanguageMessageReqQuery {
     private String messageType;
 
     /**
+     * Message type; 消息类型
+     */
+    private List<String> messageKeyList;
+
+    /**
      * Message key; 消息键
      */
     private String messageKey;
@@ -28,26 +37,11 @@ public class FmkMultiLanguageMessageReqQuery {
     /**
      * Language code (en, zh); 语言代码
      */
-    private String languageCode;
+    private FmkLanguageEnum languageCode;
 
     /**
      * Message content; 消息内容
      */
     private String messageValue;
-
-    /**
-     * Creator user ID; 创建用户ID
-     */
-    private String createUser;
-
-    /**
-     * Creation timestamp (UTC, milliseconds); 创建时间(UTC毫秒时间戳)
-     */
-    private Long createDate;
-
-    /**
-     * Updater user ID or name; 更新用户ID或名称
-     */
-    private String updateUser;
 
 }

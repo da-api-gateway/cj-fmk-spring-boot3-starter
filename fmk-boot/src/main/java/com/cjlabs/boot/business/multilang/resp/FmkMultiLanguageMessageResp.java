@@ -1,5 +1,6 @@
 package com.cjlabs.boot.business.multilang.resp;
 
+import com.cjlabs.domain.enums.FmkLanguageEnum;
 import lombok.Data;
 
 import java.time.Instant;
@@ -31,7 +32,7 @@ public class FmkMultiLanguageMessageResp {
     /**
      * Language code (en, zh); 语言代码
      */
-    private String languageCode;
+    private FmkLanguageEnum languageCode;
 
     /**
      * Message content; 消息内容

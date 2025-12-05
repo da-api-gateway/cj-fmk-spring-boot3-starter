@@ -13,6 +13,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -50,7 +52,21 @@ public class FmkMultiLanguageMessageWrapMapper extends FmkService<FmkMultiLangua
 
         // 构建查询条件
         LambdaQueryWrapper<FmkMultiLanguageMessage> lambdaQuery = buildLambdaQuery();
-
+        if (StringUtils.isNotBlank(request.getMessageType())) {
+            lambdaQuery.eq(FmkMultiLanguageMessage::getMessageType, request.getMessageType());
+        }
+        if (StringUtils.isNotBlank(request.getMessageKey())) {
+            lambdaQuery.eq(FmkMultiLanguageMessage::getMessageKey, request.getMessageKey());
+        }
+        if (StringUtils.isNotBlank(request.getMessageType())) {
+            lambdaQuery.eq(FmkMultiLanguageMessage::getMessageType, request.getMessageType());
+        }
+        if (Objects.nonNull(request.getLanguageCode())) {
+            lambdaQuery.eq(FmkMultiLanguageMessage::getLanguageCode, request.getLanguageCode());
+        }
+        if (CollectionUtils.isNotEmpty(request.getMessageKeyList())) {
+            lambdaQuery.in(FmkMultiLanguageMessage::getMessageKey, request.getMessageKeyList());
+        }
 
         List<FmkOrderItem> orderItemList = input.getOrderItemList();
 
@@ -59,4 +75,6 @@ public class FmkMultiLanguageMessageWrapMapper extends FmkService<FmkMultiLangua
 
         return FmkPageResponse.of(dbPage);
     }
+
+
 }

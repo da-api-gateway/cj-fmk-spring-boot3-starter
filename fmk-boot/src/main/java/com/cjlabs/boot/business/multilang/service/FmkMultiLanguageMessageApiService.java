@@ -10,6 +10,7 @@ import com.cjlabs.db.domain.FmkPageResponse;
 import com.cjlabs.db.domain.FmkRequest;
 import com.cjlabs.web.check.FmkCheckUtil;
 
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -17,7 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * fmk_multi_language_message System message content table; 系统消息内容表
@@ -108,5 +111,22 @@ public class FmkMultiLanguageMessageApiService {
         FmkPageResponse<FmkMultiLanguageMessageResp> pageResponse = FmkPageResponse.of(entityPage, FmkMultiLanguageMessageConvert::toResp);
 
         return pageResponse;
+    }
+
+    public Map<String, List<FmkMultiLanguageMessageResp>> listByTypeReturnMap(FmkRequest<FmkMultiLanguageMessageReqQuery> input) {
+        FmkCheckUtil.checkInput(Objects.isNull(input));
+        FmkCheckUtil.checkInput(Objects.isNull(input.getRequest()));
+        FmkMultiLanguageMessageReqQuery request = input.getRequest();
+        FmkCheckUtil.checkInput(CollectionUtils.isEmpty(request.getMessageKeyList()));
+        // List<String> messageTypeList = request.getMessageTypeList();
+
+        FmkPageResponse<FmkMultiLanguageMessageResp> pagedQuery = pageQuery(input);
+
+        List<FmkMultiLanguageMessageResp> messageRespList = pagedQuery.getRecords();
+        if (CollectionUtils.isEmpty(messageRespList)) {
+            return Maps.newHashMap();
+        }
+
+        return messageRespList.stream().collect(Collectors.groupingBy(FmkMultiLanguageMessageResp::getMessageKey));
     }
 }
