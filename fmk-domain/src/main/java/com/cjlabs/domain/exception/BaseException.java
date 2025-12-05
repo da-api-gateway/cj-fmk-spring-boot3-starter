@@ -1,4 +1,4 @@
-package com.cjlabs.web.exception;
+package com.cjlabs.domain.exception;
 
 import lombok.Getter;
 

@@ -1,8 +1,7 @@
-package com.cjlabs.web.exception;
+package com.cjlabs.domain.exception;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @Setter
@@ -14,12 +13,12 @@ public class Error400Exception extends BaseException {
 
     // 默认构造函数
     public Error400Exception(String msgKey) {
-        super(ERROR_400_TYPE_STR, msgKey, HttpStatus.BAD_REQUEST.value());
+        super(ERROR_400_TYPE_STR, msgKey, 400);
     }
 
     // 默认构造函数
     public Error400Exception(Error400ExceptionEnum exceptionEnum) {
-        super(ERROR_400_TYPE_STR, exceptionEnum.getKey(), HttpStatus.BAD_REQUEST.value());
+        super(ERROR_400_TYPE_STR, exceptionEnum.getKey(), 400);
     }
 
     /**
@@ -29,6 +28,6 @@ public class Error400Exception extends BaseException {
      * @param message       详细错误消息
      */
     public Error400Exception(Error400ExceptionEnum exceptionEnum, String message) {
-        super(ERROR_400_TYPE_STR, exceptionEnum.getKey(), HttpStatus.BAD_REQUEST.value(), message);
+        super(ERROR_400_TYPE_STR, exceptionEnum.getKey(), 400, message);
     }
 }

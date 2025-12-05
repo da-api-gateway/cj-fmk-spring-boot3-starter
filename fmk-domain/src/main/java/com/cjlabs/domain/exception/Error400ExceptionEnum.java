@@ -1,11 +1,11 @@
-package com.cjlabs.web.exception;
+package com.cjlabs.domain.exception;
 
 import com.cjlabs.domain.enums.IEnumStrException;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import static com.cjlabs.web.exception.Error400Exception.ERROR_400_TYPE_STR;
+import static com.cjlabs.domain.exception.Error400Exception.ERROR_400_TYPE_STR;
 
 /**
  * 参数校验异常枚举（Validation Exception Enum）

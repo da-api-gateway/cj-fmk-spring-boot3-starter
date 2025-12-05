@@ -1,7 +1,7 @@
-package com.cjlabs.cloud;
+package com.cjlabs.memory.lock;
 
-import com.cjlabs.web.exception.Error200Exception;
-import com.cjlabs.web.exception.Error200ExceptionEnum;
+import com.cjlabs.domain.exception.Error200Exception;
+import com.cjlabs.domain.exception.Error200ExceptionEnum;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +18,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class FmkLockUtil {
 
     // 存储重入锁的映射
-    private static final ConcurrentHashMap<String, ReentrantLock> REENTRANT_LOCKS = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, ReentrantLock> REENTRANT_LOCK_MAP = new ConcurrentHashMap<>();
 
     // 锁的最大数量，防止内存泄漏
     private static final int MAX_LOCK_SIZE = 10000;
@@ -32,7 +32,7 @@ public class FmkLockUtil {
      */
     @FunctionalInterface
     public interface LockTask<T> {
-        T execute();
+        T execute() throws InterruptedException;
     }
 
     /**
@@ -40,7 +40,7 @@ public class FmkLockUtil {
      */
     @FunctionalInterface
     public interface VoidLockTask {
-        void execute();
+        void execute() throws InterruptedException;
     }
 
     // ==================== 重入锁相关方法 ====================
@@ -57,11 +57,11 @@ public class FmkLockUtil {
         }
 
         // 检查锁数量限制
-        if (REENTRANT_LOCKS.size() >= MAX_LOCK_SIZE) {
+        if (REENTRANT_LOCK_MAP.size() >= MAX_LOCK_SIZE) {
             log.warn("重入锁数量已达到上限: {}, 请检查是否存在内存泄漏", MAX_LOCK_SIZE);
         }
 
-        return REENTRANT_LOCKS.computeIfAbsent(key, k -> {
+        return REENTRANT_LOCK_MAP.computeIfAbsent(key, k -> {
             log.debug("创建新的重入锁: {}", k);
             return new ReentrantLock(true); // 公平锁
         });
@@ -74,7 +74,7 @@ public class FmkLockUtil {
      * @param action 要执行的操作
      */
     public static void executeWithLock(String key, VoidLockTask action) {
-        executeWithLock(key, () -> {
+        executeLock(key, () -> {
             action.execute();
             return null;
         });
@@ -88,7 +88,7 @@ public class FmkLockUtil {
      * @param <T>      返回值类型
      * @return 操作结果
      */
-    public static <T> T executeWithLock(String key, LockTask<T> supplier) {
+    public static <T> T executeLock(String key, LockTask<T> supplier) {
         ReentrantLock lock = getReentrantLock(key);
         lock.lock();
         try {
@@ -96,7 +96,7 @@ public class FmkLockUtil {
             return supplier.execute();
         } catch (Exception e) {
             log.error("FmkLockUtil|executeWithLock|执行操作失败|key={}|error={}", key, e.getMessage(), e);
-            throw e;
+            throw new Error200Exception(Error200ExceptionEnum.RATE_LIMIT_EXCEEDED);
         } finally {
             lock.unlock();
             log.debug("FmkLockUtil|executeWithLock|unlock key={}", key);
@@ -110,8 +110,8 @@ public class FmkLockUtil {
      * @param action 要执行的操作
      * @throws Error200Exception 获取锁超时时抛出
      */
-    public static <T> T executeWithTryLockOrThrow(String key, LockTask<T> action) {
-        return executeWithTryLockOrThrow(key, 5, TimeUnit.SECONDS, action);
+    public static <T> T executeTryLockWait5S(String key, LockTask<T> action) {
+        return executeTryLock(key, 5, TimeUnit.SECONDS, action);
     }
 
     /**
@@ -121,8 +121,8 @@ public class FmkLockUtil {
      * @param action 要执行的操作
      * @throws Error200Exception 获取锁超时时抛出
      */
-    public static void executeWithTryLockOrThrow(String key, VoidLockTask action) {
-        executeWithTryLockOrThrow(key, 5, TimeUnit.SECONDS, () -> {
+    public static void executeTryLockWait5S(String key, VoidLockTask action) {
+        executeTryLock(key, 5, TimeUnit.SECONDS, () -> {
             action.execute();
             return null;
         });
@@ -137,8 +137,8 @@ public class FmkLockUtil {
      * @param action  要执行的操作
      * @throws Error200Exception 获取锁超时时抛出
      */
-    public static void executeWithTryLockOrThrow(String key, long timeout, TimeUnit unit, VoidLockTask action) {
-        executeWithTryLockOrThrow(key, timeout, unit, () -> {
+    public static void executeTryLock(String key, long timeout, TimeUnit unit, VoidLockTask action) {
+        executeTryLock(key, timeout, unit, () -> {
             action.execute();
             return null;
         });
@@ -155,7 +155,7 @@ public class FmkLockUtil {
      * @return 操作结果
      * @throws Error200Exception 获取锁超时时抛出
      */
-    public static <T> T executeWithTryLockOrThrow(String key, long timeout, TimeUnit unit, LockTask<T> supplier) {
+    public static <T> T executeTryLock(String key, long timeout, TimeUnit unit, LockTask<T> supplier) {
         ReentrantLock lock = getReentrantLock(key);
         try {
             if (lock.tryLock(timeout, unit)) {
@@ -189,8 +189,8 @@ public class FmkLockUtil {
      * @param action 要执行的操作
      * @throws Error200Exception 获取锁失败时立即抛出
      */
-    public static void executeWithTryLockOrThrowImmediately(String key, VoidLockTask action) {
-        executeWithTryLockOrThrow(key, 1, TimeUnit.MILLISECONDS, action);
+    public static void executeTryLock(String key, VoidLockTask action) {
+        executeTryLock(key, 1, TimeUnit.MILLISECONDS, action);
     }
 
     /**
@@ -202,8 +202,8 @@ public class FmkLockUtil {
      * @return 操作结果
      * @throws Error200Exception 获取锁失败时立即抛出
      */
-    public static <T> T executeWithTryLockOrThrowImmediately(String key, LockTask<T> supplier) {
-        return executeWithTryLockOrThrow(key, 1, TimeUnit.MILLISECONDS, supplier);
+    public static <T> T executeTryLock(String key, LockTask<T> supplier) {
+        return executeTryLock(key, 1, TimeUnit.MILLISECONDS, supplier);
     }
 
     /**
@@ -212,7 +212,7 @@ public class FmkLockUtil {
      * @return 当前锁的数量
      */
     public static int getLockCount() {
-        return REENTRANT_LOCKS.size();
+        return REENTRANT_LOCK_MAP.size();
     }
 
 }

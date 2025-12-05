@@ -1,12 +1,12 @@
 // package com.cjlabs.web.check;
 //
 // import com.cjlabs.core.types.longs.FmkUserId;
-// import com.cjlabs.web.exception.Error200Exception;
-// import com.cjlabs.web.exception.Error200ExceptionEnum;
-// import com.cjlabs.web.exception.Error500Exception;
-// import com.cjlabs.web.exception.Error500ExceptionEnum;
-// import com.cjlabs.web.exception.Error400Exception;
-// import com.cjlabs.web.exception.Error400ExceptionEnum;
+// import com.cjlabs.domain.exception.Error200Exception;
+// import com.cjlabs.domain.exception.Error200ExceptionEnum;
+// import com.cjlabs.domain.exception.Error500Exception;
+// import com.cjlabs.domain.exception.Error500ExceptionEnum;
+// import com.cjlabs.domain.exception.Error400Exception;
+// import com.cjlabs.domain.exception.Error400ExceptionEnum;
 // import com.cjlabs.web.threadlocal.FmkContextInfo;
 // import com.cjlabs.web.threadlocal.FmkContextUtil;
 // import org.junit.jupiter.api.AfterEach;

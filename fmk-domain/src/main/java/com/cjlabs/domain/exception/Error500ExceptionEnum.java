@@ -1,11 +1,11 @@
-package com.cjlabs.web.exception;
+package com.cjlabs.domain.exception;
 
 import com.cjlabs.domain.enums.IEnumStrException;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import static com.cjlabs.web.exception.Error500Exception.ERROR_500_TYPE_STR;
+import static com.cjlabs.domain.exception.Error500Exception.ERROR_500_TYPE_STR;
 
 /**
  * 系统异常枚举（System Exception Enum）

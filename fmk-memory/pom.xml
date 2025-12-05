@@ -18,10 +18,22 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.cjlabs</groupId>
+            <artifactId>fmk-domain</artifactId>
+            <version>${fmk-domain.version}</version>
+        </dependency>
+
         <!-- 添加 SLF4J API 依赖 -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <!-- 添加到 fmk-memory/pom.xml 的 dependencies 部分 -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
         </dependency>
 
         <dependency>

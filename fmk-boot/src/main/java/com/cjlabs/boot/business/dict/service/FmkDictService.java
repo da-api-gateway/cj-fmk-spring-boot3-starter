@@ -11,7 +11,7 @@ import com.cjlabs.boot.business.dict.resp.FmkDictResp;
 import com.cjlabs.db.domain.FmkPageResponse;
 import com.cjlabs.db.domain.FmkRequest;
 import com.cjlabs.web.check.FmkCheckUtil;
-import com.cjlabs.web.exception.Error200ExceptionEnum;
+import com.cjlabs.domain.exception.Error200ExceptionEnum;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;

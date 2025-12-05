@@ -1,11 +1,11 @@
-package com.cjlabs.web.exception;
+package com.cjlabs.domain.exception;
 
 import com.cjlabs.domain.enums.IEnumStrException;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import static com.cjlabs.web.exception.Error200Exception.ERROR_200_TYPE_STR;
+import static com.cjlabs.domain.exception.Error200Exception.ERROR_200_TYPE_STR;
 
 /**
  * 业务异常枚举（Business Exception Enum）

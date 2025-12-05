@@ -10,7 +10,7 @@ import com.cjlabs.boot.business.dict.requpdate.FmkDictI18nReqUpdate;
 import com.cjlabs.boot.business.dict.resp.FmkDictI18nResp;
 import com.cjlabs.db.domain.FmkRequest;
 import com.cjlabs.web.check.FmkCheckUtil;
-import com.cjlabs.web.exception.Error200ExceptionEnum;
+import com.cjlabs.domain.exception.Error200ExceptionEnum;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
