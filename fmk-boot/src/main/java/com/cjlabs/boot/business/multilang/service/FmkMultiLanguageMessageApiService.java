@@ -129,4 +129,20 @@ public class FmkMultiLanguageMessageApiService {
 
         return messageRespList.stream().collect(Collectors.groupingBy(FmkMultiLanguageMessageResp::getMessageKey));
     }
+
+    /**
+     *
+     * @return messageType messageKey Message
+     */
+    public Map<String, Map<String, List<FmkMultiLanguageMessageResp>>> listAllReturnMap() {
+        List<FmkMultiLanguageMessage> messageList = fmkMultiLanguageMessageService.listAll();
+        if (CollectionUtils.isEmpty(messageList)) {
+            return Maps.newHashMap();
+        }
+
+        List<FmkMultiLanguageMessageResp> messageRespList = FmkMultiLanguageMessageConvert.toResp(messageList);
+        return messageRespList.stream()
+                .collect(Collectors.groupingBy(FmkMultiLanguageMessageResp::getMessageType,
+                        Collectors.groupingBy(FmkMultiLanguageMessageResp::getMessageKey)));
+    }
 }

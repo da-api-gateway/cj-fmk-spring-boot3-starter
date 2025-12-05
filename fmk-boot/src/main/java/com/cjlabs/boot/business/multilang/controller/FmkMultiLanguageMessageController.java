@@ -56,9 +56,18 @@ public class FmkMultiLanguageMessageController {
     /**
      * 查询所有（不分页）
      */
-    @PostMapping("/listByTypeReturnMap")
+    @PostMapping("/listByKeyReturnMap")
     public FmkResult<Map<String, List<FmkMultiLanguageMessageResp>>> listByTypeReturnMap(@RequestBody FmkRequest<FmkMultiLanguageMessageReqQuery> input) {
         Map<String, List<FmkMultiLanguageMessageResp>> returnMap = fmkMultiLanguageMessageApiService.listByTypeReturnMap(input);
+        return FmkResult.success(returnMap);
+    }
+
+    /**
+     * 查询所有（不分页）
+     */
+    @PostMapping("/listAllReturnMap")
+    public FmkResult<Map<String, Map<String, List<FmkMultiLanguageMessageResp>>>> listAllReturnMap() {
+        Map<String, Map<String, List<FmkMultiLanguageMessageResp>>> returnMap = fmkMultiLanguageMessageApiService.listAllReturnMap();
         return FmkResult.success(returnMap);
     }
 
