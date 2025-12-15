@@ -5,10 +5,11 @@ import com.cjlabs.core.strings.FmkStringUtil;
 import com.cjlabs.domain.enums.ClientTypeEnum;
 import com.cjlabs.domain.enums.IEnumStr;
 import com.cjlabs.web.threadlocal.FmkClientInfo;
+
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

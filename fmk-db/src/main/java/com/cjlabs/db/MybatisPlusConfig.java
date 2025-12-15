@@ -2,23 +2,11 @@ package com.cjlabs.db;
 
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
-import com.cjlabs.core.types.decimal.FmkAmount;
-import com.cjlabs.core.types.longs.FmkUserId;
-import com.cjlabs.core.types.strings.*;
-import com.cjlabs.db.mybatis.type.*;
-import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.event.ContextRefreshedEvent;
-
-import javax.annotation.PostConstruct;
-import java.time.Instant;
 
 /**
  * MyBatis-Plus配置

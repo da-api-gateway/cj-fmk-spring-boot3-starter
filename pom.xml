@@ -20,7 +20,7 @@
     </modules>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
@@ -34,9 +34,9 @@
         <fmk-web.version>20251117_v1</fmk-web.version>
 
         <!-- 修改这些版本 -->
-        <spring-boot.version>2.7.18</spring-boot.version>
-        <spring-cloud.version>2021.0.8</spring-cloud.version>
-        <spring-cloud-alibaba.version>2021.0.6.2</spring-cloud-alibaba.version>
+        <spring-boot.version>3.5.8</spring-boot.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
+        <spring-cloud-alibaba.version>2025.0.0.0</spring-cloud-alibaba.version>
 
         <guava.version>33.5.0-jre</guava.version>
         <apache-commons-collections4.version>4.5.0</apache-commons-collections4.version>
@@ -44,26 +44,27 @@
         <apache-commons-text.version>1.14.0</apache-commons-text.version>
 
         <!-- MyBatis Plus 版本调整 -->
-        <mybatis-plus.version>3.5.3.1</mybatis-plus.version>
-        <mysql.version>8.0.33</mysql.version>  <!-- MySQL 9.x 可能有兼容性问题，降级到 8.x -->
+        <!--        <mybatis-plus.version>3.5.9</mybatis-plus.version>-->
+        <mybatis-plus.version>3.5.15</mybatis-plus.version>
+        <mysql.version>9.1.0</mysql.version>
 
         <ttl.version>2.14.5</ttl.version>
         <lombok.version>1.18.40</lombok.version>
-        <junit.version>5.11.0</junit.version>
-        <mockito.version>5.8.0</mockito.version>
-        <slf4j.version>1.7.36</slf4j.version>
-        <logback.version>1.2.12</logback.version>
+        <junit.version>5.11.4</junit.version>
+        <mockito.version>5.14.2</mockito.version>
+        <slf4j.version>2.0.16</slf4j.version>
+        <logback.version>1.5.15</logback.version>
         <apache-http.version>5.5.1</apache-http.version>
         <apache-http-core.version>5.3.6</apache-http-core.version>
         <caffeine.version>3.2.3</caffeine.version>
 
         <!-- 插件版本 -->
-        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <spring-boot-maven-plugin.version>${spring-boot.version}</spring-boot-maven-plugin.version>
-        <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
         <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
-        <maven-checkstyle-plugin.version>3.2.2</maven-checkstyle-plugin.version>
-        <maven-pmd-plugin.version>3.18.0</maven-pmd-plugin.version>
+        <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
+        <maven-pmd-plugin.version>3.26.0</maven-pmd-plugin.version>
         <spotbugs-maven-plugin.version>4.9.6.0</spotbugs-maven-plugin.version>
     </properties>
 
@@ -163,9 +164,24 @@
                 <version>${guava.version}</version>
             </dependency>
 
+            <!--            <dependency>-->
+            <!--                <groupId>com.baomidou</groupId>-->
+            <!--                <artifactId>mybatis-plus-boot-starter</artifactId>-->
+            <!--                <version>${mybatis-plus.version}</version>-->
+            <!--            </dependency>-->
             <dependency>
                 <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>com.baomidou</groupId>-->
+<!--                <artifactId>mybatis-plus-jsqlparser-4.9</artifactId>-->
+<!--            </dependency>-->
+            <!-- jdk 11+ 引入可选模块 -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
 
