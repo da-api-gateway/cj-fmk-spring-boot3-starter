@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.cjlabs</groupId>
-        <artifactId>cj-fmk-spring-boot2-starter</artifactId>
+        <artifactId>cj-fmk-spring-boot3-starter</artifactId>
         <version>20251117_v1</version>
     </parent>
 
