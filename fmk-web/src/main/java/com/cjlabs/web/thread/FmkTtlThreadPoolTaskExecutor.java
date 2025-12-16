@@ -3,9 +3,11 @@ package com.cjlabs.web.thread;
 import com.alibaba.ttl.TtlRunnable;
 import com.alibaba.ttl.TtlCallable;
 import com.cjlabs.core.time.FmkInstantUtil;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.io.Serial;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.*;
@@ -16,7 +18,7 @@ import java.util.concurrent.*;
  */
 @Slf4j
 public class FmkTtlThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
-
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**

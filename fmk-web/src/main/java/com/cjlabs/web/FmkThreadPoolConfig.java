@@ -1,10 +1,12 @@
 package com.cjlabs.web;
 
+import com.cjlabs.web.json.FmkJacksonUtil;
 import com.cjlabs.web.thread.FmkThreadPoolMonitor;
 import com.cjlabs.web.thread.FmkThreadPoolProperties;
 import com.cjlabs.web.thread.FmkTtlThreadPoolTaskExecutor;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +30,7 @@ public class FmkThreadPoolConfig {
     @Bean
     @ConditionalOnMissingBean(name = "fmkThreadPoolTaskExecutor")
     public ThreadPoolTaskExecutor fmkThreadPoolTaskExecutor(FmkThreadPoolProperties properties) {
-        log.info("Initializing FmkThreadPoolTaskExecutor with properties: {}", properties);
+        log.info("Initializing FmkThreadPoolTaskExecutor with properties: {}", FmkJacksonUtil.toJson(properties));
         
         FmkTtlThreadPoolTaskExecutor executor = new FmkTtlThreadPoolTaskExecutor(
                 properties.isEnableMonitoring(), 
@@ -102,7 +104,7 @@ public class FmkThreadPoolConfig {
      */
     @Bean
     @ConditionalOnMissingBean(FmkThreadPoolMonitor.class)
-    public FmkThreadPoolMonitor threadPoolMonitor(ThreadPoolTaskExecutor fmkThreadPoolTaskExecutor) {
+    public FmkThreadPoolMonitor threadPoolMonitor(@Qualifier("fmkThreadPoolTaskExecutor") ThreadPoolTaskExecutor fmkThreadPoolTaskExecutor) {
         return new FmkThreadPoolMonitor(fmkThreadPoolTaskExecutor);
     }
 }
