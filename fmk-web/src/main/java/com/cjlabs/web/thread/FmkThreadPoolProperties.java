@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "thread-pool")
+@ConfigurationProperties(prefix = "fmk.thread-pool")
 public class FmkThreadPoolProperties {
     /**
      * 线程池名称前缀
