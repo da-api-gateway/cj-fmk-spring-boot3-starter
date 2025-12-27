@@ -17,6 +17,7 @@
         <module>fmk-boot</module>
         <module>fmk-memory</module>
         <module>fmk-message</module>
+        <module>fmk-tg</module>
     </modules>
 
     <properties>
@@ -57,6 +58,7 @@
         <apache-http.version>5.5.1</apache-http.version>
         <apache-http-core.version>5.3.6</apache-http-core.version>
         <caffeine.version>3.2.3</caffeine.version>
+        <telegrambots.version>9.2.0</telegrambots.version>
 
         <!-- 插件版本 -->
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
@@ -243,6 +245,36 @@
                 <version>${caffeine.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.telegram</groupId>
+                <artifactId>telegrambots-longpolling</artifactId>
+                <version>${telegrambots.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.telegram</groupId>
+                <artifactId>telegrambots-client</artifactId>
+                <version>${telegrambots.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.telegram</groupId>
+                <artifactId>telegrambots-meta</artifactId>
+                <version>${telegrambots.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.telegram</groupId>
+                <artifactId>telegrambots-extensions</artifactId>
+                <version>${telegrambots.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.telegram</groupId>
+                <artifactId>telegrambots-webhook</artifactId>
+                <version>${telegrambots.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.telegram</groupId>
+                <artifactId>telegrambots-abilities</artifactId>
+                <version>${telegrambots.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
