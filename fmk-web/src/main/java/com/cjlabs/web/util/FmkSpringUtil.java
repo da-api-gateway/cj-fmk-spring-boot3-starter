@@ -6,6 +6,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -72,6 +73,19 @@ public class FmkSpringUtil implements ApplicationContextAware {
     public static <T> T getBean(String name, Class<T> clazz) {
         checkApplicationContext();
         return APPLICATION_CONTEXT.get().getBean(name, clazz);
+    }
+
+    /**
+     * Get a bean by its type.
+     *
+     * @param <T>   the type of the bean
+     * @param clazz the class of the bean
+     * @return the bean instance
+     * @throws IllegalStateException if the context is not initialized
+     */
+    public static <T> Map<String, T> getBeansOfType(Class<T> clazz) {
+        checkApplicationContext();
+        return APPLICATION_CONTEXT.get().getBeansOfType(clazz);
     }
 
     /**
