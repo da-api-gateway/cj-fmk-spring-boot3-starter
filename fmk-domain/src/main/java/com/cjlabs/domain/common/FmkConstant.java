@@ -32,6 +32,7 @@ public interface FmkConstant {
     String MDC_TRACE_ID = "X-CJ-Trace-Id";          // 链路追踪ID
     String MDC_SPAN_ID = "X-CJ-Span-Id";            // 跨度ID
     String MDC_USER_ID = "X-CJ-User-Id";            // 用户ID
+    String MDC_JOB_ID = "X-CJ-Job-Id";            // JobID
 
     /**
      * 常用符号 - 基础
