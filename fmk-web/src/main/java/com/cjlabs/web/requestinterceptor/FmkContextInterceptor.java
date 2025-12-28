@@ -18,8 +18,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -35,11 +33,13 @@ import static com.cjlabs.domain.common.FmkConstant.*;
  * 在请求开始时设置上下文信息，请求结束时清理
  */
 @Slf4j
-@Component
 public class FmkContextInterceptor implements HandlerInterceptor {
 
-    @Autowired(required = false)
     private IFmkTokenService fmkTokenService;
+
+    public void setFmkTokenService(IFmkTokenService fmkTokenService) {
+        this.fmkTokenService = fmkTokenService;
+    }
 
     /**
      * 系统用户ID - 用于不需要登录的接口

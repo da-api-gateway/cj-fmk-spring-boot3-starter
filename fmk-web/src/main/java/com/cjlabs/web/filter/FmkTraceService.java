@@ -7,10 +7,8 @@ import com.cjlabs.domain.common.FmkConstant;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
 public class FmkTraceService {
     public FmkTraceId generateTraceId() {
         return FmkTraceId.generate();

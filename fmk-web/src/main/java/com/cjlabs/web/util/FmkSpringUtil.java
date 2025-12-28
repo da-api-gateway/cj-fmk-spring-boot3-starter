@@ -1,29 +1,23 @@
 package com.cjlabs.web.util;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Utility class to access Spring-managed beans from the application context.
+ *
+ * 通过监听 ContextRefreshedEvent 来初始化 ApplicationContext，
+ * 确保在所有 Bean 初始化完成后才可用。
  */
 @Slf4j
-@Component
-public class FmkSpringUtil implements ApplicationContextAware {
+public class FmkSpringUtil implements ApplicationListener<ContextRefreshedEvent> {
 
     private static final AtomicReference<ApplicationContext> APPLICATION_CONTEXT = new AtomicReference<>();
-
-    @Override
-    public void setApplicationContext(ApplicationContext context) throws BeansException {
-        if (!FmkSpringUtil.APPLICATION_CONTEXT.compareAndSet(null, context)) {
-            log.warn("SpringUtil|setApplicationContext|ApplicationContext already set, ignoring new context.");
-        }
-    }
 
     /**
      * Get the Spring application context.
@@ -96,6 +90,16 @@ public class FmkSpringUtil implements ApplicationContextAware {
     private static void checkApplicationContext() {
         if (APPLICATION_CONTEXT.get() == null) {
             throw new IllegalStateException("ApplicationContext is not initialized. Ensure SpringUtil is registered as a Spring bean.");
+        }
+    }
+
+    @Override
+    public void onApplicationEvent(ContextRefreshedEvent event) {
+        // 只处理根容器的事件（避免父子容器重复触发）
+        if (event.getApplicationContext().getParent() == null) {
+            if (APPLICATION_CONTEXT.compareAndSet(null, event.getApplicationContext())) {
+                log.info("FmkSpringUtil|onApplicationEvent|ApplicationContext initialized successfully");
+            }
         }
     }
 }

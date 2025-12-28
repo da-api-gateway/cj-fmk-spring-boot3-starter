@@ -11,7 +11,9 @@ import com.cjlabs.web.token.bo.FmkTokenInfo;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -21,12 +23,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Token 服务内存实现
+ *
  * 使用内存存储 Token，适合开发环境和单机环境
- * 当 fmk.token.type=memory 时启用（默认）
+ * 启用条件：fmk.token.type=memory（默认）
+ *
+ * @author cjlabs
  */
 @Slf4j
-@Service("fmkTokenService")
+@Primary
+@Service("fmkTokenServiceMemory")
 @ConditionalOnProperty(name = "fmk.token.type", havingValue = "memory", matchIfMissing = true)
+@ConditionalOnMissingBean(name = "fmkTokenServiceRedis")
 public class FmkTokenServiceMemoryImpl implements IFmkTokenService {
 
     @Autowired
@@ -36,6 +43,13 @@ public class FmkTokenServiceMemoryImpl implements IFmkTokenService {
     private static final Map<FmkToken, FmkTokenInfo> TOKEN_TOKEN_INFO_MAP = new ConcurrentHashMap<>();
     // 用户ID到用户信息的映射
     private static final Map<FmkUserId, FmkUserInfo> USER_ID_USER_INFO_MAP = new ConcurrentHashMap<>();
+
+    /**
+     * 构造函数 - 打印初始化日志
+     */
+    public FmkTokenServiceMemoryImpl() {
+        log.info("==> Token服务初始化：内存存储模式（Memory）");
+    }
 
     @Override
     public FmkToken createAndSaveToken(FmkUserInfo userInfo, FmkClientInfo clientInfo) {

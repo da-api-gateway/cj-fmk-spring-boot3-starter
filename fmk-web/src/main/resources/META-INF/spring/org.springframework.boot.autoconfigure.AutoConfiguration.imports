@@ -1,5 +1,1 @@
-com.cjlabs.web.FilterConfig
-com.cjlabs.web.FmkThreadPoolConfig
-com.cjlabs.web.FmkTokenAutoConfiguration
-com.cjlabs.web.FmkWebAutoConfig
-com.cjlabs.web.JacksonConfig
+com.cjlabs.web.FmkWebAutoConfiguration

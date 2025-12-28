@@ -5,14 +5,13 @@ import com.cjlabs.core.types.strings.FmkTraceId;
 import com.cjlabs.domain.common.FmkConstant;
 import com.cjlabs.web.threadlocal.FmkContextInfo;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -23,11 +22,10 @@ import java.time.LocalDateTime;
  * 负责生成和管理请求的 TraceId 和 SpanId
  */
 @Slf4j
-@Component
 public class TraceFilter extends OncePerRequestFilter {
+
     private FmkTraceService fmkTraceService;
 
-    @Autowired
     public void setFmkTraceService(FmkTraceService fmkTraceService) {
         this.fmkTraceService = fmkTraceService;
     }
