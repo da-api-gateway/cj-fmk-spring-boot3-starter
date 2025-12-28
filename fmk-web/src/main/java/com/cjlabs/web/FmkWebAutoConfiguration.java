@@ -31,6 +31,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
@@ -60,9 +61,16 @@ public class FmkWebAutoConfiguration implements WebMvcConfigurer {
      * 用于在非 Spring 管理的类中获取 Bean
      */
     @Bean
-    public FmkSpringUtil fmkSpringUtil() {
+    public FmkSpringUtil fmkSpringUtil(ApplicationContext applicationContext) {
         log.info("FmkWebAutoConfiguration|注册FmkSpringUtil");
-        return new FmkSpringUtil();
+        FmkSpringUtil fmkSpringUtil = new FmkSpringUtil();
+        try {
+            fmkSpringUtil.setApplicationContext(applicationContext);
+            log.info("FmkWebAutoConfiguration|FmkSpringUtil ApplicationContext 设置成功");
+        } catch (Exception e) {
+            log.error("FmkWebAutoConfiguration|FmkSpringUtil ApplicationContext 设置失败", e);
+        }
+        return fmkSpringUtil;
     }
 
     /**

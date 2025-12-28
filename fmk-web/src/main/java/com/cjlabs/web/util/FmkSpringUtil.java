@@ -2,20 +2,19 @@ package com.cjlabs.web.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.ApplicationContextAware;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Utility class to access Spring-managed beans from the application context.
- *
+ * <p>
  * 通过监听 ContextRefreshedEvent 来初始化 ApplicationContext，
  * 确保在所有 Bean 初始化完成后才可用。
  */
 @Slf4j
-public class FmkSpringUtil implements ApplicationListener<ContextRefreshedEvent> {
+public class FmkSpringUtil implements ApplicationContextAware {
 
     private static final AtomicReference<ApplicationContext> APPLICATION_CONTEXT = new AtomicReference<>();
 
@@ -94,12 +93,9 @@ public class FmkSpringUtil implements ApplicationListener<ContextRefreshedEvent>
     }
 
     @Override
-    public void onApplicationEvent(ContextRefreshedEvent event) {
-        // 只处理根容器的事件（避免父子容器重复触发）
-        if (event.getApplicationContext().getParent() == null) {
-            if (APPLICATION_CONTEXT.compareAndSet(null, event.getApplicationContext())) {
-                log.info("FmkSpringUtil|onApplicationEvent|ApplicationContext initialized successfully");
-            }
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        if (APPLICATION_CONTEXT.compareAndSet(null, applicationContext)) {
+            log.info("FmkSpringUtil|setApplicationContext|ApplicationContext initialized successfully");
         }
     }
 }
