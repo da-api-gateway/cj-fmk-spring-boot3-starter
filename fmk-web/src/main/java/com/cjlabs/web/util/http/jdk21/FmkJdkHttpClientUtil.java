@@ -1,6 +1,7 @@
-package com.cjlabs.core.http.jdk21;
+package com.cjlabs.web.util.http.jdk21;
 
-import com.cjlabs.core.http.FmkHttpConfig;
+import com.cjlabs.web.threadlocal.FmkContextUtil;
+import com.cjlabs.web.util.http.FmkHttpConfig;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +19,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+
+import static com.cjlabs.domain.common.FmkConstant.HEADER_SPAN_ID;
+import static com.cjlabs.domain.common.FmkConstant.HEADER_TRACE_ID;
 
 public final class FmkJdkHttpClientUtil {
     // 默认 logger，类名就是日志的名字
@@ -78,6 +82,24 @@ public final class FmkJdkHttpClientUtil {
         }
     }
 
+    // 添加工具方法来从上下文中获取 trace headers
+    private static void addTraceHeaders(HttpRequest.Builder builder) {
+        try {
+            // 从上下文中获取 traceId 和 spanId
+            String traceId = FmkContextUtil.getTraceIdString(null);
+            String spanId = FmkContextUtil.getSpanIdString(null);
+
+            if (StringUtils.isNotBlank(traceId)) {
+                builder.header(HEADER_TRACE_ID, traceId);
+            }
+            if (StringUtils.isNotBlank(spanId)) {
+                builder.header(HEADER_SPAN_ID, spanId);
+            }
+        } catch (Exception e) {
+            log.warn("FmkJdkHttpClientUtil|addTraceHeaders|获取trace信息失败|error={}", e.getMessage());
+        }
+    }
+
     // -------------------- GET 请求 --------------------
     public static String get(String url) throws IOException, InterruptedException {
         return get(url, null);
@@ -100,6 +122,9 @@ public final class FmkJdkHttpClientUtil {
                 .uri(URI.create(url))
                 .timeout(timeout)
                 .GET();
+
+        // 添加 trace headers
+        addTraceHeaders(builder);
 
         if (headers != null) {
             headers.forEach(builder::header);
@@ -160,6 +185,9 @@ public final class FmkJdkHttpClientUtil {
             headers.forEach(builder::header);
         }
 
+        // 添加 trace headers
+        addTraceHeaders(builder);
+
         HttpRequest request = builder.build();
 
         if (config.isPrintJson()) {
@@ -206,6 +234,9 @@ public final class FmkJdkHttpClientUtil {
                 .timeout(timeout)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json));
+
+        // 添加 trace headers
+        addTraceHeaders(builder);
 
         if (headers != null) {
             headers.forEach(builder::header);
@@ -266,6 +297,9 @@ public final class FmkJdkHttpClientUtil {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json));
 
+        // 添加 trace headers
+        addTraceHeaders(builder);
+
         if (headers != null) {
             headers.forEach(builder::header);
         }
@@ -316,7 +350,7 @@ public final class FmkJdkHttpClientUtil {
         StringBuilder sb = new StringBuilder();
         if (formData != null && !formData.isEmpty()) {
             for (Map.Entry<String, String> entry : formData.entrySet()) {
-                if (sb.length() != 0) {
+                if (!sb.isEmpty()) {
                     sb.append("&");
                 }
                 sb.append(entry.getKey()).append("=").append(entry.getValue());
@@ -330,6 +364,9 @@ public final class FmkJdkHttpClientUtil {
                 .timeout(timeout)
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString(formBody));
+
+        // 添加 trace headers
+        addTraceHeaders(builder);
 
         if (headers != null) {
             headers.forEach(builder::header);
@@ -389,7 +426,7 @@ public final class FmkJdkHttpClientUtil {
         StringBuilder sb = new StringBuilder();
         if (formData != null && !formData.isEmpty()) {
             for (Map.Entry<String, String> entry : formData.entrySet()) {
-                if (sb.length() != 0) {
+                if (!sb.isEmpty()) {
                     sb.append("&");
                 }
                 sb.append(entry.getKey()).append("=").append(entry.getValue());
@@ -403,6 +440,9 @@ public final class FmkJdkHttpClientUtil {
                 .timeout(timeout)
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString(formBody));
+
+        // 添加 trace headers
+        addTraceHeaders(builder);
 
         if (headers != null) {
             headers.forEach(builder::header);

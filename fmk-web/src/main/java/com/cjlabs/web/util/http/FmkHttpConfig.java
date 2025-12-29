@@ -1,4 +1,4 @@
-package com.cjlabs.core.http;
+package com.cjlabs.web.util.http;
 
 import lombok.Getter;
 import lombok.Setter;

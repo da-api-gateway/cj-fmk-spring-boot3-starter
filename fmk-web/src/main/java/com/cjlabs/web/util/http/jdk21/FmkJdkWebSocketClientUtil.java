@@ -1,6 +1,6 @@
-package com.cjlabs.core.http.jdk21;
+package com.cjlabs.web.util.http.jdk21;
 
-import com.cjlabs.core.http.FmkHttpConfig;
+import com.cjlabs.web.util.http.FmkHttpConfig;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

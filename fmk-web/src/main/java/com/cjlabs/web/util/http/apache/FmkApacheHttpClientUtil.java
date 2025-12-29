@@ -1,6 +1,6 @@
-package com.cjlabs.core.http.apache;
+package com.cjlabs.web.util.http.apache;
 
-import com.cjlabs.core.http.FmkHttpConfig;
+import com.cjlabs.web.util.http.FmkHttpConfig;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;

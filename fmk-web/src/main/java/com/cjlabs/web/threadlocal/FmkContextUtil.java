@@ -2,6 +2,7 @@ package com.cjlabs.web.threadlocal;
 
 import com.alibaba.ttl.TransmittableThreadLocal;
 import com.cjlabs.core.types.longs.FmkUserId;
+import com.cjlabs.core.types.strings.FmkSpanId;
 import com.cjlabs.core.types.strings.FmkToken;
 import com.cjlabs.core.types.strings.FmkTraceId;
 import com.cjlabs.domain.enums.FmkLanguageEnum;
@@ -110,6 +111,23 @@ public class FmkContextUtil {
                 .map(FmkTraceId::getValue)
                 .orElse(defaultValue);
     }
+
+    /**
+     * 获取追踪ID
+     */
+    public static Optional<FmkSpanId> getSpanId() {
+        return getOptionalFromContext(FmkContextInfo::getSpanId);
+    }
+
+    /**
+     * 获取追踪ID字符串，如果不存在则返回默认值
+     */
+    public static String getSpanIdString(String defaultValue) {
+        return getSpanId()
+                .map(FmkSpanId::getValue)
+                .orElse(defaultValue);
+    }
+
 
     /**
      * 获取Token
