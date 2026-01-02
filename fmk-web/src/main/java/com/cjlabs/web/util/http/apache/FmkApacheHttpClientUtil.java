@@ -2,6 +2,7 @@ package com.cjlabs.web.util.http.apache;
 
 import com.cjlabs.web.util.http.FmkHttpConfig;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public final class FmkApacheHttpClientUtil {
+    @Getter
     private static volatile CloseableHttpClient httpClient;
     private static volatile FmkHttpConfig config;
 

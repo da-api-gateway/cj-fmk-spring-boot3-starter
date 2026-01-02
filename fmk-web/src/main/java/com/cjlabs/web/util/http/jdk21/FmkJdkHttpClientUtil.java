@@ -3,10 +3,10 @@ package com.cjlabs.web.util.http.jdk21;
 import com.cjlabs.web.threadlocal.FmkContextUtil;
 import com.cjlabs.web.util.http.FmkHttpConfig;
 
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -23,10 +23,9 @@ import java.util.concurrent.CompletableFuture;
 import static com.cjlabs.domain.common.FmkConstant.HEADER_SPAN_ID;
 import static com.cjlabs.domain.common.FmkConstant.HEADER_TRACE_ID;
 
+@Slf4j
 public final class FmkJdkHttpClientUtil {
-    // 默认 logger，类名就是日志的名字
-    private static final Logger log = LoggerFactory.getLogger(FmkJdkHttpClientUtil.class);
-
+    @Getter
     private static volatile HttpClient client;
     private static volatile FmkHttpConfig config;
 
