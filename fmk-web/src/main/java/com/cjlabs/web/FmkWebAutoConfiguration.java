@@ -17,9 +17,9 @@ import com.cjlabs.web.token.FmkTokenProperties;
 import com.cjlabs.web.token.IFmkTokenService;
 import com.cjlabs.web.util.FmkSpringUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +33,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -47,13 +48,14 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 @AutoConfiguration
+@ComponentScan(basePackages = "com.cjlabs.web")
 @EnableConfigurationProperties({FmkThreadPoolProperties.class, FmkTokenProperties.class})
 public class FmkWebAutoConfiguration implements WebMvcConfigurer {
     public FmkWebAutoConfiguration() {
         log.info("FmkWebAutoConfiguration|初始化|Fmk Web 模块自动配置加载");
     }
 
-    @Autowired(required = false)
+    @Autowired
     private IFmkTokenService fmkTokenService;
 
     /**
@@ -100,13 +102,15 @@ public class FmkWebAutoConfiguration implements WebMvcConfigurer {
     public FmkContextInterceptor fmkContextInterceptor() {
         log.info("FmkWebAutoConfiguration|注册FmkContextInterceptor");
         FmkContextInterceptor fmkContextInterceptor = new FmkContextInterceptor();
+
         if (fmkTokenService != null) {
+            String serviceType = fmkTokenService.getClass().getSimpleName();
             fmkContextInterceptor.setFmkTokenService(fmkTokenService);
-            log.info("FmkWebAutoConfiguration|Token服务已注入到拦截器");
+            log.info("FmkWebAutoConfiguration|Token服务已注入到拦截器|实现类={}", serviceType);
         } else {
             log.warn("FmkWebAutoConfiguration|Token服务未启用，拦截器将跳过Token验证");
         }
-        fmkContextInterceptor.setFmkTokenService(fmkTokenService);
+
         return fmkContextInterceptor;
     }
 

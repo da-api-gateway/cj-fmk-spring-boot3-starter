@@ -1,17 +1,14 @@
-package com.cjlabs.web.token.service;
+package com.cjlabs.web.token;
 
 import com.cjlabs.core.time.FmkInstantUtil;
 import com.cjlabs.core.types.longs.FmkUserId;
 import com.cjlabs.core.types.strings.FmkToken;
 import com.cjlabs.web.threadlocal.FmkClientInfo;
 import com.cjlabs.web.threadlocal.FmkUserInfo;
-import com.cjlabs.web.token.FmkTokenProperties;
-import com.cjlabs.web.token.IFmkTokenService;
 import com.cjlabs.web.token.bo.FmkTokenInfo;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -30,10 +27,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author cjlabs
  */
 @Slf4j
-@Primary
-@Service("fmkTokenServiceMemory")
+// @Primary
+@Service("FmkTokenServiceMemoryImpl")
 @ConditionalOnProperty(name = "fmk.token.type", havingValue = "memory", matchIfMissing = true)
-@ConditionalOnMissingBean(name = "fmkTokenServiceRedis")
 public class FmkTokenServiceMemoryImpl implements IFmkTokenService {
 
     @Autowired
