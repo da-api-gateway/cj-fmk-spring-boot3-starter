@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 /**
  * 单机锁工具类
@@ -22,26 +23,6 @@ public class FmkLockUtil {
 
     // 锁的最大数量，防止内存泄漏
     private static final int MAX_LOCK_SIZE = 10000;
-
-    // ==================== 锁任务接口 ====================
-
-    /**
-     * 锁任务接口（有返回值）
-     *
-     * @param <T> 任务返回值的类型
-     */
-    @FunctionalInterface
-    public interface LockTask<T> {
-        T execute() throws InterruptedException;
-    }
-
-    /**
-     * 锁任务接口（无返回值）
-     */
-    @FunctionalInterface
-    public interface VoidLockTask {
-        void execute() throws InterruptedException;
-    }
 
     // ==================== 重入锁相关方法 ====================
 
@@ -68,19 +49,6 @@ public class FmkLockUtil {
     }
 
     /**
-     * 执行带锁的操作（无返回值）- 阻塞等待直到获取锁
-     *
-     * @param key    锁的key
-     * @param action 要执行的操作
-     */
-    public static void executeWithLock(String key, VoidLockTask action) {
-        executeLock(key, () -> {
-            action.execute();
-            return null;
-        });
-    }
-
-    /**
      * 执行带锁的操作（有返回值）- 阻塞等待直到获取锁
      *
      * @param key      锁的key
@@ -88,12 +56,12 @@ public class FmkLockUtil {
      * @param <T>      返回值类型
      * @return 操作结果
      */
-    public static <T> T executeLock(String key, LockTask<T> supplier) {
+    public static <T> T executeLock(String key, Supplier<T> supplier) {
         ReentrantLock lock = getReentrantLock(key);
         lock.lock();
         try {
             log.debug("FmkLockUtil|executeWithLock|getLock={}", key);
-            return supplier.execute();
+            return supplier.get();
         } catch (Exception e) {
             log.error("FmkLockUtil|executeWithLock|执行操作失败|key={}|error={}", key, e.getMessage(), e);
             throw new Error200Exception(Error200ExceptionEnum.RATE_LIMIT_EXCEEDED);
@@ -110,38 +78,8 @@ public class FmkLockUtil {
      * @param action 要执行的操作
      * @throws Error200Exception 获取锁超时时抛出
      */
-    public static <T> T executeTryLockWait5S(String key, LockTask<T> action) {
+    public static <T> T executeTryLockWait5S(String key, Supplier<T> action) {
         return executeTryLock(key, 5, TimeUnit.SECONDS, action);
-    }
-
-    /**
-     * 执行带超时锁的操作，获取锁失败时抛出异常（无返回值）
-     *
-     * @param key    锁的key
-     * @param action 要执行的操作
-     * @throws Error200Exception 获取锁超时时抛出
-     */
-    public static void executeTryLockWait5S(String key, VoidLockTask action) {
-        executeTryLock(key, 5, TimeUnit.SECONDS, () -> {
-            action.execute();
-            return null;
-        });
-    }
-
-    /**
-     * 执行带超时锁的操作，获取锁失败时抛出异常（无返回值）
-     *
-     * @param key     锁的key
-     * @param timeout 超时时间
-     * @param unit    时间单位
-     * @param action  要执行的操作
-     * @throws Error200Exception 获取锁超时时抛出
-     */
-    public static void executeTryLock(String key, long timeout, TimeUnit unit, VoidLockTask action) {
-        executeTryLock(key, timeout, unit, () -> {
-            action.execute();
-            return null;
-        });
     }
 
     /**
@@ -155,13 +93,13 @@ public class FmkLockUtil {
      * @return 操作结果
      * @throws Error200Exception 获取锁超时时抛出
      */
-    public static <T> T executeTryLock(String key, long timeout, TimeUnit unit, LockTask<T> supplier) {
+    public static <T> T executeTryLock(String key, long timeout, TimeUnit unit, Supplier<T> supplier) {
         ReentrantLock lock = getReentrantLock(key);
         try {
             if (lock.tryLock(timeout, unit)) {
                 try {
                     log.debug("FmkLockUtil|executeWithTryLockOrThrow|getLock={}", key);
-                    return supplier.execute();
+                    return supplier.get();
                 } catch (Exception e) {
                     log.error("FmkLockUtil|executeWithTryLockOrThrow|执行操作失败|key={}|error={}", key, e.getMessage(), e);
                     throw e;
@@ -183,17 +121,6 @@ public class FmkLockUtil {
     // ==================== 便利方法 ====================
 
     /**
-     * 立即尝试获取锁并执行操作，获取不到锁立即抛出异常（无返回值）
-     *
-     * @param key    锁的key
-     * @param action 要执行的操作
-     * @throws Error200Exception 获取锁失败时立即抛出
-     */
-    public static void executeTryLock(String key, VoidLockTask action) {
-        executeTryLock(key, 1, TimeUnit.MILLISECONDS, action);
-    }
-
-    /**
      * 立即尝试获取锁并执行操作，获取不到锁立即抛出异常（有返回值）
      *
      * @param key      锁的key
@@ -202,7 +129,7 @@ public class FmkLockUtil {
      * @return 操作结果
      * @throws Error200Exception 获取锁失败时立即抛出
      */
-    public static <T> T executeTryLock(String key, LockTask<T> supplier) {
+    public static <T> T executeTryLock(String key, Supplier<T> supplier) {
         return executeTryLock(key, 1, TimeUnit.MILLISECONDS, supplier);
     }
 

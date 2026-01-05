@@ -91,7 +91,11 @@ class FmkLockUtilTest {
                 try {
                     FmkLockUtil.executeLock(TEST_KEY, () -> {
                         int current = counter.get();
-                        Thread.sleep(5); // 模拟耗时操作
+                        try {
+                            Thread.sleep(5); // 模拟耗时操作
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                         counter.set(current + 1);
                         return null;
                     });
@@ -131,50 +135,6 @@ class FmkLockUtilTest {
 
         assertEquals("重入成功", result);
         System.out.println("✅ ReentrantLock 支持重入");
-    }
-
-    // ==================== executeWithLock 无返回值测试 ====================
-
-    @Test
-    @DisplayName("测试 executeWithLock - 无返回值正常执行")
-    void testExecuteWithLock_Void() {
-        AtomicInteger counter = new AtomicInteger(0);
-
-        FmkLockUtil.executeWithLock(TEST_KEY, () -> {
-            counter.incrementAndGet();
-        });
-
-        assertEquals(1, counter.get());
-        System.out.println("✅ executeWithLock(无返回值) 正常执行");
-    }
-
-    @Test
-    @DisplayName("测试 executeWithLock - 无返回值并发互斥")
-    void testExecuteWithLock_VoidConcurrency() throws InterruptedException {
-        AtomicInteger counter = new AtomicInteger(0);
-        int threadCount = 10;
-        CountDownLatch latch = new CountDownLatch(threadCount);
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-
-        for (int i = 0; i < threadCount; i++) {
-            executor.submit(() -> {
-                try {
-                    FmkLockUtil.executeWithLock(TEST_KEY, () -> {
-                        int current = counter.get();
-                        Thread.sleep(5);
-                        counter.set(current + 1);
-                    });
-                } finally {
-                    latch.countDown();
-                }
-            });
-        }
-
-        latch.await();
-        executor.shutdown();
-
-        assertEquals(threadCount, counter.get());
-        System.out.println("✅ executeWithLock(无返回值) 并发互斥正常");
     }
 
     // ==================== executeTryLock 测试 ====================
@@ -246,48 +206,6 @@ class FmkLockUtilTest {
     }
 
     @Test
-    @DisplayName("测试 executeTryLock - 无返回值")
-    void testExecuteTryLock_Void() {
-        AtomicInteger counter = new AtomicInteger(0);
-
-        FmkLockUtil.executeTryLock(TEST_KEY, () -> {
-            counter.incrementAndGet();
-        });
-
-        assertEquals(1, counter.get());
-        System.out.println("✅ executeTryLock(无返回值) 正常执行");
-    }
-
-    @Test
-    @DisplayName("测试 executeTryLock - 无返回值超时")
-    void testExecuteTryLock_VoidTimeout() throws InterruptedException {
-        CountDownLatch lockHeldLatch = new CountDownLatch(1);
-
-        Thread thread1 = new Thread(() -> {
-            FmkLockUtil.executeWithLock(TEST_KEY, () -> {
-                lockHeldLatch.countDown();
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
-        });
-        thread1.start();
-
-        lockHeldLatch.await();
-
-        assertThrows(Error200Exception.class, () -> {
-            FmkLockUtil.executeTryLock(TEST_KEY, 500, TimeUnit.MILLISECONDS, () -> {
-                System.out.println("不应该执行到这里");
-            });
-        }, "超时应该抛出异常");
-
-        thread1.join();
-        System.out.println("✅ executeTryLock(无返回值) 超时正常工作");
-    }
-
-    @Test
     @DisplayName("测试 executeTryLock - 自定义超时时间")
     void testExecuteTryLock_CustomTimeout() {
         String result = FmkLockUtil.executeTryLock(
@@ -312,49 +230,6 @@ class FmkLockUtilTest {
 
         assertEquals("立即获取成功", result);
         System.out.println("✅ executeTryLock(立即) 没有竞争时获取成功");
-    }
-
-    @Test
-    @DisplayName("测试 executeTryLock(立即) - 立即失败")
-    void testExecuteTryLock_Immediate_Fail() throws InterruptedException {
-        CountDownLatch lockHeldLatch = new CountDownLatch(1);
-
-        Thread thread1 = new Thread(() -> {
-            FmkLockUtil.executeWithLock(TEST_KEY, () -> {
-                lockHeldLatch.countDown();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
-        });
-        thread1.start();
-
-        lockHeldLatch.await();
-
-        // 立即尝试获取锁，应该立即失败
-        assertThrows(Error200Exception.class, () -> {
-            FmkLockUtil.executeTryLock(TEST_KEY, () -> {
-                return "不应该执行到这里";
-            });
-        }, "锁被占用时应该立即失败");
-
-        thread1.join();
-        System.out.println("✅ executeTryLock(立即) 锁被占用时立即失败");
-    }
-
-    @Test
-    @DisplayName("测试 executeTryLock(立即) - 无返回值")
-    void testExecuteTryLock_Immediate_Void() {
-        AtomicInteger counter = new AtomicInteger(0);
-
-        FmkLockUtil.executeTryLock(TEST_KEY, () -> {
-            counter.incrementAndGet();
-        });
-
-        assertEquals(1, counter.get());
-        System.out.println("✅ executeTryLock(立即，无返回值) 成功执行");
     }
 
     // ==================== getLockCount 测试 ====================
@@ -395,7 +270,11 @@ class FmkLockUtilTest {
                     FmkLockUtil.executeLock(key, () -> {
                         AtomicInteger counter = counters.get(key);
                         int current = counter.get();
-                        Thread.sleep(3);
+                        try {
+                            Thread.sleep(3);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                         counter.set(current + 1);
                         return null;
                     });

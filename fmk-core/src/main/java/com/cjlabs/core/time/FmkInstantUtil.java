@@ -24,6 +24,13 @@ public class FmkInstantUtil {
     }
 
     /**
+     * 获取当前秒级时间戳
+     */
+    public static long currentSeconds() {
+        return Instant.now().getEpochSecond();
+    }
+
+    /**
      * 获取当前毫秒时间戳
      */
     public static long currentMillis() {
@@ -31,13 +38,37 @@ public class FmkInstantUtil {
     }
 
     /**
-     * 获取当前秒级时间戳
+     * 获取当前纳秒时间戳
+     * 注：返回的是当前秒数的纳秒偏移（0-999999999）
      */
-    public static long currentSeconds() {
-        return Instant.now().getEpochSecond();
+    public static long currentNanos() {
+        return Instant.now().getNano();
+    }
+
+    /**
+     * 获取当前完整纳秒时间戳
+     * 注：这是一个组合计算，秒数 * 1_000_000_000 + 纳秒偏移
+     */
+    public static long currentFullNanos() {
+        Instant now = Instant.now();
+        return now.getEpochSecond() * 1_000_000_000L + now.getNano();
     }
 
     // ---------------------- 转换方法 ----------------------
+
+    /**
+     * Instant → 秒级时间戳
+     */
+    public static long toSeconds(Instant instant) {
+        return instant == null ? 0L : instant.getEpochSecond();
+    }
+
+    /**
+     * 秒级时间戳 → Instant
+     */
+    public static Instant fromSeconds(long seconds) {
+        return Instant.ofEpochSecond(seconds);
+    }
 
     /**
      * Instant → 毫秒时间戳
@@ -51,6 +82,73 @@ public class FmkInstantUtil {
      */
     public static Instant fromMillis(long millis) {
         return Instant.ofEpochMilli(millis);
+    }
+
+    /**
+     * Instant → 纳秒偏移（当前秒内的纳秒值，0-999999999）
+     */
+    public static long toNanos(Instant instant) {
+        return instant == null ? 0L : instant.getNano();
+    }
+
+    /**
+     * 秒 + 纳秒偏移 → Instant
+     *
+     * @param seconds 秒级时间戳
+     * @param nanos   纳秒偏移（0-999999999）
+     */
+    public static Instant fromSecondsAndNanos(long seconds, long nanos) {
+        return Instant.ofEpochSecond(seconds, nanos);
+    }
+
+    /**
+     * 纳秒时间戳 → Instant
+     * 注：这里的纳秒是相对于 1970-01-01T00:00:00Z 的完整纳秒值
+     *
+     * @param nanos 完整纳秒时间戳
+     */
+    public static Instant fromNanos(long nanos) {
+        long seconds = nanos / 1_000_000_000L;
+        long nanoOffset = nanos % 1_000_000_000L;
+        return Instant.ofEpochSecond(seconds, nanoOffset);
+    }
+
+    /**
+     * 获取 Instant 的完整纳秒表示（秒*1e9 + 纳秒偏移）
+     */
+    public static long toFullNanos(Instant instant) {
+        if (instant == null) {
+            return 0L;
+        }
+        return instant.getEpochSecond() * 1_000_000_000L + instant.getNano();
+    }
+
+    /**
+     * 完整纳秒时间戳 → Instant
+     *
+     * @param fullNanos 完整纳秒时间戳（秒 * 1e9 + 纳秒偏移）
+     * @return Instant 对象
+     *
+     * 示例：
+     * fullNanos = 1704110400123456789
+     * 秒 = 1704110400
+     * 纳秒偏移 = 123456789
+     * 结果 = Instant.ofEpochSecond(1704110400, 123456789)
+     */
+    public static Instant fromFullNanos(long fullNanos) {
+        // 计算秒数（向下整除）
+        long seconds = fullNanos / 1_000_000_000L;
+
+        // 计算纳秒偏移（取余）
+        long nanos = fullNanos % 1_000_000_000L;
+
+        // 处理负数情况（如果 fullNanos 是负数）
+        if (nanos < 0) {
+            seconds--;
+            nanos += 1_000_000_000L;
+        }
+
+        return Instant.ofEpochSecond(seconds, nanos);
     }
 
     // ---------------------- 加减时间 ----------------------

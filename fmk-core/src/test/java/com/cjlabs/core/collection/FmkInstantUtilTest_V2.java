@@ -14,7 +14,7 @@ import java.util.function.Function;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("FmkPairUtil Tests")
-class FmkPairUtilTest {
+class FmkInstantUtilTest_V2 {
 
     @Nested
     @DisplayName("Pair Creation Tests")
