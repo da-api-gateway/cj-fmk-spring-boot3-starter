@@ -1,7 +1,10 @@
 package com.cjlabs.memory;
 
 import com.cjlabs.memory.redis.FmkRedisProperties;
+import com.cjlabs.memory.token.FmkTokenServiceRedisImpl;
 import com.cjlabs.web.json.FmkJacksonUtil;
+import com.cjlabs.web.token.FmkTokenProperties;
+import com.cjlabs.web.token.IFmkTokenService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +14,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,13 +24,26 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Slf4j
 @Configuration
 @ConditionalOnClass(RedisTemplate.class)
-@ComponentScan(basePackages = "com.cjlabs.memory")
+// @ComponentScan(basePackages = "com.cjlabs.memory")
 @EnableConfigurationProperties({FmkRedisProperties.class})
 @ConditionalOnProperty(prefix = "fmk.redis", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class FmkMemoryAutoConfig {
 
     public FmkMemoryAutoConfig() {
         log.info("FmkMemoryAutoConfig|初始化|Fmk memory 模块自动配置加载");
+    }
+
+    /**
+     * Redis Token 服务
+     * 只在 fmk.token.type=redis 时创建
+     */
+    @Bean
+    @ConditionalOnProperty(name = "fmk.token.type", havingValue = "redis")
+    public IFmkTokenService fmkTokenServiceRedis(FmkTokenProperties tokenProperties) {
+        log.info("FmkMemoryAutoConfig|注册Redis Token服务");
+        FmkTokenServiceRedisImpl service = new FmkTokenServiceRedisImpl();
+        service.setTokenProperties(tokenProperties);
+        return service;
     }
 
     /**

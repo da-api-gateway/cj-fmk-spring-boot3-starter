@@ -14,10 +14,11 @@ import com.cjlabs.web.thread.FmkThreadPoolMonitor;
 import com.cjlabs.web.thread.FmkThreadPoolProperties;
 import com.cjlabs.web.thread.FmkTtlThreadPoolTaskExecutor;
 import com.cjlabs.web.token.FmkTokenProperties;
+import com.cjlabs.web.token.FmkTokenServiceMemoryImpl;
 import com.cjlabs.web.token.IFmkTokenService;
 import com.cjlabs.web.util.FmkSpringUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.Lists;
@@ -33,8 +34,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
@@ -48,15 +49,37 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 @AutoConfiguration
-@ComponentScan(basePackages = "com.cjlabs.web")
+// @ComponentScan(basePackages = "com.cjlabs.web")
 @EnableConfigurationProperties({FmkThreadPoolProperties.class, FmkTokenProperties.class})
 public class FmkWebAutoConfiguration implements WebMvcConfigurer {
     public FmkWebAutoConfiguration() {
         log.info("FmkWebAutoConfiguration|初始化|Fmk Web 模块自动配置加载");
     }
 
-    @Autowired
-    private IFmkTokenService fmkTokenService;
+    // @Autowired
+    // private FmkTokenProperties tokenProperties;
+    //
+    // @Autowired(required = false)
+    // private IFmkTokenService fmkTokenService;
+    //
+    // @Lazy
+    // @Autowired(required = false)
+    // private FmkContextInterceptor contextInterceptor;
+
+    /**
+     * Memory Token 服务
+     * 只在 fmk.token.type=memory 时创建（默认）
+     * 使用 @ConditionalOnMissingBean 确保 Redis 实现存在时不创建这个 Bean
+     */
+    @Bean
+    @ConditionalOnProperty(name = "fmk.token.type", havingValue = "memory", matchIfMissing = true)
+    @ConditionalOnMissingBean(IFmkTokenService.class)
+    public IFmkTokenService fmkTokenServiceMemory(@Autowired FmkTokenProperties tokenProperties) {
+        log.info("FmkWebAutoConfiguration|注册Memory Token服务");
+        FmkTokenServiceMemoryImpl service = new FmkTokenServiceMemoryImpl();
+        service.setTokenProperties(tokenProperties);
+        return service;
+    }
 
     /**
      * Spring 上下文工具类
@@ -99,7 +122,7 @@ public class FmkWebAutoConfiguration implements WebMvcConfigurer {
      * 负责设置请求上下文信息（用户信息、客户端信息等）
      */
     @Bean
-    public FmkContextInterceptor fmkContextInterceptor() {
+    public FmkContextInterceptor fmkContextInterceptor(@Autowired(required = false) IFmkTokenService fmkTokenService) {
         log.info("FmkWebAutoConfiguration|注册FmkContextInterceptor");
         FmkContextInterceptor fmkContextInterceptor = new FmkContextInterceptor();
 
@@ -111,27 +134,9 @@ public class FmkWebAutoConfiguration implements WebMvcConfigurer {
             log.warn("FmkWebAutoConfiguration|Token服务未启用，拦截器将跳过Token验证");
         }
 
+        log.info("FmkWebAutoConfiguration|Token服务已注入到拦截器|实现类={}", fmkTokenService);
+
         return fmkContextInterceptor;
-    }
-
-    // 排除路径列表
-    private static final List<String> EXCLUDE_PATHS = Lists.newArrayList(
-            "/static/**",
-            "/favicon.ico",
-            "/error",
-            "/actuator/**",
-            "/swagger-ui/**",
-            "/v3/api-docs/**"
-    );
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        // 添加上下文拦截器（优先级最高）
-        registry.addInterceptor(fmkContextInterceptor())
-                .addPathPatterns("/**")
-                .excludePathPatterns(EXCLUDE_PATHS)
-                .order(1);
-        log.info("FmkWebAutoConfiguration|配置拦截器|excludePaths={}", EXCLUDE_PATHS);
     }
 
     /**
@@ -154,8 +159,7 @@ public class FmkWebAutoConfiguration implements WebMvcConfigurer {
     @Bean
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
-        FilterRegistrationBean<CorsFilter> registration =
-                new FilterRegistrationBean<>(new CorsFilter());
+        FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>(new CorsFilter());
         registration.setOrder(1000);
         registration.addUrlPatterns("/*");
         log.info("FmkWebAutoConfiguration|注册CorsFilter|order=1000");
@@ -195,8 +199,7 @@ public class FmkWebAutoConfiguration implements WebMvcConfigurer {
         logFilter.setBeforeMessagePrefix("请求处理前: ");
         logFilter.setAfterMessagePrefix("请求处理后: ");
 
-        FilterRegistrationBean<CommonsRequestLoggingFilter> registration =
-                new FilterRegistrationBean<>(logFilter);
+        FilterRegistrationBean<CommonsRequestLoggingFilter> registration = new FilterRegistrationBean<>(logFilter);
         registration.setOrder(Integer.MAX_VALUE);
         registration.addUrlPatterns("/*");
         log.info("FmkWebAutoConfiguration|注册CommonsRequestLoggingFilter|order={}", Integer.MAX_VALUE);
@@ -258,10 +261,8 @@ public class FmkWebAutoConfiguration implements WebMvcConfigurer {
         executor.setKeepAliveSeconds(properties.getKeepAliveSeconds());
         executor.setThreadNamePrefix(properties.getThreadNamePrefix());
         executor.setAllowCoreThreadTimeOut(properties.isAllowCoreThreadTimeOut());
-        executor.setRejectedExecutionHandler(
-                createRejectionPolicy(properties.getRejectionPolicy(), executor));
-        executor.setWaitForTasksToCompleteOnShutdown(
-                properties.isWaitForTasksToCompleteOnShutdown());
+        executor.setRejectedExecutionHandler(createRejectionPolicy(properties.getRejectionPolicy(), executor));
+        executor.setWaitForTasksToCompleteOnShutdown(properties.isWaitForTasksToCompleteOnShutdown());
         executor.setAwaitTerminationSeconds(properties.getAwaitTerminationSeconds());
 
         executor.initialize();

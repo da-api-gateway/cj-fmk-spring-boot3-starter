@@ -1,1 +1,2 @@
 com.cjlabs.web.FmkWebAutoConfiguration
+com.cjlabs.web.FmkWebMvcConfiguration

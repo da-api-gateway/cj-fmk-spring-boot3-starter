@@ -9,9 +9,6 @@ import com.cjlabs.web.token.IFmkTokenService;
 import com.cjlabs.web.token.bo.FmkTokenInfo;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
@@ -21,15 +18,20 @@ import java.util.Optional;
  * 当 fmk.token.type=redis 时启用
  */
 @Slf4j
-@Service("FmkTokenServiceRedisImpl")
-@ConditionalOnProperty(name = "fmk.token.type", havingValue = "redis")
+// @Service("FmkTokenServiceRedisImpl")
+// @ConditionalOnProperty(name = "fmk.token.type", havingValue = "redis")
 public class FmkTokenServiceRedisImpl implements IFmkTokenService {
 
-    @Autowired
+    // @Autowired
     private FmkTokenProperties tokenProperties;
 
     public FmkTokenServiceRedisImpl() {
         log.info("==> Token服务初始化：Redis存储模式");
+    }
+
+    // 添加 setter 方法
+    public void setTokenProperties(FmkTokenProperties tokenProperties) {
+        this.tokenProperties = tokenProperties;
     }
 
     @Override
